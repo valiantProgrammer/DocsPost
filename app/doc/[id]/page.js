@@ -2,6 +2,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useParams } from "next/navigation";
 import Header from "../../components/Header";
+import DocEngagement from "../../components/DocEngagement";
 import { MdExpandMore } from "react-icons/md";
 import { MdShare } from "react-icons/md";
 import { LuMessageCircle } from "react-icons/lu";
@@ -195,6 +196,7 @@ export default function Home() {
                             <button className="action-btn" type="button" aria-label="Comments"><LuMessageCircle size={20} /></button>
                             <button className="action-btn" type="button" aria-label="Edit"><MdEdit size={20} /></button>
                             <button className="action-btn" type="button" aria-label="More"><MdMoreVert size={20} /></button>
+                            <DocEngagement docId={rawId} />
                             <span className="share-status" role="status" aria-live="polite">{shareStatus}</span>
                         </div>
                     </div>

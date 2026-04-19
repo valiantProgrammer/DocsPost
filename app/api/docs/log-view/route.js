@@ -1,0 +1,64 @@
+import { MongoClient } from "mongodb";
+
+export async function POST(req) {
+    let client;
+    try {
+        const { docId, userEmail } = await req.json();
+
+        if (!docId) {
+            return new Response(
+                JSON.stringify({ error: "Doc ID is required" }),
+                { status: 400 }
+            );
+        }
+
+        if (!process.env.MONGODB_URI) {
+            console.error("MONGODB_URI is not set");
+            return new Response(
+                JSON.stringify({ error: "Database connection not configured" }),
+                { status: 500 }
+            );
+        }
+
+        client = new MongoClient(process.env.MONGODB_URI);
+        await client.connect();
+        const db = client.db("docspost");
+
+        const now = new Date();
+
+        // Log the view
+        const viewsCollection = db.collection("doc_views");
+        await viewsCollection.insertOne({
+            docId,
+            userEmail: userEmail || "anonymous",
+            timestamp: now,
+            date: new Date(now.getFullYear(), now.getMonth(), now.getDate()),
+        });
+
+        // Update doc stats
+        const statsCollection = db.collection("doc_stats");
+        await statsCollection.updateOne(
+            { docId },
+            {
+                $inc: { views: 1 },
+                $set: { lastViewed: now },
+            },
+            { upsert: true }
+        );
+
+        return new Response(
+            JSON.stringify({ success: true, message: "View logged" }),
+            { status: 200 }
+        );
+    } catch (error) {
+        console.error("Error logging view:", error.message, error.stack);
+        return new Response(
+            JSON.stringify({ error: error.message || "Failed to log view" }),
+            { status: 500 }
+        );
+    } finally {
+        if (client) {
+            await client.close();
+        }
+    }
+}

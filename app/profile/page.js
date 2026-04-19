@@ -3,8 +3,9 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Header from "@/app/components/Header";
 import ProfilePictureModal from "@/app/components/ProfilePictureModal";
+import AnalyticsDashboard from "@/app/components/AnalyticsDashboard";
 import { useTheme } from "@/app/providers/ThemeProvider";
-import { FiUser, FiMail, FiMapPin, FiBookmark, FiEdit2, FiFileText } from "react-icons/fi";
+import { FiUser, FiMail, FiMapPin, FiBookmark, FiEdit2, FiFileText, FiBarChart2 } from "react-icons/fi";
 
 export default function Profile() {
     const { isDark, toggleTheme } = useTheme();
@@ -317,6 +318,13 @@ export default function Profile() {
                             Overview
                         </button>
                         <button
+                            className={`tab-button ${activeTab === "analytics" ? "active" : ""}`}
+                            onClick={() => setActiveTab("analytics")}
+                        >
+                            <FiBarChart2 size={18} />
+                            Analytics
+                        </button>
+                        <button
                             className={`tab-button ${activeTab === "articles" ? "active" : ""}`}
                             onClick={() => setActiveTab("articles")}
                         >
@@ -368,6 +376,13 @@ export default function Profile() {
                                     ))}
                                 </div>
                             </div>
+                        </div>
+                    )}
+
+                    {/* Analytics Tab */}
+                    {activeTab === "analytics" && (
+                        <div className="profile-tab-content">
+                            <AnalyticsDashboard userEmail={userData.email} />
                         </div>
                     )}
 

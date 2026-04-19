@@ -1,3 +1,29 @@
+:root {
+    --page-bg: #f4f5f6;
+    --panel-bg: #ffffff;
+    --hero-bg: #e6fff8;
+    --text-main: #0f1720;
+    --text-muted: #4a5563;
+    --line: #d6dde2;
+    --brand: #118a63;
+    --brand-deep: #0f7a57;
+    --but-col: rgb(228, 228, 228);
+    --border-color: #48484888;
+}
+
+:root[data-theme="dark"] {
+    --but-col: rgb(34, 34, 34);
+    --page-bg: #111112;
+    --panel-bg: #0c0e12;
+    --hero-bg: #3b3b3b;
+    --text-main: #f5f5f7;
+    --text-muted: #b0b8c1;
+    --line: #202426;
+    --brand: #2ebd7e;
+    --brand-deep: #1fa366;
+    --border-color: #bdbdbd;
+}
+
 .profile-picture-modal-overlay {
     position: fixed;
     top: 0;
@@ -134,34 +160,106 @@
 }
 
 .view-btn {
-    background: var(--brand);
-    color: white;
+    background: transparent;
+    color: var(--text-main);
+    border: 1px solid #2d9165c5;
+    background-image: linear-gradient(to right, var(--brand-deep), var(--brand-deep));
+    background-size: 0% 100%;
+    background-position: left center;
+    background-repeat: no-repeat;
+    transition: background-size 0.8s ease, color 0.8s ease;
 }
 
 .view-btn:hover:not(:disabled) {
-    background: var(--brand-deep);
-    transform: translateY(-2px);
+    background-size: 100% 100%;
+    color: white;
     box-shadow: 0 4px 12px rgba(17, 138, 99, 0.3);
+}
+
+@keyframes borderRotate {
+    0% {
+        transform: rotate(0deg);
+    }
+
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+/* .upload-btn {
+    position: relative;
+    background: transparent;
+    color: var(--text-main);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    overflow: hidden;
+} */
+
+/* Define animatable variable */
+@property --angle {
+    syntax: "<angle>";
+    initial-value: 0deg;
+    inherits: false;
 }
 
 .upload-btn {
-    background: var(--brand);
-    color: white;
+    --angle: 0deg;
+
+    border: 2px solid transparent;
+    border-radius: 8px;
+    color: var(--text-main);
+    background:
+        /* inner background */
+        linear-gradient(var(--bg, var(--but-col)), var(--bg, var(--but-col))) padding-box,
+
+        /* border gradient (arc) */
+        conic-gradient(from var(--angle),
+            transparent 0deg,
+            transparent 320deg,
+            rgb(0, 255, 200) 330deg,
+            rgb(0, 150, 255) 350deg,
+            transparent 360deg) border-box;
+
+    background-clip: padding-box, border-box;
+    transition: box-shadow 0.3s ease;
 }
 
-.upload-btn:hover:not(:disabled) {
-    background: var(--brand-deep);
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(17, 138, 99, 0.3);
+/* Animate gradient itself */
+.upload-btn:hover {
+    animation: rotateBorder 1.5s linear infinite;
+    box-shadow: 0 4px 12px rgba(0, 255, 200, 0.3);
+}
+
+@keyframes rotateBorder {
+    to {
+        --angle: 360deg;
+    }
+}
+
+/* Animate ONLY on hover */
+.upload-btn:hover::before {
+    opacity: 1;
+    animation: rotateGradient 1.5s linear infinite;
+}
+
+.upload-btn:hover {
+    box-shadow: 0 4px 12px rgba(0, 255, 200, 0.3);
+}
+
+/* This changes gradient start position */
+@keyframes rotateGradient {
+    to {
+        --angle: 360deg;
+    }
 }
 
 .delete-btn {
-    background: #ef4444;
+    background: #ff1313;
     color: white;
 }
 
 .delete-btn:hover:not(:disabled) {
-    background: #dc2626;
+    background: #ff0000;
     transform: translateY(-2px);
     box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
 }
@@ -211,7 +309,7 @@
 /* Dark Mode Support */
 :root[data-theme="dark"] .profile-picture-modal {
     --modal-bg: #1f2937;
-    --border-color: #374151;
+    --border-color: #bdbdbdbb;
     --text-primary: #f3f4f6;
     --text-secondary: #d1d5db;
     --hover-bg: #374151;

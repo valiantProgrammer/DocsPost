@@ -14,6 +14,7 @@
   --line: #d6dde2;
   --brand: #118a63;
   --brand-deep: #0f7a57;
+  --border-color: #484848;
 }
 
 :root[data-theme="dark"] {
@@ -25,6 +26,7 @@
   --line: #202426;
   --brand: #2ebd7e;
   --brand-deep: #1fa366;
+  --border-color: #bdbdbd;
 }
 
 button {
