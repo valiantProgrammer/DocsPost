@@ -13,7 +13,7 @@ export async function POST(req) {
 
         const client = new MongoClient(process.env.MONGODB_URI);
         await client.connect();
-        const db = client.db("docspost");
+        const db = client.db("DocsPost");
 
         // Log individual vote
         const analyticsCollection = db.collection("analytics");

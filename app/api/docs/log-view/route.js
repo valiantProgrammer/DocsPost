@@ -22,7 +22,7 @@ export async function POST(req) {
 
         client = new MongoClient(process.env.MONGODB_URI);
         await client.connect();
-        const db = client.db("docspost");
+        const db = client.db("DocsPost");
 
         const now = new Date();
 

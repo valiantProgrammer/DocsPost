@@ -8,7 +8,7 @@ export async function POST(req) {
         if (!docId || !userEmail) {
             return new Response(
                 JSON.stringify({ error: "Doc ID and user email are required" }),
-                { status: 400 }
+                { status: 400, headers: { "Content-Type": "application/json" } }
             );
         }
 
@@ -16,13 +16,13 @@ export async function POST(req) {
             console.error("MONGODB_URI is not set");
             return new Response(
                 JSON.stringify({ error: "Database connection not configured" }),
-                { status: 500 }
+                { status: 500, headers: { "Content-Type": "application/json" } }
             );
         }
 
         client = new MongoClient(process.env.MONGODB_URI);
         await client.connect();
-        const db = client.db("docspost");
+        const db = client.db("DocsPost");
 
         const upvotesCollection = db.collection("doc_upvotes");
         const statsCollection = db.collection("doc_stats");
@@ -52,7 +52,10 @@ export async function POST(req) {
                     message: "Upvote removed",
                     isUpvoted: false,
                 }),
-                { status: 200 }
+                {
+                    status: 200,
+                    headers: { "Content-Type": "application/json" }
+                }
             );
         } else {
             // Add upvote
@@ -77,14 +80,17 @@ export async function POST(req) {
                     message: "Upvoted successfully",
                     isUpvoted: true,
                 }),
-                { status: 200 }
+                {
+                    status: 200,
+                    headers: { "Content-Type": "application/json" }
+                }
             );
         }
     } catch (error) {
         console.error("Error upvoting:", error.message, error.stack);
         return new Response(
             JSON.stringify({ error: error.message || "Failed to process upvote" }),
-            { status: 500 }
+            { status: 500, headers: { "Content-Type": "application/json" } }
         );
     } finally {
         if (client) {
@@ -103,7 +109,7 @@ export async function GET(req) {
         if (!docId) {
             return new Response(
                 JSON.stringify({ error: "Doc ID is required" }),
-                { status: 400 }
+                { status: 400, headers: { "Content-Type": "application/json" } }
             );
         }
 
@@ -111,13 +117,13 @@ export async function GET(req) {
             console.error("MONGODB_URI is not set");
             return new Response(
                 JSON.stringify({ error: "Database connection not configured" }),
-                { status: 500 }
+                { status: 500, headers: { "Content-Type": "application/json" } }
             );
         }
 
         client = new MongoClient(process.env.MONGODB_URI);
         await client.connect();
-        const db = client.db("docspost");
+        const db = client.db("DocsPost");
 
         const upvotesCollection = db.collection("doc_upvotes");
 
@@ -140,13 +146,13 @@ export async function GET(req) {
                 upvoteCount,
                 isUpvoted,
             }),
-            { status: 200 }
+            { status: 200, headers: { "Content-Type": "application/json" } }
         );
     } catch (error) {
         console.error("Error fetching upvotes:", error.message, error.stack);
         return new Response(
             JSON.stringify({ error: error.message || "Failed to fetch upvotes" }),
-            { status: 500 }
+            { status: 500, headers: { "Content-Type": "application/json" } }
         );
     } finally {
         if (client) {

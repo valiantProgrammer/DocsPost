@@ -8,7 +8,7 @@ export async function POST(req) {
         if (!docId || !reason) {
             return new Response(
                 JSON.stringify({ error: "Doc ID and reason are required" }),
-                { status: 400 }
+                { status: 400, headers: { "Content-Type": "application/json" } }
             );
         }
 
@@ -16,13 +16,13 @@ export async function POST(req) {
             console.error("MONGODB_URI is not set");
             return new Response(
                 JSON.stringify({ error: "Database connection not configured" }),
-                { status: 500 }
+                { status: 500, headers: { "Content-Type": "application/json" } }
             );
         }
 
         client = new MongoClient(process.env.MONGODB_URI);
         await client.connect();
-        const db = client.db("docspost");
+        const db = client.db("DocsPost");
 
         const reportsCollection = db.collection("doc_reports");
 
@@ -37,7 +37,7 @@ export async function POST(req) {
                 JSON.stringify({
                     error: "You have already reported this document",
                 }),
-                { status: 400 }
+                { status: 400, headers: { "Content-Type": "application/json" } }
             );
         }
 
@@ -56,13 +56,13 @@ export async function POST(req) {
                 success: true,
                 message: "Report submitted successfully. Thank you for your feedback.",
             }),
-            { status: 200 }
+            { status: 200, headers: { "Content-Type": "application/json" } }
         );
     } catch (error) {
         console.error("Error reporting doc:", error.message, error.stack);
         return new Response(
             JSON.stringify({ error: error.message || "Failed to submit report" }),
-            { status: 500 }
+            { status: 500, headers: { "Content-Type": "application/json" } }
         );
     } finally {
         if (client) {
@@ -80,7 +80,7 @@ export async function GET(req) {
         if (!docId) {
             return new Response(
                 JSON.stringify({ error: "Doc ID is required" }),
-                { status: 400 }
+                { status: 400, headers: { "Content-Type": "application/json" } }
             );
         }
 
@@ -88,13 +88,13 @@ export async function GET(req) {
             console.error("MONGODB_URI is not set");
             return new Response(
                 JSON.stringify({ error: "Database connection not configured" }),
-                { status: 500 }
+                { status: 500, headers: { "Content-Type": "application/json" } }
             );
         }
 
         client = new MongoClient(process.env.MONGODB_URI);
         await client.connect();
-        const db = client.db("docspost");
+        const db = client.db("DocsPost");
 
         const reportsCollection = db.collection("doc_reports");
 
@@ -106,13 +106,14 @@ export async function GET(req) {
                 success: true,
                 reportCount,
             }),
-            { status: 200 }
+            { status: 200, headers: { "Content-Type": "application/json" } }
         );
     } catch (error) {
         console.error("Error fetching reports:", error.message, error.stack);
         return new Response(
             JSON.stringify({ error: error.message || "Failed to fetch reports" }),
-            { status: 500 }
+            { status: 500, headers: { "Content-Type": "application/json" } }
+        );
         );
     } finally {
         if (client) {

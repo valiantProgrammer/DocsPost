@@ -1,0 +1,190 @@
+.document-editor {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    width: 100%;
+}
+
+.editor-toolbar {
+    display: flex;
+    gap: 8px;
+    padding: 12px;
+    background: var(--panel-bg);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+.toolbar-group {
+    display: flex;
+    gap: 4px;
+    padding-right: 8px;
+    border-right: 1px solid var(--line);
+}
+
+.toolbar-group:last-child {
+    border-right: none;
+}
+
+.toolbar-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border: 1px solid var(--line);
+    background: var(--panel-bg);
+    border-radius: 6px;
+    cursor: pointer;
+    color: var(--text-main);
+    transition: all 0.2s ease;
+}
+
+.toolbar-btn:hover {
+    background: var(--brand);
+    color: white;
+    border-color: var(--brand);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.2);
+}
+
+.toolbar-btn:active {
+    transform: translateY(0);
+}
+
+.editor-textarea {
+    min-height: 400px;
+    padding: 16px;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: var(--panel-bg);
+    color: var(--text-main);
+    font-family: "Fira Code", "Monaco", monospace;
+    font-size: 14px;
+    line-height: 1.6;
+    resize: vertical;
+    transition: all 0.2s ease;
+}
+
+.editor-textarea:focus {
+    outline: none;
+    border-color: var(--brand);
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+    background: var(--panel-bg);
+}
+
+.editor-textarea::placeholder {
+    color: var(--text-secondary);
+    opacity: 0.6;
+}
+
+/* Code Block Selector */
+.code-block-selector {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 999;
+    backdrop-filter: blur(4px);
+}
+
+.selector-content {
+    background: var(--panel-bg);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 24px;
+    width: 90%;
+    max-width: 400px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+}
+
+.selector-content label {
+    display: block;
+    margin-bottom: 12px;
+    font-weight: 600;
+    color: var(--text-main);
+}
+
+.selector-content select {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    background: var(--panel-bg);
+    color: var(--text-main);
+    font-size: 14px;
+    margin-bottom: 16px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.selector-content select:focus {
+    outline: none;
+    border-color: var(--brand);
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+}
+
+.selector-actions {
+    display: flex;
+    gap: 12px;
+    justify-content: flex-end;
+}
+
+.editor-preview-toggle {
+    padding: 8px 12px;
+    background: var(--panel-bg);
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    text-align: center;
+    color: var(--text-secondary);
+    font-size: 12px;
+}
+
+/* Dark theme adjustments */
+[data-theme="dark"] .editor-textarea {
+    background: #1a1a2e;
+}
+
+[data-theme="dark"] .editor-toolbar {
+    background: #16213e;
+}
+
+[data-theme="dark"] .code-block-selector {
+    background: rgba(0, 0, 0, 0.7);
+}
+
+[data-theme="dark"] .selector-content {
+    background: #16213e;
+}
+
+/* Responsive */
+@media (max-width: 640px) {
+    .editor-toolbar {
+        gap: 4px;
+    }
+
+    .toolbar-group {
+        padding-right: 4px;
+    }
+
+    .toolbar-btn {
+        width: 32px;
+        height: 32px;
+    }
+
+    .editor-textarea {
+        min-height: 300px;
+        font-size: 13px;
+    }
+
+    .selector-content {
+        width: 95%;
+        padding: 16px;
+    }
+}

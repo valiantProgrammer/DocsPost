@@ -3,7 +3,8 @@ import { MongoClient } from "mongodb";
 export async function GET(req, { params }) {
     let client;
     try {
-        const { id: docId } = params;
+        const resolvedParams = await params;
+        const { id: docId } = resolvedParams;
 
         if (!docId) {
             return new Response(
@@ -22,7 +23,7 @@ export async function GET(req, { params }) {
 
         client = new MongoClient(process.env.MONGODB_URI);
         await client.connect();
-        const db = client.db("docspost");
+        const db = client.db("DocsPost");
 
         // Get doc stats
         const statsCollection = db.collection("doc_stats");

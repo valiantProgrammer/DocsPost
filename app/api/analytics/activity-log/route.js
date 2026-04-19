@@ -14,7 +14,7 @@ export async function GET(req) {
 
         const client = new MongoClient(process.env.MONGODB_URI);
         await client.connect();
-        const db = client.db("docspost");
+        const db = client.db("DocsPost");
 
         const analyticsCollection = db.collection("analytics");
         const now = new Date();
