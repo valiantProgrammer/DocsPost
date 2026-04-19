@@ -61,105 +61,22 @@
     color: #4ec9b0;
 }
 
-/* Code Editor Wrapper */
-.code-editor-wrapper {
-    display: flex;
-    overflow: hidden;
+/* Monaco Editor Wrapper */
+.monaco-editor-wrapper {
     flex: 1;
     min-height: 250px;
     max-height: 600px;
+    overflow: hidden;
+    border-top: 1px solid #333;
 }
 
-.code-line-numbers {
+.monaco-editor-wrapper .monaco-editor {
+    background: #1e1e1e;
+}
+
+.monaco-editor-wrapper .monaco-editor .line-numbers {
     background: #252526;
     color: #858585;
-    border-right: 1px solid #333;
-    padding: 16px 0;
-    text-align: right;
-    user-select: none;
-    font-family: "Fira Code", "Monaco", "Courier New", monospace;
-    font-size: 0.9rem;
-    line-height: 1.6;
-    overflow: hidden;
-    min-width: 50px;
-    max-width: 80px;
-}
-
-.line-number {
-    padding: 0 12px;
-    height: 1.6em;
-    display: flex;
-    align-items: center;
-    justify-content: flex-end;
-}
-
-/* Code Editor Container - Overlay structure */
-.code-editor-container {
-    position: relative;
-    flex: 1;
-    display: flex;
-    overflow: hidden;
-}
-
-.code-highlight {
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    padding: 16px;
-    margin: 0;
-    background: #1e1e1e;
-    color: #d4d4d4;
-    border: none;
-    font-family: "Fira Code", "Monaco", "Courier New", monospace;
-    font-size: 0.9rem;
-    line-height: 1.6;
-    outline: none;
-    tab-size: 4;
-    overflow: auto;
-    white-space: pre;
-    word-wrap: normal;
-    pointer-events: none;
-    z-index: 0;
-}
-
-.code-highlight code {
-    font-family: "Fira Code", "Monaco", "Courier New", monospace;
-    font-size: 0.9rem;
-    line-height: 1.6;
-}
-
-.code-textarea {
-    position: relative;
-    z-index: 1;
-    flex: 1;
-    padding: 16px;
-    background: transparent;
-    color: transparent;
-    border: none;
-    font-family: "Fira Code", "Monaco", "Courier New", monospace;
-    font-size: 0.9rem;
-    line-height: 1.6;
-    resize: none;
-    outline: none;
-    tab-size: 4;
-    overflow: auto;
-    caret-color: #d4d4d4;
-}
-
-.code-textarea:focus {
-    outline: none;
-}
-
-.code-textarea::selection {
-    background: rgba(111, 168, 220, 0.3);
-    color: transparent;
-}
-
-/* Syntax highlighting colors */
-.code-textarea::selection {
-    background: rgba(111, 168, 220, 0.3);
 }
 
 .inline-code {
@@ -169,68 +86,6 @@
     border-radius: 3px;
     font-family: "Fira Code", "Monaco", "Courier New", monospace;
     font-size: 0.9em;
-}
-
-/* Highlight.js Theme Customization */
-.hljs {
-    background: transparent !important;
-    padding: 0 !important;
-}
-
-.hljs-string {
-    color: #ce9178;
-}
-
-.hljs-number {
-    color: #b5cea8;
-}
-
-.hljs-literal {
-    color: #569cd6;
-}
-
-.hljs-attr {
-    color: #9cdcfe;
-}
-
-.hljs-title {
-    color: #dcdcaa;
-}
-
-.hljs-params {
-    color: #d4d4d4;
-}
-
-.hljs-built_in {
-    color: #4ec9b0;
-}
-
-.hljs-keyword {
-    color: #569cd6;
-}
-
-.hljs-comment {
-    color: #6a9955;
-}
-
-.hljs-variable {
-    color: #9cdcfe;
-}
-
-.hljs-meta {
-    color: #569cd6;
-}
-
-.hljs-function {
-    color: #dcdcaa;
-}
-
-.hljs-class {
-    color: #4ec9b0;
-}
-
-.hljs-name {
-    color: #569cd6;
 }
 
 /* Dark mode support */
@@ -260,58 +115,8 @@
     border-color: #999;
 }
 
-[data-theme="light"] .code-line-numbers {
-    background: #f5f5f5;
-    border-right-color: #e0e0e0;
-    color: #888;
-}
-
-[data-theme="light"] .code-highlight {
-    background: #ffffff;
-}
-
-[data-theme="light"] .code-textarea {
-    caret-color: #333;
-}
-
-[data-theme="light"] .hljs-string {
-    color: #c41a16;
-}
-
-[data-theme="light"] .hljs-number {
-    color: #1c00cf;
-}
-
-[data-theme="light"] .hljs-literal {
-    color: #0000ff;
-}
-
-[data-theme="light"] .hljs-attr {
-    color: #881391;
-}
-
-[data-theme="light"] .hljs-title {
-    color: #0000ff;
-}
-
-[data-theme="light"] .hljs-keyword {
-    color: #0000ff;
-}
-
-[data-theme="light"] .hljs-comment {
-    color: #008000;
-}
-
-[data-theme="light"] .hljs-variable {
-    color: #881391;
-}
-
-[data-theme="light"] .hljs-built_in {
-    color: #008080;
-}
-
-[data-theme="light"] .hljs-function {
-    color: #0000ff;
+[data-theme="light"] .monaco-editor-wrapper {
+    border-top-color: #e0e0e0;
 }
 
 /* Responsive */
@@ -321,21 +126,13 @@
         border-radius: 0;
     }
 
-    .code-editor-wrapper {
+    .monaco-editor-wrapper {
         min-height: 150px;
         max-height: 400px;
-    }
-
-    .code-textarea {
-        font-size: 0.8rem;
     }
 
     .code-btn {
         padding: 6px 10px;
         font-size: 0.75rem;
-    }
-
-    .line-number {
-        padding: 0 8px;
     }
 }

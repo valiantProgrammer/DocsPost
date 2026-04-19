@@ -1,17 +1,33 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Editor from "@monaco-editor/react";
 import { MdContentCopy, MdCheck } from "react-icons/md";
 import "./CodeBlock.css";
 
 export default function CodeBlock({ inline, className, children }) {
     const [copied, setCopied] = useState(false);
+    const [isDark, setIsDark] = useState(true);
     const code = String(children).replace(/\n$/, "");
 
     // Extract language from className
     const match = /language-(\w+)/.exec(className || "");
     const language = match ? match[1] : "text";
+
+    // Check theme on mount and listen for changes
+    useEffect(() => {
+        const updateTheme = () => {
+            const theme = document.documentElement.getAttribute("data-theme");
+            setIsDark(theme !== "light");
+        };
+
+        updateTheme();
+        
+        const observer = new MutationObserver(updateTheme);
+        observer.observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+        
+        return () => observer.disconnect();
+    }, []);
 
     const handleCopy = async () => {
         await navigator.clipboard.writeText(code);
@@ -51,7 +67,7 @@ export default function CodeBlock({ inline, className, children }) {
                     height="400px"
                     language={language}
                     value={code}
-                    theme="vs-dark"
+                    theme={isDark ? "vs-dark" : "vs"}
                     options={{
                         readOnly: false,
                         minimap: { enabled: false },
