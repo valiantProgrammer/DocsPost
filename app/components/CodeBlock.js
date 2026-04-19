@@ -22,10 +22,10 @@ export default function CodeBlock({ inline, className, children }) {
         };
 
         updateTheme();
-        
+
         const observer = new MutationObserver(updateTheme);
         observer.observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
-        
+
         return () => observer.disconnect();
     }, []);
 
