@@ -2,10 +2,10 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTheme } from "@/app/providers/ThemeProvider";
-import { 
-    FiHome, 
-    FiUser, 
-    FiBriefcase, 
+import {
+    FiHome,
+    FiUser,
+    FiBriefcase,
     FiSettings,
     FiMenu,
     FiX,
@@ -38,7 +38,7 @@ export default function DashboardSidebar({ activeTab, onTabChange }) {
     return (
         <>
             {/* Mobile Toggle */}
-            <button 
+            <button
                 className="sidebar-toggle lg:hidden"
                 onClick={() => setIsOpen(!isOpen)}
                 aria-label="Toggle sidebar"
@@ -48,17 +48,6 @@ export default function DashboardSidebar({ activeTab, onTabChange }) {
 
             {/* Sidebar */}
             <aside className={`dashboard-sidebar ${isOpen ? "open" : ""}`}>
-                <div className="sidebar-header">
-                    <h2 className="sidebar-title">DocsPost</h2>
-                    <button
-                        className="sidebar-close lg:hidden"
-                        onClick={() => setIsOpen(false)}
-                        aria-label="Close sidebar"
-                    >
-                        <FiX size={24} />
-                    </button>
-                </div>
-
                 <nav className="sidebar-nav">
                     {menuItems.map((item) => {
                         const Icon = item.icon;

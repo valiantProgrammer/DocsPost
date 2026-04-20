@@ -77,7 +77,7 @@ function AnimatedPlaceholderInput({ className }) {
 }
 
 export default function Home() {
-  const { isDark, toggleTheme } = useTheme();
+  const { isDark } = useTheme();
 
   const categoryLinks = [
     "DSA",
@@ -98,7 +98,7 @@ export default function Home() {
 
   return (
     <main className="learning-page" data-theme={isDark ? "dark" : "light"}>
-      <Header isDark={isDark} toggleTheme={toggleTheme} />
+      <Header />
 
       <div className="category-strip" role="navigation" aria-label="Topics">
         <div className="category-strip-inner">

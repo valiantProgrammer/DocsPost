@@ -9,7 +9,7 @@ import { useTheme } from "@/app/providers/ThemeProvider";
 import { FiUser, FiMail, FiMapPin, FiBookmark, FiEdit2, FiFileText, FiBarChart2, FiBriefcase } from "react-icons/fi";
 
 export default function Profile() {
-    const { isDark, toggleTheme } = useTheme();
+    const { isDark } = useTheme();
     const router = useRouter();
     const [activeTab, setActiveTab] = useState("overview");
     const [isLoading, setIsLoading] = useState(true);
@@ -223,7 +223,7 @@ export default function Profile() {
     if (isLoading) {
         return (
             <main className="learning-page" data-theme={isDark ? "dark" : "light"}>
-                <Header isDark={isDark} toggleTheme={toggleTheme} />
+                <Header />
                 <div style={{ padding: "40px 20px", textAlign: "center", minHeight: "100vh" }}>
                     <p>Loading profile...</p>
                 </div>
@@ -233,7 +233,7 @@ export default function Profile() {
 
     return (
         <main className="learning-page" data-theme={isDark ? "dark" : "light"}>
-            <Header isDark={isDark} toggleTheme={toggleTheme} />
+            <Header />
 
             {/* Profile Picture Modal */}
             <ProfilePictureModal

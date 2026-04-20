@@ -11,6 +11,7 @@ import { MdShare } from "react-icons/md";
 import { FiThumbsUp, FiFlag } from "react-icons/fi";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import { useTheme } from "../../providers/ThemeProvider";
 import "./page.css";
 
 // Custom heading renderer with IDs for TOC links
@@ -27,8 +28,8 @@ const HeadingRenderer = ({ level, children }) => {
 export default function DocumentView() {
     const params = useParams();
     const slug = typeof params?.id === "string" ? params.id : "";
+    const { isDark } = useTheme();
 
-    const [isDark, setIsDark] = useState(false);
     const [docData, setDocData] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -41,15 +42,6 @@ export default function DocumentView() {
     const [isReportModalOpen, setIsReportModalOpen] = useState(false);
     const [isSubmittingReport, setIsSubmittingReport] = useState(false);
     const contentRef = useRef(null);
-
-    useEffect(() => {
-        if (typeof window === "undefined") return;
-        const savedTheme = localStorage.getItem("theme");
-        const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-        const initialDark = savedTheme ? savedTheme === "dark" : prefersDark;
-        setIsDark(initialDark);
-        document.documentElement.setAttribute("data-theme", initialDark ? "dark" : "light");
-    }, []);
 
     useEffect(() => {
         if (typeof window === "undefined") return;
@@ -320,7 +312,7 @@ export default function DocumentView() {
     if (isLoading) {
         return (
             <main className="doc-view" data-theme={isDark ? "dark" : "light"}>
-                <Header isDark={isDark} toggleTheme={toggleTheme} />
+                <Header />
                 <div className="loading-container">
                     <div className="loading-spinner"></div>
                     <p>Loading document...</p>
@@ -332,7 +324,7 @@ export default function DocumentView() {
     if (error || !docData) {
         return (
             <main className="doc-view" data-theme={isDark ? "dark" : "light"}>
-                <Header isDark={isDark} toggleTheme={toggleTheme} />
+                <Header />
                 <div className="error-container">
                     <h2>Document Not Found</h2>
                     <p>{error || "The document you're looking for doesn't exist."}</p>
@@ -352,7 +344,7 @@ export default function DocumentView() {
 
     return (
         <main className="doc-view" data-theme={isDark ? "dark" : "light"}>
-            <Header isDark={isDark} toggleTheme={toggleTheme} />
+            <Header />
 
             <div className="doc-container-three-col">
                 {/* Left Sidebar - Related Topics */}

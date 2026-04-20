@@ -4,7 +4,7 @@ export async function GET(req) {
     try {
         const { searchParams } = new URL(req.url);
         const userEmail = searchParams.get("email");
-        const timeframe = searchParams.get("timeframe") || "daily"; // daily, monthly, yearly
+        const timeframe = searchParams.get("timeframe") || "daily"; // hourly, daily, monthly, yearly
 
         if (!userEmail) {
             return new Response(
@@ -24,17 +24,21 @@ export async function GET(req) {
         let startDate;
         let groupBy;
 
-        if (timeframe === "yearly") {
-            // Last 3 years
-            startDate = new Date(now.getFullYear() - 3, 0, 1);
+        if (timeframe === "hourly") {
+            // Last 7 hours
+            startDate = new Date(now.getTime() - 7 * 60 * 60 * 1000);
+            groupBy = { $dateToString: { format: "%Y-%m-%d %H:00", date: "$timestamp" } };
+        } else if (timeframe === "yearly") {
+            // Last 7 years
+            startDate = new Date(now.getFullYear() - 7, 0, 1);
             groupBy = { $dateToString: { format: "%Y", date: "$timestamp" } };
         } else if (timeframe === "monthly") {
-            // Last 12 months
-            startDate = new Date(now.getFullYear(), now.getMonth() - 12, 1);
+            // Last 10 months
+            startDate = new Date(now.getFullYear(), now.getMonth() - 10, 1);
             groupBy = { $dateToString: { format: "%Y-%m", date: "$timestamp" } };
         } else {
-            // Last 30 days (daily)
-            startDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+            // Last 7 days (daily)
+            startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
             groupBy = { $dateToString: { format: "%Y-%m-%d", date: "$timestamp" } };
         }
 

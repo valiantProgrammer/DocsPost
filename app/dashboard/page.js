@@ -16,7 +16,7 @@ export default function DashboardPage() {
     const [userName, setUserName] = useState("");
     const [userData, setUserData] = useState(null);
     const [loading, setLoading] = useState(true);
-    const { isDark, toggleTheme, mounted } = useTheme();
+    const { mounted } = useTheme();
     const router = useRouter();
 
     useEffect(() => {
@@ -83,7 +83,7 @@ export default function DashboardPage() {
 
     return (
         <div className="dashboard-container">
-            <Header isDark={isDark} toggleTheme={toggleTheme} />
+            <Header />
             <DashboardSidebar activeTab={activeTab} onTabChange={setActiveTab} />
             <main className="dashboard-main">
                 {renderContent()}

@@ -9,7 +9,7 @@ import { FiUser, FiMail, FiMapPin, FiFileText, FiBarChart2, FiEye } from "react-
 import Link from "next/link";
 
 export default function UserProfile() {
-    const { isDark, toggleTheme } = useTheme();
+    const { isDark } = useTheme();
     const params = useParams();
     const router = useRouter();
     const username = params?.username;
@@ -84,7 +84,7 @@ export default function UserProfile() {
     if (isLoading) {
         return (
             <div className="profile-page">
-                <Header isDark={isDark} toggleTheme={toggleTheme} />
+                <Header />
                 <div className="profile-loading">
                     <p>Loading profile...</p>
                 </div>
@@ -95,7 +95,7 @@ export default function UserProfile() {
     if (error) {
         return (
             <div className="profile-page">
-                <Header isDark={isDark} toggleTheme={toggleTheme} />
+                <Header />
                 <div className="profile-error">
                     <p>{error}</p>
                     <Link href="/">← Go back home</Link>
@@ -106,7 +106,7 @@ export default function UserProfile() {
 
     return (
         <div className="profile-page">
-            <Header isDark={isDark} toggleTheme={toggleTheme} />
+            <Header />
 
             <div className="profile-container">
                 {/* Profile Header */}

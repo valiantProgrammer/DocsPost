@@ -9,8 +9,10 @@ import { RiArrowDropDownLine } from "react-icons/ri";
 import { CiSearch } from "react-icons/ci";
 import { FiUser, FiBookmark, FiSettings, FiLogOut, FiAward, FiHome } from "react-icons/fi";
 import { syncAuthDataFromCookies } from "@/lib/authUtils";
+import { useTheme } from "@/app/providers/ThemeProvider";
 
-export default function Header({ isDark, toggleTheme }) {
+export default function Header() {
+    const { isDark, toggleTheme } = useTheme();
     const [isSignedIn, setIsSignedIn] = useState(false);
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
     const [userName, setUserName] = useState("");

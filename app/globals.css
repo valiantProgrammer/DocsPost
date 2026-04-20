@@ -15,6 +15,21 @@
   --brand: #118a63;
   --brand-deep: #0f7a57;
   --border-color: #484848;
+
+  /* Chart Colors */
+  --chart-purple: #8b5cf6;
+  --chart-green: #10b981;
+  --chart-orange: #f97316;
+  --chart-pink: #ec4899;
+  --chart-red: #e23030;
+  --chart-blue: #3b82f6;
+  --chart-cyan: #06b6d4;
+  --chart-secondary-orange: #fb923c;
+
+  /* Chart Grid & Hover */
+  --chart-grid: #c7c5c5be;
+  --chart-hover-bg: rgba(139, 92, 246, 0.05);
+  --chart-bar-hover: #b8a9ff;
 }
 
 :root[data-theme="dark"] {
@@ -27,6 +42,20 @@
   --brand: #2ebd7e;
   --brand-deep: #1fa366;
   --border-color: #bdbdbd;
+
+  /* Chart Colors */
+  --chart-purple: #774adff6;
+  --chart-green: #15c380;
+  --chart-orange: #f97316;
+  --chart-pink: #ec4899;
+  --chart-blue: #3b82f6;
+  --chart-cyan: #20efe4;
+  --chart-secondary-orange: #ea8532;
+
+  /* Chart Grid & Hover */
+  --chart-grid: #636364;
+  --chart-hover-bg: rgba(23, 23, 23, 0.1);
+  --chart-bar-hover: #6b5bce;
 }
 
 button {

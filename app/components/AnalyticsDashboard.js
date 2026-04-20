@@ -20,7 +20,7 @@ import "./AnalyticsDashboard.css";
 import { FiTrendingUp, FiEye, FiThumbsUp, FiCalendar, FiActivity, FiZap } from "react-icons/fi";
 
 export default function AnalyticsDashboard({ userEmail }) {
-    const [timeframe, setTimeframe] = useState("daily"); // daily, monthly, yearly
+    const [timeframe, setTimeframe] = useState("daily"); // hourly, daily, monthly, yearly
     const [viewStats, setViewStats] = useState([]);
     const [voteStats, setVoteStats] = useState([]);
     const [articleStats, setArticleStats] = useState([]);
@@ -122,8 +122,93 @@ export default function AnalyticsDashboard({ userEmail }) {
         }
     };
 
+    // Get subtitle based on timeframe
+    const getTimeframeSubtitle = () => {
+        switch (timeframe) {
+            case "hourly":
+                return "Last 7 hours";
+            case "daily":
+                return "Last 7 days";
+            case "monthly":
+                return "Last 10 months";
+            case "yearly":
+                return "Last 7 years";
+            default:
+                return "Last 7 days";
+        }
+    };
+
+    // Fill missing data points with 0
+    const fillMissingData = (data) => {
+        if (!data || data.length === 0) return [];
+
+        const filledData = [];
+        const now = new Date();
+
+        if (timeframe === "hourly") {
+            // Fill missing hours in last 7 hours
+            const hours = 7;
+            for (let i = hours - 1; i >= 0; i--) {
+                const date = new Date(now.getTime() - i * 60 * 60 * 1000);
+                const year = date.getFullYear();
+                const month = String(date.getMonth() + 1).padStart(2, '0');
+                const day = String(date.getDate()).padStart(2, '0');
+                const hour = String(date.getHours()).padStart(2, '0');
+                const dateStr = `${year}-${month}-${day} ${hour}:00`;
+                const existing = data.find(item => item._id === dateStr);
+                filledData.push({
+                    _id: dateStr,
+                    views: existing ? existing.views : 0,
+                    articles: existing ? existing.articles : [],
+                });
+            }
+        } else if (timeframe === "daily") {
+            // Fill missing days in last 7 days
+            const days = 7;
+            for (let i = days - 1; i >= 0; i--) {
+                const date = new Date(now.getTime() - i * 24 * 60 * 60 * 1000);
+                const dateStr = date.toISOString().slice(0, 10);
+                const existing = data.find(item => item._id === dateStr);
+                filledData.push({
+                    _id: dateStr,
+                    views: existing ? existing.views : 0,
+                    articles: existing ? existing.articles : [],
+                });
+            }
+        } else if (timeframe === "monthly") {
+            // Fill missing months in last 10 months
+            const months = 10;
+            for (let i = months - 1; i >= 0; i--) {
+                const date = new Date(now.getFullYear(), now.getMonth() - i, 1);
+                const dateStr = date.toISOString().slice(0, 7);
+                const existing = data.find(item => item._id === dateStr);
+                filledData.push({
+                    _id: dateStr,
+                    views: existing ? existing.views : 0,
+                    articles: existing ? existing.articles : [],
+                });
+            }
+        } else if (timeframe === "yearly") {
+            // Fill missing years in last 7 years
+            const years = 7;
+            for (let i = years - 1; i >= 0; i--) {
+                const year = now.getFullYear() - i;
+                const dateStr = year.toString();
+                const existing = data.find(item => item._id === dateStr);
+                filledData.push({
+                    _id: dateStr,
+                    views: existing ? existing.views : 0,
+                    articles: existing ? existing.articles : [],
+                });
+            }
+        }
+
+        return filledData.length > 0 ? filledData : data;
+    };
+
     // Format data for display
-    const formattedViewStats = viewStats.map((item) => ({
+    const filledViewStats = fillMissingData(viewStats);
+    const formattedViewStats = filledViewStats.map((item) => ({
         ...item,
         name: item._id,
         value: item.views,
@@ -165,6 +250,12 @@ export default function AnalyticsDashboard({ userEmail }) {
             <div className="analytics-header">
                 <h2>Analytics & Performance</h2>
                 <div className="timeframe-selector">
+                    <button
+                        className={`timeframe-btn ${timeframe === "hourly" ? "active" : ""}`}
+                        onClick={() => setTimeframe("hourly")}
+                    >
+                        Hourly
+                    </button>
                     <button
                         className={`timeframe-btn ${timeframe === "daily" ? "active" : ""}`}
                         onClick={() => setTimeframe("daily")}
@@ -274,7 +365,7 @@ export default function AnalyticsDashboard({ userEmail }) {
             <div className="charts-grid-dual">
                 <div className="chart-section-large">
                     <h3>Views & Engagement Trend</h3>
-                    <p className="chart-subtitle">Last 7 days</p>
+                    <p className="chart-subtitle">{getTimeframeSubtitle()}</p>
                     <div className="chart-wrapper">
                         {isLoading ? (
                             <div className="chart-loading">Loading...</div>
@@ -283,13 +374,13 @@ export default function AnalyticsDashboard({ userEmail }) {
                                 <ComposedChart data={formattedViewStats}>
                                     <defs>
                                         <linearGradient id="colorGradient" x1="0" y1="0" x2="0" y2="1">
-                                            <stop offset="5%" stopColor="#8b5cf6" stopOpacity={0.8}/>
-                                            <stop offset="95%" stopColor="#8b5cf6" stopOpacity={0.1}/>
+                                            <stop offset="5%" stopColor="var(--chart-purple)" stopOpacity={0.8} />
+                                            <stop offset="95%" stopColor="var(--chart-purple)" stopOpacity={0.1} />
                                         </linearGradient>
                                     </defs>
                                     <CartesianGrid
-                                        strokeDasharray="3 3"
-                                        stroke="var(--line)"
+                                        strokeDasharray="1 1"
+                                        stroke="var(--chart-grid)"
                                     />
                                     <XAxis
                                         dataKey="name"
@@ -309,17 +400,23 @@ export default function AnalyticsDashboard({ userEmail }) {
                                     />
                                     <Tooltip
                                         contentStyle={{
-                                            backgroundColor: "var(--panel-bg)",
-                                            border: `2px solid #8b5cf6`,
+                                            backgroundColor: "#0c0e12",
+                                            border: `2px solid var(--chart-purple)`,
                                             color: "var(--text-main)",
                                             borderRadius: "8px",
+                                            padding: "12px",
                                         }}
+                                        wrapperStyle={{
+                                            backgroundColor: "rgba(139, 92, 246, 0.15)",
+                                            borderRadius: "8px",
+                                        }}
+                                        cursor={{ fill: 'rgba(139, 92, 246, 0.2)' }}
                                     />
                                     <Legend />
                                     <Bar
                                         yAxisId="left"
                                         dataKey="value"
-                                        fill="#8b5cf6"
+                                        fill="var(--chart-purple)"
                                         name="Page Views"
                                         radius={[8, 8, 0, 0]}
                                         opacity={0.85}
@@ -328,10 +425,10 @@ export default function AnalyticsDashboard({ userEmail }) {
                                         yAxisId="right"
                                         type="monotone"
                                         dataKey="value"
-                                        stroke="#10b981"
+                                        stroke="var(--chart-green)"
                                         name="Trend"
                                         strokeWidth={3}
-                                        dot={{ fill: "#10b981", r: 5 }}
+                                        dot={{ fill: "var(--chart-green)", r: 5 }}
                                         activeDot={{ r: 7 }}
                                     />
                                 </ComposedChart>
@@ -359,17 +456,23 @@ export default function AnalyticsDashboard({ userEmail }) {
                                         dataKey="likes"
                                         label={({ title, likes, percent }) => `${title?.substring(0, 15)}... ${(percent * 100).toFixed(1)}%`}
                                     >
-                                        <Cell fill="#8b5cf6" />
-                                        <Cell fill="#10b981" />
-                                        <Cell fill="#f97316" />
-                                        <Cell fill="#ec4899" />
-                                        <Cell fill="#3b82f6" />
+                                        <Cell fill="var(--chart-red)" />
+                                        <Cell fill="var(--chart-green)" />
+                                        <Cell fill="var(--chart-blue)" />
+                                        <Cell fill="var(--chart-pink)" />
+                                        <Cell fill="var(--chart-purple)" />
+                                        <Cell fill="var(--chart-orange)" />
                                     </Pie>
                                     <Tooltip
                                         contentStyle={{
-                                            backgroundColor: "var(--panel-bg)",
-                                            border: `2px solid #8b5cf6`,
+                                            backgroundColor: "#0c0e12",
+                                            border: `2px solid var(--chart-purple)`,
                                             color: "var(--text-main)",
+                                            borderRadius: "8px",
+                                            padding: "12px",
+                                        }}
+                                        wrapperStyle={{
+                                            backgroundColor: "rgba(139, 92, 246, 0.15)",
                                             borderRadius: "8px",
                                         }}
                                         formatter={(value, name, props) => [
@@ -395,8 +498,8 @@ export default function AnalyticsDashboard({ userEmail }) {
                             <ResponsiveContainer width="100%" height={280}>
                                 <BarChart data={articleStats.slice(0, 5)}>
                                     <CartesianGrid
-                                        strokeDasharray="3 3"
-                                        stroke="var(--line)"
+                                        strokeDasharray="1 1"
+                                        stroke="var(--chart-grid)"
                                     />
                                     <XAxis
                                         dataKey="title"
@@ -412,24 +515,35 @@ export default function AnalyticsDashboard({ userEmail }) {
                                     />
                                     <Tooltip
                                         contentStyle={{
-                                            backgroundColor: "var(--panel-bg)",
-                                            border: `2px solid #8b5cf6`,
+                                            backgroundColor: "#0c0e12",
+                                            border: `2px solid var(--chart-purple)`,
                                             color: "var(--text-main)",
                                             borderRadius: "8px",
+                                            padding: "12px",
                                         }}
+                                        wrapperStyle={{
+                                            backgroundColor: "rgba(139, 92, 246, 0.15)",
+                                            borderRadius: "8px",
+                                        }}
+                                        shape={false}
+                                        cursor={{ fill: 'rgba(139, 92, 246, 0.2)' }}
                                     />
                                     <Legend />
                                     <Bar
                                         dataKey="views"
-                                        fill="#f97316"
+                                        fill="var(--chart-orange)"
                                         name="Views"
                                         radius={[8, 8, 0, 0]}
+                                        activeBar={{ fill: 'rgba(249, 115, 22, 0.8)' }}
+                                        isAnimationActive={false}
                                     />
                                     <Bar
                                         dataKey="likes"
-                                        fill="#ec4899"
+                                        fill="var(--chart-pink)"
                                         name="Likes"
                                         radius={[8, 8, 0, 0]}
+                                        activeBar={{ fill: 'rgba(236, 72, 153, 0.8)' }}
+                                        isAnimationActive={false}
                                     />
                                 </BarChart>
                             </ResponsiveContainer>
@@ -450,8 +564,8 @@ export default function AnalyticsDashboard({ userEmail }) {
                             <ResponsiveContainer width="100%" height={280}>
                                 <LineChart data={formattedViewStats}>
                                     <CartesianGrid
-                                        strokeDasharray="3 3"
-                                        stroke="var(--line)"
+                                        strokeDasharray="1 1"
+                                        stroke="var(--chart-grid)"
                                     />
                                     <XAxis
                                         dataKey="name"
@@ -464,19 +578,25 @@ export default function AnalyticsDashboard({ userEmail }) {
                                     />
                                     <Tooltip
                                         contentStyle={{
-                                            backgroundColor: "var(--panel-bg)",
-                                            border: `2px solid #06b6d4`,
+                                            backgroundColor: "#0c0e12",
+                                            border: `2px solid var(--chart-cyan)`,
                                             color: "var(--text-main)",
                                             borderRadius: "8px",
+                                            padding: "12px",
                                         }}
+                                        wrapperStyle={{
+                                            backgroundColor: "rgba(6, 182, 212, 0.15)",
+                                            borderRadius: "8px",
+                                        }}
+                                        cursor={{ fill: 'rgba(6, 182, 212, 0.2)' }}
                                     />
                                     <Legend />
                                     <Line
                                         type="monotone"
                                         dataKey="value"
-                                        stroke="#3b82f6"
+                                        stroke="var(--chart-blue)"
                                         name="Activity"
-                                        dot={{ fill: "#3b82f6", r: 5 }}
+                                        dot={{ fill: "var(--chart-blue)", r: 5 }}
                                         activeDot={{ r: 7 }}
                                         strokeWidth={3}
                                     />
