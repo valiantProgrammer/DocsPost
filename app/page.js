@@ -1,16 +1,18 @@
 "use client"
 import { useRef, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import Header from "@/app/components/Header";
 import { useTheme } from "@/app/providers/ThemeProvider";
 
 const PLACEHOLDER_WORDS = [
-  "Type your message here...",
-  "Fast and easy!",
-  "Keep it simple.",
+  "Search documentation...",
+  "Find tutorials...",
+  "Learn DSA...",
 ];
 
 function AnimatedPlaceholderInput({ className }) {
   const inputRef = useRef(null);
+  const router = useRouter();
 
   useEffect(() => {
     let wordIndex = 0;
@@ -56,7 +58,22 @@ function AnimatedPlaceholderInput({ className }) {
     };
   }, []);
 
-  return <input ref={inputRef} type="text" placeholder={PLACEHOLDER_WORDS[0]} className={className} />;
+  const handleSearch = (e) => {
+    if (e.key === "Enter" && e.target.value.trim()) {
+      const query = e.target.value.trim();
+      router.push(`/search?q=${encodeURIComponent(query)}`);
+    }
+  };
+
+  return (
+    <input
+      ref={inputRef}
+      type="text"
+      placeholder={PLACEHOLDER_WORDS[0]}
+      className={className}
+      onKeyDown={handleSearch}
+    />
+  );
 }
 
 export default function Home() {

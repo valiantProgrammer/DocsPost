@@ -124,6 +124,16 @@ export default function Header({ isDark, toggleTheme }) {
         setIsDropdownOpen(false);
     };
 
+    const handleSearchClick = () => {
+        router.push("/search");
+    };
+
+    const handleSearchInput = (e) => {
+        if (e.key === "Enter" && e.target.value.trim()) {
+            router.push(`/search?q=${encodeURIComponent(e.target.value.trim())}`);
+        }
+    };
+
     return (
         <header className="main-header">
             <div className="main-header-inner">
@@ -137,7 +147,12 @@ export default function Header({ isDark, toggleTheme }) {
                         <svg viewBox="0 0 24 24" className="hidden sm:flex" aria-hidden="true">
                             <path d="M10.5 3.75a6.75 6.75 0 1 0 4.196 12.037l4.759 4.758a.75.75 0 1 0 1.06-1.06l-4.758-4.76A6.75 6.75 0 0 0 10.5 3.75Zm0 1.5a5.25 5.25 0 1 1 0 10.5 5.25 5.25 0 0 1 0-10.5Z" />
                         </svg>
-                        <input type="search" className="text-[12px] hidden sm:flex" placeholder="Search..." />
+                        <input
+                            type="search"
+                            className="text-[12px] hidden sm:flex"
+                            placeholder="Search docs..."
+                            onKeyDown={handleSearchInput}
+                        />
                     </label>
                 </div>
 
@@ -151,7 +166,12 @@ export default function Header({ isDark, toggleTheme }) {
                 </nav>
 
                 <div className="header-actions">
-                    <button type="button" className="circle-action sm:hidden grid place-items-center" aria-label="Search">
+                    <button
+                        type="button"
+                        className="circle-action sm:hidden grid place-items-center"
+                        aria-label="Search"
+                        onClick={handleSearchClick}
+                    >
                         <CiSearch />
                     </button>
                     <button type="button" className="circle-action grid place-items-center" aria-label="Theme" onClick={toggleTheme}>

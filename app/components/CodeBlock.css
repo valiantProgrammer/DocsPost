@@ -64,8 +64,7 @@
 /* Monaco Editor Wrapper */
 .monaco-editor-wrapper {
     flex: 1;
-    min-height: 250px;
-    max-height: 600px;
+    height: auto;
     overflow: hidden;
     border-top: 1px solid #333;
 }

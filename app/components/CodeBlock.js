@@ -8,6 +8,7 @@ import "./CodeBlock.css";
 export default function CodeBlock({ inline, className, children }) {
     const [copied, setCopied] = useState(false);
     const [isDark, setIsDark] = useState(true);
+    const [editorHeight, setEditorHeight] = useState("auto");
     const code = String(children).replace(/\n$/, "");
 
     // Extract language from className
@@ -28,6 +29,14 @@ export default function CodeBlock({ inline, className, children }) {
 
         return () => observer.disconnect();
     }, []);
+
+    // Calculate height based on content
+    useEffect(() => {
+        const lineCount = code.split("\n").length;
+        const lineHeight = 24; // Monaco's default line height
+        const calculatedHeight = Math.max(lineCount * lineHeight + 20, 300); // min 150px, no max limit
+        setEditorHeight(`${calculatedHeight}px`);
+    }, [code]);
 
     const handleCopy = async () => {
         await navigator.clipboard.writeText(code);
@@ -64,7 +73,7 @@ export default function CodeBlock({ inline, className, children }) {
 
             <div className="monaco-editor-wrapper">
                 <Editor
-                    height="400px"
+                    height={editorHeight}
                     language={language}
                     value={code}
                     theme={isDark ? "vs-dark" : "vs"}
@@ -72,13 +81,18 @@ export default function CodeBlock({ inline, className, children }) {
                         readOnly: false,
                         minimap: { enabled: false },
                         fontSize: 14,
-                        lineNumbers: "on",
+                        lineNumbers: "off",
                         scrollBeyondLastLine: false,
                         wordWrap: "on",
                         automaticLayout: true,
                         tabSize: 4,
                         insertSpaces: true,
                         padding: { top: 10, bottom: 10 },
+                        scrollbar: {
+                            horizontal: "hidden",
+                            vertical: "hidden",
+                        },
+                        overviewRulerLanes: 0,
                     }}
                 />
             </div>

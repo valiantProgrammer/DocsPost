@@ -72,6 +72,25 @@ export default function DocumentView() {
                 const data = await response.json();
                 setDocData(data.document);
                 setViewCount(data.document.views || 0);
+
+                // Log view activity for contribution heatmap
+                const userEmail = localStorage.getItem("userEmail") || "";
+                if (userEmail) {
+                    try {
+                        await fetch("/api/analytics/log-activity", {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({
+                                userEmail,
+                                type: "view",
+                                articleId: data.document._id,
+                                articleTitle: data.document.title,
+                            }),
+                        });
+                    } catch (err) {
+                        console.error("Error logging view activity:", err);
+                    }
+                }
             } catch (err) {
                 console.error("Error fetching document:", err);
                 setError(err.message);
@@ -221,6 +240,26 @@ export default function DocumentView() {
             if (response.ok) {
                 const data = await response.json();
                 setIsUpvoted(data.isUpvoted);
+
+                // Log upvote/like activity
+                if (data.isUpvoted) {
+                    try {
+                        await fetch("/api/analytics/log-activity", {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({
+                                userEmail: userEmail === "anonymous" ? "" : userEmail,
+                                type: "vote",
+                                voteType: "like",
+                                articleId: docData._id,
+                                articleTitle: docData.title,
+                            }),
+                        });
+                    } catch (err) {
+                        console.error("Error logging upvote activity:", err);
+                    }
+                }
+
                 // Fetch updated count
                 const countResponse = await fetch(
                     `/api/docs/upvote?docId=${slug}&userEmail=${encodeURIComponent(userEmail)}`

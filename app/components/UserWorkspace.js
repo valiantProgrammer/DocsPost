@@ -86,6 +86,23 @@ export default function UserWorkspace({ userEmail }) {
             });
 
             if (response.ok) {
+                // Log creation activity for contribution heatmap (only for new documents)
+                if (!editingDoc) {
+                    try {
+                        await fetch("/api/analytics/log-activity", {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({
+                                userEmail,
+                                type: "create",
+                                articleTitle: formData.title,
+                            }),
+                        });
+                    } catch (err) {
+                        console.error("Error logging creation activity:", err);
+                    }
+                }
+
                 setShowCreateModal(false);
                 fetchUserDocuments();
                 alert(editingDoc ? "Document updated!" : "Document created!");

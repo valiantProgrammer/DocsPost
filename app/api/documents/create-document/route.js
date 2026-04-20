@@ -30,6 +30,7 @@ export async function POST(req) {
             .replace(/[^a-z0-9]+/g, "-")
             .replace(/^-|-$/g, "");
 
+        const now = new Date();
         const document = {
             title,
             description,
@@ -39,13 +40,33 @@ export async function POST(req) {
             slug,
             userEmail,
             views: 0,
-            createdAt: new Date(),
-            updatedAt: new Date(),
+            createdAt: now,
+            updatedAt: now,
             published: false,
         };
 
         const docsCollection = db.collection("user_documents");
         const result = await docsCollection.insertOne(document);
+        const docId = result.insertedId.toString();
+
+        // Initialize stats collections for this document
+        const statsCollection = db.collection("doc_stats");
+        await statsCollection.updateOne(
+            { docId },
+            {
+                $set: {
+                    docId,
+                    title,
+                    userEmail,
+                    views: 0,
+                    upvotes: 0,
+                    reports: 0,
+                    createdAt: now,
+                    updatedAt: now,
+                },
+            },
+            { upsert: true }
+        );
 
         return new Response(
             JSON.stringify({
