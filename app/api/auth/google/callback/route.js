@@ -70,9 +70,37 @@ export async function GET(request) {
         const now = new Date();
         const existingUser = await users.findOne({ email });
 
+        // Generate a unique username from Google profile name
+        let baseUsername = profile.name 
+            ? profile.name.toLowerCase().replace(/[^a-z0-9]/g, "")
+            : email.split("@")[0].toLowerCase().replace(/[^a-z0-9]/g, "");
+        
+        // Ensure username is 3-20 characters
+        if (baseUsername.length < 3) {
+            baseUsername = baseUsername + Math.random().toString(36).substring(2, 5);
+        } else if (baseUsername.length > 20) {
+            baseUsername = baseUsername.substring(0, 20);
+        }
+
+        let finalUsername = baseUsername;
+        let counter = 1;
+
+        // Check if username is unique, add numbers if needed
+        if (!existingUser) {
+            while (await users.findOne({ 
+                username: { $regex: `^${finalUsername}$`, $options: "i" } 
+            })) {
+                finalUsername = baseUsername + counter;
+                counter++;
+            }
+        } else {
+            // For existing users, keep their current username
+            finalUsername = existingUser.username || baseUsername;
+        }
+
         const googleUserData = {
             email,
-            username: profile.name || existingUser?.username || email.split("@")[0],
+            username: finalUsername,
             name: profile.name || existingUser?.name || profile.given_name || "",
             googleId: profile.id,
             provider: "google",
@@ -116,7 +144,9 @@ export async function GET(request) {
             }
         );
 
+        // Redirect directly to destination - Header component will sync cookies to localStorage
         const response = NextResponse.redirect(new URL(nextPath, request.url));
+        
         const cookieOptions = {
             path: "/",
             httpOnly: false,

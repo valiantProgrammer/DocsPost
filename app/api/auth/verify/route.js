@@ -124,6 +124,22 @@ export async function POST(request) {
 
     console.error("Verification Error:", error);
     
+    // Handle MongoDB duplicate key errors
+    if (error.code === 11000) {
+      const field = Object.keys(error.keyPattern || {})[0];
+      if (field === "username") {
+        return NextResponse.json(
+          { error: "This username has been taken by another user. Please contact support." },
+          { status: 409 }
+        );
+      } else if (field === "email") {
+        return NextResponse.json(
+          { error: "This email has been registered by another user." },
+          { status: 409 }
+        );
+      }
+    }
+    
     const statusMap = {
       "Invalid or expired OTP": 400,
       "User already verified": 409, // 409 Conflict

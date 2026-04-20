@@ -68,15 +68,17 @@ a {
 .main-header {
   position: sticky;
   top: 0;
-  z-index: 40;
+  z-index: 50;
+  height: 70px;
   border-bottom: 1px solid var(--line);
   background: rgba(255, 255, 255, 0.95);
   backdrop-filter: blur(8px);
-  transition: background-color 0.3s ease;
+  transition: background-color 0.3s ease, border-color 0.3s ease;
+  overflow: visible;
 }
 
 :root[data-theme="dark"] .main-header {
-  background: #1f1f1f;
+  background: rgba(12, 14, 18, 0.95);
 }
 
 .main-header-inner {
@@ -228,6 +230,9 @@ a {
   place-items: center;
   width: 36px;
   height: 36px;
+  min-width: 36px;
+  min-height: 36px;
+  flex-shrink: 0;
   align-items: center;
   justify-content: center;
   transition: all 0.3s ease;
@@ -249,6 +254,9 @@ a {
 .profile-avatar {
   width: 32px;
   height: 32px;
+  min-width: 32px;
+  min-height: 32px;
+  flex-shrink: 0;
   border-radius: 999px;
   background: linear-gradient(135deg, var(--brand), #118a63);
   display: flex;

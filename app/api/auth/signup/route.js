@@ -25,6 +25,24 @@ export async function POST(request) {
       );
     }
 
+    // Validate username format: only alphanumeric characters (letters and numbers)
+    // Allow uppercase and lowercase, but no special characters
+    const usernameRegex = /^[a-zA-Z0-9]+$/;
+    if (!usernameRegex.test(username)) {
+      return NextResponse.json(
+        { error: "Username must contain only letters and numbers. No special characters, spaces, or symbols allowed." },
+        { status: 400 }
+      );
+    }
+
+    // Validate username length (optional but recommended)
+    if (username.length < 3 || username.length > 20) {
+      return NextResponse.json(
+        { error: "Username must be between 3 and 20 characters long" },
+        { status: 400 }
+      );
+    }
+
     // --- 2. Connect to Database using native driver ---
     const client = await clientPromise;
     const db = client.db();
@@ -35,6 +53,28 @@ export async function POST(request) {
     if (existingVerifiedUser) {
       return NextResponse.json(
         { error: "A user with this email already exists." },
+        { status: 409 }
+      );
+    }
+
+    // --- 3b. Check if username is already taken ---
+    const existingUsername = await db.collection("users").findOne({ 
+      username: { $regex: `^${username}$`, $options: "i" }
+    });
+    if (existingUsername) {
+      return NextResponse.json(
+        { error: "This username is already taken. Please choose a different one." },
+        { status: 409 }
+      );
+    }
+
+    // Also check in tempusers collection
+    const existingTempUsername = await db.collection("tempusers").findOne({ 
+      username: { $regex: `^${username}$`, $options: "i" }
+    });
+    if (existingTempUsername) {
+      return NextResponse.json(
+        { error: "This username is already being used. Please choose a different one." },
         { status: 409 }
       );
     }
@@ -93,6 +133,23 @@ export async function POST(request) {
 
   } catch (error) {
     console.error("Registration Error:", error);
+    
+    // Handle MongoDB duplicate key errors
+    if (error.code === 11000) {
+      const field = Object.keys(error.keyPattern || {})[0];
+      if (field === "username") {
+        return NextResponse.json(
+          { error: "This username is already taken. Please choose a different one." },
+          { status: 409 }
+        );
+      } else if (field === "email") {
+        return NextResponse.json(
+          { error: "An account with this email already exists." },
+          { status: 409 }
+        );
+      }
+    }
+    
     return NextResponse.json(
       {
         error: "Registration failed. Please try again later.",

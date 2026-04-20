@@ -7,7 +7,7 @@ import { PiSunBold } from "react-icons/pi";
 import { FaMoon } from "react-icons/fa";
 import { RiArrowDropDownLine } from "react-icons/ri";
 import { CiSearch } from "react-icons/ci";
-import { FiUser, FiBookmark, FiSettings, FiLogOut, FiAward } from "react-icons/fi";
+import { FiUser, FiBookmark, FiSettings, FiLogOut, FiAward, FiHome } from "react-icons/fi";
 import { syncAuthDataFromCookies } from "@/lib/authUtils";
 
 export default function Header({ isDark, toggleTheme }) {
@@ -120,7 +120,12 @@ export default function Header({ isDark, toggleTheme }) {
     };
 
     const handleProfileClick = (path) => {
-        router.push(path);
+        // For profile, navigate to username route instead of /profile
+        if (path === "/profile") {
+            router.push(`/${userName}`);
+        } else {
+            router.push(path);
+        }
         setIsDropdownOpen(false);
     };
 
@@ -217,6 +222,13 @@ export default function Header({ isDark, toggleTheme }) {
                                     <div className="dropdown-divider"></div>
 
                                     <div className="dropdown-menu">
+                                        <button
+                                            className="dropdown-item"
+                                            onClick={() => handleProfileClick("/dashboard")}
+                                        >
+                                            <FiHome size={18} />
+                                            <span>Dashboard</span>
+                                        </button>
                                         <button
                                             className="dropdown-item"
                                             onClick={() => handleProfileClick("/profile")}

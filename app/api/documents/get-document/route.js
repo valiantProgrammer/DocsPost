@@ -5,6 +5,7 @@ export async function GET(req) {
     try {
         const { searchParams } = new URL(req.url);
         const slug = searchParams.get("slug");
+        const userEmail = searchParams.get("userEmail") || "";
 
         if (!slug) {
             return new Response(
@@ -40,6 +41,42 @@ export async function GET(req) {
             );
         }
 
+        // Get author's username
+        let authorUsername = "";
+        if (document.userEmail) {
+            try {
+                const usersCollection = db.collection("users");
+                const author = await usersCollection.findOne({ email: document.userEmail });
+                authorUsername = author?.username || document.userEmail;
+            } catch (err) {
+                console.error("Error fetching author:", err);
+                authorUsername = document.userEmail;
+            }
+        }
+
+        // Log to analytics collection for the document author
+        if (document.userEmail) {
+            try {
+                const analyticsCollection = db.collection("analytics");
+                const now = new Date();
+
+                await analyticsCollection.insertOne({
+                    userEmail: document.userEmail, // Author of the document
+                    articleId: slug,
+                    articleTitle: document.title || "Untitled",
+                    type: "view",
+                    viewerEmail: userEmail || "anonymous",
+                    timestamp: now,
+                    date: new Date(now.getFullYear(), now.getMonth(), now.getDate()),
+                    month: new Date(now.getFullYear(), now.getMonth(), 1),
+                    year: now.getFullYear(),
+                });
+            } catch (analyticsErr) {
+                // Log analytics error but don't fail the document fetch
+                console.error("Error logging analytics:", analyticsErr);
+            }
+        }
+
         return new Response(
             JSON.stringify({
                 success: true,
@@ -53,6 +90,7 @@ export async function GET(req) {
                     slug: document.slug,
                     views: document.views || 0,
                     userEmail: document.userEmail,
+                    authorUsername: authorUsername,
                     createdAt: document.createdAt,
                     updatedAt: document.updatedAt,
                 },

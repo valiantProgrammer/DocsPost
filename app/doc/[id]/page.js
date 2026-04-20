@@ -1,6 +1,7 @@
 "use client"
 import { useState, useEffect, useRef } from "react";
 import { useParams } from "next/navigation";
+import Link from "next/link";
 import Header from "../../components/Header";
 import Notification from "../../components/Notification";
 import ReportModal from "../../components/ReportModal";
@@ -73,18 +74,16 @@ export default function DocumentView() {
                 setDocData(data.document);
                 setViewCount(data.document.views || 0);
 
-                // Log view activity for contribution heatmap
-                const userEmail = localStorage.getItem("userEmail") || "";
+                // Log view activity to analytics for tracking article views
+                const userEmail = localStorage.getItem("docspost-email") || "";
                 if (userEmail) {
                     try {
-                        await fetch("/api/analytics/log-activity", {
+                        await fetch("/api/docs/log-view", {
                             method: "POST",
                             headers: { "Content-Type": "application/json" },
                             body: JSON.stringify({
+                                docId: slug,
                                 userEmail,
-                                type: "view",
-                                articleId: data.document._id,
-                                articleTitle: data.document.title,
                             }),
                         });
                     } catch (err) {
@@ -528,7 +527,15 @@ export default function DocumentView() {
                             </li>
                             <li>
                                 <span>Author:</span>
-                                <strong className="truncate">{docData.userEmail}</strong>
+                                {docData.authorUsername ? (
+                                    <strong className="truncate">
+                                        <Link href={`/${docData.authorUsername}`} className="author-link">
+                                            {docData.authorUsername}
+                                        </Link>
+                                    </strong>
+                                ) : (
+                                    <strong className="truncate">{docData.userEmail}</strong>
+                                )}
                             </li>
                             <li>
                                 <span>Created:</span>

@@ -26,6 +26,11 @@ export async function POST(req) {
 
         const upvotesCollection = db.collection("doc_upvotes");
         const statsCollection = db.collection("doc_stats");
+        const docsCollection = db.collection("user_documents");
+        const now = new Date();
+
+        // Get document info to retrieve the author's email (docId is actually the slug)
+        const document = await docsCollection.findOne({ slug: docId });
 
         // Check if user already upvoted
         const existingUpvote = await upvotesCollection.findOne({
@@ -46,6 +51,18 @@ export async function POST(req) {
                 { upsert: true }
             );
 
+            // Remove from analytics collection
+            if (document && document.userEmail) {
+                const analyticsCollection = db.collection("analytics");
+                await analyticsCollection.deleteOne({
+                    userEmail: document.userEmail,
+                    articleId: docId,
+                    type: "vote",
+                    voteType: "like",
+                    "voterEmail": userEmail, // Track who made the vote
+                });
+            }
+
             return new Response(
                 JSON.stringify({
                     success: true,
@@ -62,17 +79,34 @@ export async function POST(req) {
             await upvotesCollection.insertOne({
                 docId,
                 userEmail,
-                timestamp: new Date(),
+                timestamp: now,
             });
 
             await statsCollection.updateOne(
                 { docId },
                 {
                     $inc: { upvotes: 1 },
-                    $set: { lastUpvoted: new Date() },
+                    $set: { lastUpvoted: now },
                 },
                 { upsert: true }
             );
+
+            // Also log to analytics collection (for the document author's analytics dashboard)
+            if (document && document.userEmail) {
+                const analyticsCollection = db.collection("analytics");
+                await analyticsCollection.insertOne({
+                    userEmail: document.userEmail, // Author of the document
+                    articleId: docId,
+                    articleTitle: document.title || "Untitled",
+                    type: "vote",
+                    voteType: "like",
+                    voterEmail: userEmail, // Track who made the vote
+                    timestamp: now,
+                    date: new Date(now.getFullYear(), now.getMonth(), now.getDate()),
+                    month: new Date(now.getFullYear(), now.getMonth(), 1),
+                    year: now.getFullYear(),
+                });
+            }
 
             return new Response(
                 JSON.stringify({

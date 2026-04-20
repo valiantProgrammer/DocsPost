@@ -26,6 +26,10 @@ export async function POST(req) {
 
         const now = new Date();
 
+        // Get document info to retrieve the author's email (docId is actually the slug)
+        const docsCollection = db.collection("user_documents");
+        const document = await docsCollection.findOne({ slug: docId });
+
         // Log the view
         const viewsCollection = db.collection("doc_views");
         await viewsCollection.insertOne({
@@ -45,6 +49,21 @@ export async function POST(req) {
             },
             { upsert: true }
         );
+
+        // Also log to analytics collection (for the document author's analytics dashboard)
+        if (document && document.userEmail) {
+            const analyticsCollection = db.collection("analytics");
+            await analyticsCollection.insertOne({
+                userEmail: document.userEmail, // Author of the document
+                articleId: docId,
+                articleTitle: document.title || "Untitled",
+                type: "view",
+                timestamp: now,
+                date: new Date(now.getFullYear(), now.getMonth(), now.getDate()),
+                month: new Date(now.getFullYear(), now.getMonth(), 1),
+                year: now.getFullYear(),
+            });
+        }
 
         return new Response(
             JSON.stringify({ success: true, message: "View logged" }),

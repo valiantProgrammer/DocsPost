@@ -466,6 +466,18 @@
     white-space: nowrap;
 }
 
+.author-link {
+    color: var(--brand);
+    text-decoration: none;
+    font-weight: 500;
+    transition: all 0.2s ease;
+}
+
+.author-link:hover {
+    color: var(--brand-deep);
+    text-decoration: underline;
+}
+
 .links-list a {
     color: var(--brand);
     text-decoration: none;

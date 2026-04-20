@@ -1,29 +1,192 @@
 "use client"
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import Header from "@/app/components/Header";
-import ProfilePictureModal from "@/app/components/ProfilePictureModal";
-import AnalyticsDashboard from "@/app/components/AnalyticsDashboard";
-import UserWorkspace from "@/app/components/UserWorkspace";
 import { useTheme } from "@/app/providers/ThemeProvider";
+import Header from "@/app/components/Header";
+import DashboardSidebar from "@/app/components/DashboardSidebar";
+import AnalyticsDashboard from "@/app/components/AnalyticsDashboard";
+import ProfilePictureModal from "@/app/components/ProfilePictureModal";
+import UserWorkspace from "@/app/components/UserWorkspace";
 import { FiUser, FiMail, FiMapPin, FiBookmark, FiEdit2, FiFileText, FiBarChart2, FiBriefcase } from "react-icons/fi";
+import "./dashboard.css";
 
-export default function Profile() {
-    const { isDark, toggleTheme } = useTheme();
-    const router = useRouter();
-    const [activeTab, setActiveTab] = useState("overview");
-    const [isLoading, setIsLoading] = useState(true);
-    const [userName, setUserName] = useState("");
+export default function DashboardPage() {
+    const [activeTab, setActiveTab] = useState("analytics");
     const [userEmail, setUserEmail] = useState("");
-    const [userLocation, setUserLocation] = useState("Not specified");
-    const [userBio, setUserBio] = useState("Welcome to my profile!");
-    const [userJoinDate, setUserJoinDate] = useState("2024");
-    const [userId, setUserId] = useState("");
-    const [profilePicture, setProfilePicture] = useState(null);
+    const [userName, setUserName] = useState("");
+    const [userData, setUserData] = useState(null);
+    const [loading, setLoading] = useState(true);
+    const { isDark, toggleTheme, mounted } = useTheme();
+    const router = useRouter();
+
+    useEffect(() => {
+        const savedAuth = localStorage.getItem("docspost-auth");
+        const savedEmail = localStorage.getItem("docspost-email");
+        const savedUsername = localStorage.getItem("docspost-username");
+
+        if (savedAuth !== "signed-in") {
+            router.push("/Auth?mode=signin");
+            return;
+        }
+
+        setUserEmail(savedEmail || "");
+        setUserName(savedUsername || "");
+
+        // Fetch user profile data
+        const fetchUserData = async () => {
+            try {
+                if (savedEmail) {
+                    const response = await fetch(
+                        `/api/profile/get-profile?email=${encodeURIComponent(savedEmail)}`
+                    );
+                    if (response.ok) {
+                        const data = await response.json();
+                        setUserData(data.user);
+                    }
+                }
+            } catch (error) {
+                console.error("Error fetching user data:", error);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        if (savedEmail) {
+            fetchUserData();
+        }
+    }, [router]);
+
+    const renderContent = () => {
+        switch (activeTab) {
+            case "dashboard":
+                return <DashboardView userName={userName} />;
+            case "analytics":
+                return <AnalyticsView userEmail={userEmail} />;
+            case "profile":
+                return <ProfileView userData={userData} userEmail={userEmail} userName={userName} />;
+            case "workplace":
+                return <WorkplaceView />;
+            case "settings":
+                return <SettingsView />;
+            default:
+                return <DashboardView userName={userName} />;
+        }
+    };
+
+    if (loading || !mounted) {
+        return (
+            <div className="dashboard-loading">
+                <div className="loading-spinner"></div>
+            </div>
+        );
+    }
+
+    return (
+        <div className="dashboard-container">
+            <Header isDark={isDark} toggleTheme={toggleTheme} />
+            <DashboardSidebar activeTab={activeTab} onTabChange={setActiveTab} />
+            <main className="dashboard-main">
+                {renderContent()}
+            </main>
+        </div>
+    );
+}
+
+// Dashboard View Component
+function DashboardView({ userName }) {
+    return (
+        <div className="dashboard-view">
+            <div className="view-header">
+                <h1>Welcome, {userName}! 👋</h1>
+                <p>Here's your dashboard overview</p>
+            </div>
+
+            {/* Top Metrics */}
+            <div className="metrics-grid">
+                <MetricCard
+                    title="Total Documents"
+                    value="12"
+                    change="+2"
+                    changeType="positive"
+                    color="#ec4899"
+                />
+                <MetricCard
+                    title="Total Views"
+                    value="2,340"
+                    change="+15%"
+                    changeType="positive"
+                    color="#06b6d4"
+                />
+                <MetricCard
+                    title="Total Likes"
+                    value="456"
+                    change="+8%"
+                    changeType="positive"
+                    color="#8b5cf6"
+                />
+                <MetricCard
+                    title="Engagement Rate"
+                    value="19.5%"
+                    change="+3.2%"
+                    changeType="positive"
+                    color="#f59e0b"
+                />
+            </div>
+
+            {/* Featured Cards */}
+            <div className="featured-section">
+                <div className="featured-card featured-primary">
+                    <div className="card-content">
+                        <h3>Start Creating Documents</h3>
+                        <p>Build your knowledge base by creating and sharing documents with the community.</p>
+                        <a href="/docs/create" className="card-link">Create Now →</a>
+                    </div>
+                    <div className="card-icon">🚀</div>
+                </div>
+
+                <div className="featured-card featured-secondary">
+                    <div className="card-content">
+                        <h3>Explore Community</h3>
+                        <p>Discover amazing documents from other creators and boost your learning.</p>
+                        <a href="/search" className="card-link">Explore →</a>
+                    </div>
+                    <div className="card-icon">🌟</div>
+                </div>
+            </div>
+
+            {/* Quick Stats */}
+            <div className="quick-stats">
+                <h2>Quick Statistics</h2>
+                <div className="stats-grid">
+                    <StatItem label="Documents" value="12" icon="📄" />
+                    <StatItem label="Total Views" value="2.3K" icon="👁️" />
+                    <StatItem label="Likes Received" value="456" icon="❤️" />
+                    <StatItem label="Followers" value="23" icon="👥" />
+                </div>
+            </div>
+        </div>
+    );
+}
+
+// Analytics View Component
+function AnalyticsView({ userEmail }) {
+    return (
+        <div className="analytics-view">
+            <div className="view-header">
+                <h1>Analytics Dashboard</h1>
+                <p>Track your content performance</p>
+            </div>
+            <AnalyticsDashboard userEmail={userEmail} />
+        </div>
+    );
+}
+
+// Profile View Component
+function ProfileView({ userData, userEmail, userName }) {
+    const [profileTabActive, setProfileTabActive] = useState("overview");
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isUploadingPicture, setIsUploadingPicture] = useState(false);
 
-    // Sample articles data - in future this will come from database
     const articles = [
         {
             id: 1,
@@ -63,85 +226,22 @@ export default function Profile() {
         }
     ];
 
-    useEffect(() => {
-        // Get user data from localStorage (set during login)
-        const savedUserName = localStorage.getItem("docspost-username");
-        const savedUserEmail = localStorage.getItem("docspost-email");
-        const isSignedIn = localStorage.getItem("docspost-auth");
-
-        if (!isSignedIn) {
-            // Redirect to sign in if not authenticated
-            router.push("/Auth?mode=signin");
-            return;
-        }
-
-        // Redirect to dashboard instead
-        router.push("/dashboard");
-    }, [router]);
-
-    useEffect(() => {
-        // Get user data from localStorage and populate state
-        const savedUserName = localStorage.getItem("docspost-username");
-        const savedUserEmail = localStorage.getItem("docspost-email");
-        const savedLocation = localStorage.getItem("docspost-location");
-        const savedBio = localStorage.getItem("docspost-bio");
-        const savedJoinDate = localStorage.getItem("docspost-joinDate");
-
-        if (savedUserName) {
-            setUserName(savedUserName);
-        }
-        if (savedUserEmail) {
-            setUserEmail(savedUserEmail);
-        }
-        if (savedLocation) {
-            setUserLocation(savedLocation);
-        }
-        if (savedBio) {
-            setUserBio(savedBio);
-        }
-        if (savedJoinDate) {
-            setUserJoinDate(savedJoinDate);
-        }
-
-        // Fetch full profile including profile picture from API
-        const fetchProfileData = async () => {
-            try {
-                if (savedUserEmail) {
-                    const response = await fetch(
-                        `/api/profile/get-profile?email=${encodeURIComponent(savedUserEmail)}`
-                    );
-                    if (response.ok) {
-                        const data = await response.json();
-                        setUserId(data.user._id);
-                        setProfilePicture(data.user.profilePicture);
-                    }
-                }
-            } catch (error) {
-                console.error("Error fetching profile:", error);
-            } finally {
-                setIsLoading(false);
-            }
-        };
-
-        fetchProfileData();
-    }, []);
-
-    // Construct user data from state
-    const userData = {
-        name: userName || "User",
-        email: userEmail || "user@example.com",
-        location: userLocation || "Not specified",
-        bio: userBio || "Welcome to my profile!",
-        joinDate: userJoinDate || "2024",
+    const profileData = {
+        name: userData?.name || userName || "User",
+        email: userEmail || userData?.email || "user@example.com",
+        location: userData?.location || "Not specified",
+        bio: userData?.bio || "Welcome to my profile!",
+        joinDate: userData?.joinDate || "2024",
         followers: 128,
         following: 45,
         articlesCount: articles.length,
-        profileImage: userName.charAt(0).toUpperCase(),
-        profilePicture: profilePicture,
+        profileImage: (userData?.name || userName)?.charAt(0).toUpperCase(),
+        profilePicture: userData?.profilePicture,
+        userId: userData?._id,
     };
 
     const handleProfilePictureUpload = async (base64String) => {
-        if (!userId) {
+        if (!profileData.userId) {
             alert("User ID not found. Please refresh the page.");
             return;
         }
@@ -155,17 +255,15 @@ export default function Profile() {
                 },
                 body: JSON.stringify({
                     imageBase64: base64String,
-                    userId: userId,
+                    userId: profileData.userId,
                 }),
             });
 
             const data = await response.json();
 
             if (response.ok) {
-                setProfilePicture(data.profilePicture);
                 setIsModalOpen(false);
                 alert("Profile picture updated successfully!");
-                // Notify Header component to refresh profile picture
                 window.dispatchEvent(new Event("profilePictureUpdated"));
             } else {
                 alert(data.error || "Failed to upload profile picture");
@@ -179,7 +277,7 @@ export default function Profile() {
     };
 
     const handleProfilePictureDelete = async () => {
-        if (!userId) {
+        if (!profileData.userId) {
             alert("User ID not found. Please refresh the page.");
             return;
         }
@@ -196,18 +294,16 @@ export default function Profile() {
                     "Content-Type": "application/json",
                 },
                 body: JSON.stringify({
-                    userId: userId,
-                    publicId: "", // Will be fetched from DB if needed
+                    userId: profileData.userId,
+                    publicId: "",
                 }),
             });
 
             const data = await response.json();
 
             if (response.ok) {
-                setProfilePicture(null);
                 setIsModalOpen(false);
                 alert("Profile picture deleted successfully!");
-                // Notify Header component to refresh profile picture
                 window.dispatchEvent(new Event("profilePictureUpdated"));
             } else {
                 alert(data.error || "Failed to delete profile picture");
@@ -220,27 +316,13 @@ export default function Profile() {
         }
     };
 
-    if (isLoading) {
-        return (
-            <main className="learning-page" data-theme={isDark ? "dark" : "light"}>
-                <Header isDark={isDark} toggleTheme={toggleTheme} />
-                <div style={{ padding: "40px 20px", textAlign: "center", minHeight: "100vh" }}>
-                    <p>Loading profile...</p>
-                </div>
-            </main>
-        );
-    }
-
     return (
-        <main className="learning-page" data-theme={isDark ? "dark" : "light"}>
-            <Header isDark={isDark} toggleTheme={toggleTheme} />
-
-            {/* Profile Picture Modal */}
+        <div className="profile-view">
             <ProfilePictureModal
                 isOpen={isModalOpen}
                 onClose={() => setIsModalOpen(false)}
-                profilePicture={userData.profilePicture}
-                userName={userData.name}
+                profilePicture={profileData.profilePicture}
+                userName={profileData.name}
                 onUpload={handleProfilePictureUpload}
                 onDelete={handleProfilePictureDelete}
                 isLoading={isUploadingPicture}
@@ -256,10 +338,10 @@ export default function Profile() {
                             style={{ cursor: "pointer" }}
                             title="Click to manage profile picture"
                         >
-                            {userData.profilePicture ? (
+                            {profileData.profilePicture ? (
                                 <img
-                                    src={userData.profilePicture}
-                                    alt={userData.name}
+                                    src={profileData.profilePicture}
+                                    alt={profileData.name}
                                     style={{
                                         width: "100%",
                                         height: "100%",
@@ -268,36 +350,36 @@ export default function Profile() {
                                     }}
                                 />
                             ) : (
-                                userData.profileImage
+                                profileData.profileImage
                             )}
                         </div>
 
                         <div className="profile-info">
-                            <h1 className="profile-name">{userData.name}</h1>
-                            <p className="profile-bio">{userData.bio}</p>
+                            <h1 className="profile-name">{profileData.name}</h1>
+                            <p className="profile-bio">{profileData.bio}</p>
 
                             <div className="profile-meta">
                                 <div className="meta-item">
                                     <FiMail size={16} />
-                                    <span>{userData.email}</span>
+                                    <span>{profileData.email}</span>
                                 </div>
                                 <div className="meta-item">
                                     <FiMapPin size={16} />
-                                    <span>{userData.location}</span>
+                                    <span>{profileData.location}</span>
                                 </div>
                             </div>
 
                             <div className="profile-stats">
                                 <div className="stat">
-                                    <span className="stat-number">{userData.followers}</span>
+                                    <span className="stat-number">{profileData.followers}</span>
                                     <span className="stat-label">Followers</span>
                                 </div>
                                 <div className="stat">
-                                    <span className="stat-number">{userData.following}</span>
+                                    <span className="stat-number">{profileData.following}</span>
                                     <span className="stat-label">Following</span>
                                 </div>
                                 <div className="stat">
-                                    <span className="stat-number">{userData.articlesCount}</span>
+                                    <span className="stat-number">{profileData.articlesCount}</span>
                                     <span className="stat-label">Articles</span>
                                 </div>
                             </div>
@@ -322,36 +404,36 @@ export default function Profile() {
                 <div className="profile-container">
                     <div className="profile-tabs">
                         <button
-                            className={`tab-button ${activeTab === "overview" ? "active" : ""}`}
-                            onClick={() => setActiveTab("overview")}
+                            className={`tab-button ${profileTabActive === "overview" ? "active" : ""}`}
+                            onClick={() => setProfileTabActive("overview")}
                         >
                             Overview
                         </button>
                         <button
-                            className={`tab-button ${activeTab === "workspace" ? "active" : ""}`}
-                            onClick={() => setActiveTab("workspace")}
+                            className={`tab-button ${profileTabActive === "workspace" ? "active" : ""}`}
+                            onClick={() => setProfileTabActive("workspace")}
                         >
                             <FiBriefcase size={18} />
                             Workspace
                         </button>
                         <button
-                            className={`tab-button ${activeTab === "analytics" ? "active" : ""}`}
-                            onClick={() => setActiveTab("analytics")}
+                            className={`tab-button ${profileTabActive === "analytics" ? "active" : ""}`}
+                            onClick={() => setProfileTabActive("analytics")}
                         >
                             <FiBarChart2 size={18} />
                             Analytics
                         </button>
                         <button
-                            className={`tab-button ${activeTab === "articles" ? "active" : ""}`}
-                            onClick={() => setActiveTab("articles")}
+                            className={`tab-button ${profileTabActive === "articles" ? "active" : ""}`}
+                            onClick={() => setProfileTabActive("articles")}
                         >
                             <FiFileText size={18} />
-                            Your Articles ({userData.articlesCount})
+                            Your Articles ({profileData.articlesCount})
                         </button>
                     </div>
 
                     {/* Overview Tab */}
-                    {activeTab === "overview" && (
+                    {profileTabActive === "overview" && (
                         <div className="profile-tab-content">
                             <div className="stats-grid">
                                 <div className="stat-card">
@@ -359,7 +441,7 @@ export default function Profile() {
                                         <FiFileText size={24} />
                                     </div>
                                     <h3>Articles Written</h3>
-                                    <p className="stat-card-value">{userData.articlesCount}</p>
+                                    <p className="stat-card-value">{profileData.articlesCount}</p>
                                 </div>
                                 <div className="stat-card">
                                     <div className="stat-card-icon">
@@ -373,7 +455,7 @@ export default function Profile() {
                                         <FiUser size={24} />
                                     </div>
                                     <h3>Followers</h3>
-                                    <p className="stat-card-value">{userData.followers}</p>
+                                    <p className="stat-card-value">{profileData.followers}</p>
                                 </div>
                             </div>
 
@@ -397,21 +479,21 @@ export default function Profile() {
                     )}
 
                     {/* Analytics Tab */}
-                    {activeTab === "analytics" && (
+                    {profileTabActive === "analytics" && (
                         <div className="profile-tab-content">
-                            <AnalyticsDashboard userEmail={userData.email} />
+                            <AnalyticsDashboard userEmail={userEmail} />
                         </div>
                     )}
 
                     {/* Workspace Tab */}
-                    {activeTab === "workspace" && (
+                    {profileTabActive === "workspace" && (
                         <div className="profile-tab-content">
-                            <UserWorkspace userEmail={userData.email} />
+                            <UserWorkspace userEmail={userEmail} />
                         </div>
                     )}
 
                     {/* Articles Tab */}
-                    {activeTab === "articles" && (
+                    {profileTabActive === "articles" && (
                         <div className="profile-tab-content">
                             <div className="articles-header">
                                 <h2>Your Published Articles</h2>
@@ -451,6 +533,97 @@ export default function Profile() {
                     )}
                 </div>
             </section>
-        </main>
+        </div>
+    );
+}
+
+// Workplace View Component
+function WorkplaceView() {
+    return (
+        <div className="workplace-view">
+            <div className="view-header">
+                <h1>Workplace</h1>
+                <p>Manage your documents and workspace</p>
+            </div>
+
+            <div className="workplace-grid">
+                <div className="workplace-section">
+                    <h3>📝 My Documents</h3>
+                    <p>You have not created any documents yet.</p>
+                    <a href="/docs/create" className="btn-create">Create First Document</a>
+                </div>
+
+                <div className="workplace-section">
+                    <h3>⭐ Saved Documents</h3>
+                    <p>No saved documents yet.</p>
+                </div>
+
+                <div className="workplace-section">
+                    <h3>👥 Followers</h3>
+                    <p>Start gaining followers by creating amazing content.</p>
+                </div>
+            </div>
+        </div>
+    );
+}
+
+// Settings View Component
+function SettingsView() {
+    return (
+        <div className="settings-view">
+            <div className="view-header">
+                <h1>Settings</h1>
+                <p>Configure your preferences</p>
+            </div>
+
+            <div className="settings-sections">
+                <div className="settings-section">
+                    <h3>🎨 Theme Settings</h3>
+                    <div className="setting-item">
+                        <label>Dark Mode</label>
+                        <input type="checkbox" defaultChecked />
+                    </div>
+                </div>
+
+                <div className="settings-section">
+                    <h3>🔔 Notifications</h3>
+                    <div className="setting-item">
+                        <label>Email Notifications</label>
+                        <input type="checkbox" defaultChecked />
+                    </div>
+                </div>
+
+                <div className="settings-section">
+                    <h3>🔐 Privacy & Security</h3>
+                    <p>Your profile is public. Others can find you by your username.</p>
+                </div>
+            </div>
+        </div>
+    );
+}
+
+// Metric Card Component
+function MetricCard({ title, value, change, changeType, color }) {
+    return (
+        <div className="metric-card" style={{ borderLeftColor: color }}>
+            <div className="metric-header">
+                <h3>{title}</h3>
+                <span className={`change ${changeType}`}>{change}</span>
+            </div>
+            <div className="metric-value">{value}</div>
+        </div>
+    );
+}
+
+// Stat Item Component
+function StatItem({ label, value, icon }) {
+    return (
+        <div className="stat-item">
+            <div className="stat-icon">{icon}</div>
+            <div className="stat-info">
+                <p className="stat-label">{label}</p>
+                <p className="stat-value">{value}</p>
+            </div>
+        </div>
     );
 }

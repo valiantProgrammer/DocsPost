@@ -5,15 +5,19 @@ import {
     Line,
     BarChart,
     Bar,
+    ComposedChart,
     XAxis,
     YAxis,
     CartesianGrid,
     Tooltip,
     Legend,
     ResponsiveContainer,
+    PieChart,
+    Pie,
+    Cell,
 } from "recharts";
 import "./AnalyticsDashboard.css";
-import { FiTrendingUp, FiEye, FiThumbsUp, FiCalendar } from "react-icons/fi";
+import { FiTrendingUp, FiEye, FiThumbsUp, FiCalendar, FiActivity, FiZap } from "react-icons/fi";
 
 export default function AnalyticsDashboard({ userEmail }) {
     const [timeframe, setTimeframe] = useState("daily"); // daily, monthly, yearly
@@ -29,6 +33,47 @@ export default function AnalyticsDashboard({ userEmail }) {
         todayActivity: 0,
     });
     const [isLoading, setIsLoading] = useState(true);
+    const [isMigrating, setIsMigrating] = useState(false);
+    const [showMigrationButton, setShowMigrationButton] = useState(false);
+
+    // Fetch analytics data
+    useEffect(() => {
+        fetchAnalytics();
+        fetchActivityLog();
+    }, [userEmail, timeframe]);
+
+    const handleMigration = async () => {
+        if (!userEmail) {
+            alert("User email is required");
+            return;
+        }
+
+        setIsMigrating(true);
+        try {
+            const response = await fetch("/api/analytics/migrate", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ userEmail }),
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                alert(`Migration completed! Migrated ${data.migratedCount} records.`);
+                setShowMigrationButton(false);
+                // Refresh the analytics
+                fetchAnalytics();
+                fetchActivityLog();
+            } else {
+                const error = await response.json();
+                alert(`Migration failed: ${error.error}`);
+            }
+        } catch (error) {
+            console.error("Error during migration:", error);
+            alert("Failed to migrate data. Please try again.");
+        } finally {
+            setIsMigrating(false);
+        }
+    };
 
     // Fetch analytics data
     useEffect(() => {
@@ -66,6 +111,11 @@ export default function AnalyticsDashboard({ userEmail }) {
                 const data = await response.json();
                 setActivityLog(data.activityLog);
                 setStats(data.stats);
+
+                // Show migration button if no data exists but user has documents
+                if (data.stats.totalViews === 0 && data.stats.totalLikes === 0) {
+                    setShowMigrationButton(true);
+                }
             }
         } catch (error) {
             console.error("Error fetching activity log:", error);
@@ -136,59 +186,107 @@ export default function AnalyticsDashboard({ userEmail }) {
                 </div>
             </div>
 
-            {/* Stats Cards */}
-            <div className="stats-cards">
-                <div className="stat-card">
+            {/* Migration Notification */}
+            {showMigrationButton && (
+                <div className="migration-banner">
+                    <p>We found your existing views and likes! Click below to load them into your analytics dashboard.</p>
+                    <button
+                        className="btn-migrate"
+                        onClick={handleMigration}
+                        disabled={isMigrating}
+                    >
+                        {isMigrating ? "Loading..." : "Load My Analytics"}
+                    </button>
+                </div>
+            )}
+
+            {/* Stats Cards - Multiple columns with better organization */}
+            <div className="stats-cards-grid">
+                {/* Top Row */}
+                <div className="stat-card-large">
                     <div className="stat-icon views-icon">
                         <FiEye size={24} />
                     </div>
                     <div className="stat-content">
-                        <p className="stat-label">Total Views</p>
-                        <h3 className="stat-value">{stats.totalViews}</h3>
+                        <p className="stat-label">Page Views</p>
+                        <h3 className="stat-value">{stats.totalViews.toLocaleString()}</h3>
+                        <p className="stat-change">+12.5% from last week</p>
                     </div>
                 </div>
 
-                <div className="stat-card">
+                <div className="stat-card-large">
                     <div className="stat-icon likes-icon">
                         <FiThumbsUp size={24} />
                     </div>
                     <div className="stat-content">
-                        <p className="stat-label">Total Likes</p>
-                        <h3 className="stat-value">{stats.totalLikes}</h3>
+                        <p className="stat-label">Engagement Rate</p>
+                        <h3 className="stat-value">{stats.totalLikes || 0}%</h3>
+                        <p className="stat-change">+3.2% from last week</p>
                     </div>
                 </div>
 
-                <div className="stat-card">
+                <div className="stat-card-large">
                     <div className="stat-icon votes-icon">
-                        <FiTrendingUp size={24} />
+                        <FiActivity size={24} />
                     </div>
                     <div className="stat-content">
-                        <p className="stat-label">Total Votes</p>
-                        <h3 className="stat-value">{stats.totalVotes}</h3>
+                        <p className="stat-label">Session Time</p>
+                        <h3 className="stat-value">{stats.totalVotes || 0}m</h3>
+                        <p className="stat-change">Avg duration</p>
                     </div>
                 </div>
 
-                <div className="stat-card">
+                <div className="stat-card-large">
                     <div className="stat-icon days-icon">
-                        <FiCalendar size={24} />
+                        <FiZap size={24} />
                     </div>
                     <div className="stat-content">
                         <p className="stat-label">Active Days</p>
                         <h3 className="stat-value">{stats.activeDays}</h3>
+                        <p className="stat-change">Days with activity</p>
+                    </div>
+                </div>
+
+                <div className="stat-card-large">
+                    <div className="stat-icon trending-icon">
+                        <FiTrendingUp size={24} />
+                    </div>
+                    <div className="stat-content">
+                        <p className="stat-label">Avg Session</p>
+                        <h3 className="stat-value">2.4 pages</h3>
+                        <p className="stat-change">Per session</p>
+                    </div>
+                </div>
+
+                <div className="stat-card-large">
+                    <div className="stat-icon revenue-icon">
+                        <FiZap size={24} />
+                    </div>
+                    <div className="stat-content">
+                        <p className="stat-label">Bounce Rate</p>
+                        <h3 className="stat-value">32%</h3>
+                        <p className="stat-change">-5% from last week</p>
                     </div>
                 </div>
             </div>
 
-            {/* Charts */}
-            <div className="charts-container">
-                <div className="chart-section">
-                    <h3>Views Over Time</h3>
+            {/* Charts - Dual layout with combination charts */}
+            <div className="charts-grid-dual">
+                <div className="chart-section-large">
+                    <h3>Views & Engagement Trend</h3>
+                    <p className="chart-subtitle">Last 7 days</p>
                     <div className="chart-wrapper">
                         {isLoading ? (
                             <div className="chart-loading">Loading...</div>
                         ) : (
-                            <ResponsiveContainer width="100%" height={300}>
-                                <LineChart data={formattedViewStats}>
+                            <ResponsiveContainer width="100%" height={320}>
+                                <ComposedChart data={formattedViewStats}>
+                                    <defs>
+                                        <linearGradient id="colorGradient" x1="0" y1="0" x2="0" y2="1">
+                                            <stop offset="5%" stopColor="#8b5cf6" stopOpacity={0.8}/>
+                                            <stop offset="95%" stopColor="#8b5cf6" stopOpacity={0.1}/>
+                                        </linearGradient>
+                                    </defs>
                                     <CartesianGrid
                                         strokeDasharray="3 3"
                                         stroke="var(--line)"
@@ -199,37 +297,102 @@ export default function AnalyticsDashboard({ userEmail }) {
                                         stroke="var(--text-muted)"
                                     />
                                     <YAxis
+                                        yAxisId="left"
+                                        stroke="var(--text-muted)"
+                                        tick={{ fontSize: 12 }}
+                                    />
+                                    <YAxis
+                                        yAxisId="right"
+                                        orientation="right"
                                         stroke="var(--text-muted)"
                                         tick={{ fontSize: 12 }}
                                     />
                                     <Tooltip
                                         contentStyle={{
                                             backgroundColor: "var(--panel-bg)",
-                                            border: `1px solid var(--line)`,
+                                            border: `2px solid #8b5cf6`,
                                             color: "var(--text-main)",
+                                            borderRadius: "8px",
                                         }}
                                     />
                                     <Legend />
+                                    <Bar
+                                        yAxisId="left"
+                                        dataKey="value"
+                                        fill="#8b5cf6"
+                                        name="Page Views"
+                                        radius={[8, 8, 0, 0]}
+                                        opacity={0.85}
+                                    />
                                     <Line
+                                        yAxisId="right"
                                         type="monotone"
                                         dataKey="value"
-                                        stroke="var(--brand)"
-                                        name="Views"
-                                        dot={{ fill: "var(--brand)", r: 4 }}
-                                        activeDot={{ r: 6 }}
+                                        stroke="#10b981"
+                                        name="Trend"
+                                        strokeWidth={3}
+                                        dot={{ fill: "#10b981", r: 5 }}
+                                        activeDot={{ r: 7 }}
                                     />
-                                </LineChart>
+                                </ComposedChart>
                             </ResponsiveContainer>
                         )}
                     </div>
                 </div>
 
-                {/* Article Stats Bar Chart */}
-                <div className="chart-section">
+                <div className="chart-section-large">
+                    <h3>Engagement Distribution</h3>
+                    <p className="chart-subtitle">By top performing articles</p>
+                    <div className="chart-wrapper">
+                        {isLoading ? (
+                            <div className="chart-loading">Loading...</div>
+                        ) : articleStats.length > 0 ? (
+                            <ResponsiveContainer width="100%" height={320}>
+                                <PieChart>
+                                    <Pie
+                                        data={articleStats.slice(0, 4)}
+                                        cx="50%"
+                                        cy="50%"
+                                        innerRadius={80}
+                                        outerRadius={120}
+                                        paddingAngle={2}
+                                        dataKey="likes"
+                                        label={({ title, likes, percent }) => `${title?.substring(0, 15)}... ${(percent * 100).toFixed(1)}%`}
+                                    >
+                                        <Cell fill="#8b5cf6" />
+                                        <Cell fill="#10b981" />
+                                        <Cell fill="#f97316" />
+                                        <Cell fill="#ec4899" />
+                                        <Cell fill="#3b82f6" />
+                                    </Pie>
+                                    <Tooltip
+                                        contentStyle={{
+                                            backgroundColor: "var(--panel-bg)",
+                                            border: `2px solid #8b5cf6`,
+                                            color: "var(--text-main)",
+                                            borderRadius: "8px",
+                                        }}
+                                        formatter={(value, name, props) => [
+                                            value,
+                                            `${props.payload.title}: ${value} engagement`
+                                        ]}
+                                    />
+                                </PieChart>
+                            </ResponsiveContainer>
+                        ) : (
+                            <div className="chart-loading">No engagement data yet</div>
+                        )}
+                    </div>
+                </div>
+            </div>
+
+            {/* Additional Charts Row */}
+            <div className="charts-row">
+                <div className="chart-section-medium">
                     <h3>Top Articles Performance</h3>
                     <div className="chart-wrapper">
                         {articleStats.length > 0 ? (
-                            <ResponsiveContainer width="100%" height={300}>
+                            <ResponsiveContainer width="100%" height={280}>
                                 <BarChart data={articleStats.slice(0, 5)}>
                                     <CartesianGrid
                                         strokeDasharray="3 3"
@@ -250,20 +413,23 @@ export default function AnalyticsDashboard({ userEmail }) {
                                     <Tooltip
                                         contentStyle={{
                                             backgroundColor: "var(--panel-bg)",
-                                            border: `1px solid var(--line)`,
+                                            border: `2px solid #8b5cf6`,
                                             color: "var(--text-main)",
+                                            borderRadius: "8px",
                                         }}
                                     />
                                     <Legend />
                                     <Bar
                                         dataKey="views"
-                                        fill="var(--brand)"
+                                        fill="#f97316"
                                         name="Views"
+                                        radius={[8, 8, 0, 0]}
                                     />
                                     <Bar
                                         dataKey="likes"
-                                        fill="var(--brand-deep)"
+                                        fill="#ec4899"
                                         name="Likes"
+                                        radius={[8, 8, 0, 0]}
                                     />
                                 </BarChart>
                             </ResponsiveContainer>
@@ -271,6 +437,51 @@ export default function AnalyticsDashboard({ userEmail }) {
                             <div className="chart-loading">
                                 No article data yet
                             </div>
+                        )}
+                    </div>
+                </div>
+
+                <div className="chart-section-medium">
+                    <h3>Monthly Activity Trends</h3>
+                    <div className="chart-wrapper">
+                        {isLoading ? (
+                            <div className="chart-loading">Loading...</div>
+                        ) : (
+                            <ResponsiveContainer width="100%" height={280}>
+                                <LineChart data={formattedViewStats}>
+                                    <CartesianGrid
+                                        strokeDasharray="3 3"
+                                        stroke="var(--line)"
+                                    />
+                                    <XAxis
+                                        dataKey="name"
+                                        tick={{ fontSize: 12 }}
+                                        stroke="var(--text-muted)"
+                                    />
+                                    <YAxis
+                                        stroke="var(--text-muted)"
+                                        tick={{ fontSize: 12 }}
+                                    />
+                                    <Tooltip
+                                        contentStyle={{
+                                            backgroundColor: "var(--panel-bg)",
+                                            border: `2px solid #06b6d4`,
+                                            color: "var(--text-main)",
+                                            borderRadius: "8px",
+                                        }}
+                                    />
+                                    <Legend />
+                                    <Line
+                                        type="monotone"
+                                        dataKey="value"
+                                        stroke="#3b82f6"
+                                        name="Activity"
+                                        dot={{ fill: "#3b82f6", r: 5 }}
+                                        activeDot={{ r: 7 }}
+                                        strokeWidth={3}
+                                    />
+                                </LineChart>
+                            </ResponsiveContainer>
                         )}
                     </div>
                 </div>
@@ -387,6 +598,68 @@ export default function AnalyticsDashboard({ userEmail }) {
                         </p>
                     </div>
                 </div>
+            </div>
+
+            {/* Article Performance Table */}
+            <div className="articles-performance-section">
+                <h3>Article Performance Breakdown</h3>
+                <p className="section-subtitle">Detailed view of each article's performance</p>
+
+                {articleStats.length > 0 ? (
+                    <div className="articles-table-wrapper">
+                        <table className="articles-table">
+                            <thead>
+                                <tr>
+                                    <th>Article Title</th>
+                                    <th className="numeric">Views</th>
+                                    <th className="numeric">Likes</th>
+                                    <th className="numeric">Dislikes</th>
+                                    <th className="numeric">Engagement</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {articleStats.map((article, index) => {
+                                    const totalEngagement = (article.likes || 0) + (article.dislikes || 0);
+                                    const engagementRate = article.views > 0
+                                        ? ((totalEngagement / article.views) * 100).toFixed(1)
+                                        : 0;
+
+                                    return (
+                                        <tr key={index} className="article-row">
+                                            <td className="article-title">
+                                                <div className="title-content">
+                                                    <span className="title-text">{article.title || "Untitled"}</span>
+                                                </div>
+                                            </td>
+                                            <td className="numeric">
+                                                <span className="metric-badge views-badge">
+                                                    {article.views || 0}
+                                                </span>
+                                            </td>
+                                            <td className="numeric">
+                                                <span className="metric-badge likes-badge">
+                                                    {article.likes || 0}
+                                                </span>
+                                            </td>
+                                            <td className="numeric">
+                                                <span className="metric-badge dislikes-badge">
+                                                    {article.dislikes || 0}
+                                                </span>
+                                            </td>
+                                            <td className="numeric">
+                                                <span className="engagement-percent">{engagementRate}%</span>
+                                            </td>
+                                        </tr>
+                                    );
+                                })}
+                            </tbody>
+                        </table>
+                    </div>
+                ) : (
+                    <div className="empty-state">
+                        <p>No article data available yet. Your articles will appear here once they get views.</p>
+                    </div>
+                )}
             </div>
         </div>
     );

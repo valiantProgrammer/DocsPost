@@ -34,6 +34,13 @@ function AuthPageContent() {
         specialChar: false
     });
 
+    const [usernameValidation, setUsernameValidation] = useState({
+        isValid: true,
+        message: "",
+        length: false,
+        alphanumeric: false
+    });
+
     const formVariants = {
         hidden: { opacity: 0, x: isSignUp ? 50 : -50 },
         visible: { opacity: 1, x: 0 },
@@ -64,6 +71,27 @@ function AuthPageContent() {
             });
         }
     }, [password, isSignUp]);
+
+    useEffect(() => {
+        if (isSignUp && name) {
+            const isAlphanumeric = /^[a-zA-Z0-9]+$/.test(name);
+            const isValidLength = name.length >= 3 && name.length <= 20;
+            
+            setUsernameValidation({
+                isValid: isAlphanumeric && isValidLength,
+                message: !isAlphanumeric ? "Username can only contain letters (A-Z, a-z) and numbers (0-9). No special characters, spaces, or symbols allowed." : !isValidLength ? "Username must be between 3 and 20 characters" : "",
+                length: isValidLength,
+                alphanumeric: isAlphanumeric
+            });
+        } else {
+            setUsernameValidation({
+                isValid: true,
+                message: "",
+                length: false,
+                alphanumeric: false
+            });
+        }
+    }, [name, isSignUp]);
 
     const handleOtpChange = (index, value) => {
         if (!/^\d*$/.test(value)) return;
@@ -316,6 +344,18 @@ function AuthPageContent() {
                 setError("Username must be at least 3 characters");
                 return false;
             }
+            
+            // Validate username format: only alphanumeric characters
+            if (!/^[a-zA-Z0-9]+$/.test(name)) {
+                setError("Username can only contain letters (A-Z, a-z) and numbers (0-9). No special characters, spaces, or symbols allowed.");
+                return false;
+            }
+            
+            if (name.length > 20) {
+                setError("Username must not exceed 20 characters");
+                return false;
+            }
+            
             if (password.length < 8) {
                 setError("Password must be at least 8 characters");
                 return false;
@@ -385,19 +425,29 @@ function AuthPageContent() {
                                         transition={{ delay: 0.1 }}
                                     >
                                         <label htmlFor="name" className="block text-sm font-medium text-white">
-                                            Full Name
+                                            Username <span className="text-red-400">*</span>
                                         </label>
                                         <input
                                             id="name"
                                             name="name"
                                             type="text"
-                                            autoComplete="name"
+                                            autoComplete="username"
                                             required
                                             value={name}
                                             onChange={(e) => setName(e.target.value)}
-                                            className="mt-1 block w-full rounded-lg border border-white/30 bg-white/20 py-2 px-3 text-white placeholder-white/70 focus:outline-none focus:ring-2 focus:ring-white focus:border-transparent"
-                                            placeholder="John Doe"
+                                            className={`mt-1 block w-full rounded-lg border ${!usernameValidation.isValid && name ? 'border-red-500' : 'border-white/30'} bg-white/20 py-2 px-3 text-white placeholder-white/70 focus:outline-none focus:ring-2 ${!usernameValidation.isValid && name ? 'focus:ring-red-400' : 'focus:ring-white'} focus:border-transparent`}
+                                            placeholder="letters and numbers only (3-20 chars)"
                                         />
+                                        {isSignUp && name && !usernameValidation.isValid && (
+                                            <p className="mt-2 text-sm text-red-400">
+                                                {usernameValidation.message}
+                                            </p>
+                                        )}
+                                        {isSignUp && name && usernameValidation.isValid && (
+                                            <p className="mt-2 text-sm text-green-400">
+                                                ✓ Username is valid
+                                            </p>
+                                        )}
                                     </motion.div>
                                 )}
 
@@ -407,18 +457,18 @@ function AuthPageContent() {
                                     transition={{ delay: 0.2 }}
                                 >
                                     <label htmlFor="email" className="block text-sm font-medium text-white">
-                                        Email address
+                                        {isSignUp ? "Email address" : "Email or Username"}
                                     </label>
                                     <input
                                         id="email"
                                         name="email"
-                                        type="email"
-                                        autoComplete="email"
+                                        type="text"
+                                        autoComplete={isSignUp ? "email" : "username"}
                                         required
                                         value={email}
                                         onChange={(e) => setEmail(e.target.value)}
                                         className="mt-1 block w-full rounded-lg border border-white/30 bg-white/20 py-2 px-3 text-white placeholder-white/70 focus:outline-none focus:ring-2 focus:ring-white focus:border-transparent"
-                                        placeholder="Enter your email"
+                                        placeholder={isSignUp ? "Enter your email" : "Email or username"}
                                     />
                                 </motion.div>
 
