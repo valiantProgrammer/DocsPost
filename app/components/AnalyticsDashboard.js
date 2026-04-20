@@ -20,7 +20,7 @@ import "./AnalyticsDashboard.css";
 import { FiTrendingUp, FiEye, FiThumbsUp, FiCalendar, FiActivity, FiZap } from "react-icons/fi";
 
 export default function AnalyticsDashboard({ userEmail }) {
-    const [timeframe, setTimeframe] = useState("daily"); // hourly, daily, monthly, yearly
+    const [timeframe, setTimeframe] = useState("daily"); // quarterly, daily, monthly, yearly
     const [viewStats, setViewStats] = useState([]);
     const [voteStats, setVoteStats] = useState([]);
     const [articleStats, setArticleStats] = useState([]);
@@ -81,6 +81,17 @@ export default function AnalyticsDashboard({ userEmail }) {
         fetchActivityLog();
     }, [userEmail, timeframe]);
 
+    // Auto-refresh analytics every 30 seconds to capture new views
+    useEffect(() => {
+        const interval = setInterval(() => {
+            if (userEmail) {
+                fetchAnalytics();
+            }
+        }, 30000); // 30 seconds
+
+        return () => clearInterval(interval);
+    }, [userEmail, timeframe]);
+
     const fetchAnalytics = async () => {
         setIsLoading(true);
         try {
@@ -125,14 +136,14 @@ export default function AnalyticsDashboard({ userEmail }) {
     // Get subtitle based on timeframe
     const getTimeframeSubtitle = () => {
         switch (timeframe) {
-            case "hourly":
-                return "Last 7 hours";
+            case "quarterly":
+                return "Last 7 hours (15-min intervals)";
             case "daily":
-                return "Last 7 days";
+                return "Last 30 days";
             case "monthly":
-                return "Last 10 months";
+                return "Last 36 months";
             case "yearly":
-                return "Last 7 years";
+                return "Last 20 years";
             default:
                 return "Last 7 days";
         }
@@ -145,16 +156,28 @@ export default function AnalyticsDashboard({ userEmail }) {
         const filledData = [];
         const now = new Date();
 
-        if (timeframe === "hourly") {
-            // Fill missing hours in last 7 hours
-            const hours = 7;
-            for (let i = hours - 1; i >= 0; i--) {
-                const date = new Date(now.getTime() - i * 60 * 60 * 1000);
+        if (timeframe === "quarterly") {
+            // Align to fixed 15-minute boundaries (:00, :15, :30, :45)
+            const now = new Date();
+            const minutes = now.getMinutes();
+            const alignedMinutes = Math.floor(minutes / 15) * 15;
+
+            // Create aligned boundary (round down to nearest 15-min)
+            const alignedTime = new Date(now);
+            alignedTime.setMinutes(alignedMinutes);
+            alignedTime.setSeconds(0);
+            alignedTime.setMilliseconds(0);
+
+            // Go back 27 intervals from aligned current time to show last 7 hours
+            const intervals = 28; // 7 hours * 4 intervals per hour
+            for (let i = intervals - 1; i >= 0; i--) {
+                const date = new Date(alignedTime.getTime() - i * 15 * 60 * 1000);
                 const year = date.getFullYear();
                 const month = String(date.getMonth() + 1).padStart(2, '0');
                 const day = String(date.getDate()).padStart(2, '0');
                 const hour = String(date.getHours()).padStart(2, '0');
-                const dateStr = `${year}-${month}-${day} ${hour}:00`;
+                const minutes = String(date.getMinutes()).padStart(2, '0');
+                const dateStr = `${year}-${month}-${day} ${hour}:${minutes}`;
                 const existing = data.find(item => item._id === dateStr);
                 filledData.push({
                     _id: dateStr,
@@ -163,8 +186,8 @@ export default function AnalyticsDashboard({ userEmail }) {
                 });
             }
         } else if (timeframe === "daily") {
-            // Fill missing days in last 7 days
-            const days = 7;
+            // Fill missing days in last 30 days
+            const days = 30;
             for (let i = days - 1; i >= 0; i--) {
                 const date = new Date(now.getTime() - i * 24 * 60 * 60 * 1000);
                 const dateStr = date.toISOString().slice(0, 10);
@@ -176,8 +199,8 @@ export default function AnalyticsDashboard({ userEmail }) {
                 });
             }
         } else if (timeframe === "monthly") {
-            // Fill missing months in last 10 months
-            const months = 10;
+            // Fill missing months in last 36 months
+            const months = 36;
             for (let i = months - 1; i >= 0; i--) {
                 const date = new Date(now.getFullYear(), now.getMonth() - i, 1);
                 const dateStr = date.toISOString().slice(0, 7);
@@ -189,8 +212,8 @@ export default function AnalyticsDashboard({ userEmail }) {
                 });
             }
         } else if (timeframe === "yearly") {
-            // Fill missing years in last 7 years
-            const years = 7;
+            // Fill missing years in last 20 years
+            const years = 20;
             for (let i = years - 1; i >= 0; i--) {
                 const year = now.getFullYear() - i;
                 const dateStr = year.toString();
@@ -208,10 +231,62 @@ export default function AnalyticsDashboard({ userEmail }) {
 
     // Format data for display
     const filledViewStats = fillMissingData(viewStats);
+
+    if (timeframe === "quarterly") {
+        console.log("[Debug] API viewStats:", viewStats);
+        console.log("[Debug] Filled viewStats:", filledViewStats);
+    }
+
     const formattedViewStats = filledViewStats.map((item) => ({
         ...item,
         name: item._id,
         value: item.views,
+    }));
+
+    // Calculate smoothed trend line using Exponential Moving Average with trend projection
+    // Adapts smoothing parameters based on timeframe and data point count
+    const calculateSmoothedTrendLine = (data) => {
+        const dataLength = data.length;
+
+        // Dynamically adjust smoothing based on timeframe and data volume
+        let alpha, trendWindow, lookAheadWeight;
+
+        // Use same smoothing for all timeframes
+        alpha = 0.3;
+        trendWindow = Math.min(8, dataLength);
+        lookAheadWeight = 1.3;
+
+        // Step 1: Calculate Exponential Moving Average (EMA)
+        const emaValues = [];
+        let ema = data[0]?.value || 0;
+
+        for (let i = 0; i < data.length; i++) {
+            ema = alpha * (data[i]?.value || 0) + (1 - alpha) * ema;
+            emaValues.push(ema);
+        }
+
+        // Step 2: Calculate trend direction (slope over recent points)
+        const trendStartIdx = Math.max(0, dataLength - trendWindow);
+        const recentEMA = emaValues.slice(trendStartIdx);
+
+        let totalTrend = 0;
+        for (let i = 1; i < recentEMA.length; i++) {
+            totalTrend += (recentEMA[i] - recentEMA[i - 1]);
+        }
+        const avgTrend = totalTrend / Math.max(1, recentEMA.length - 1);
+
+        // Step 3: Project trend forward to create "leading" effect
+        return emaValues.map((emaVal) => {
+            const projectedValue = emaVal + (avgTrend * lookAheadWeight);
+            return Math.max(0, Math.round(projectedValue * 100) / 100);
+        });
+    };
+
+    const smoothedTrendValues = calculateSmoothedTrendLine(formattedViewStats);
+
+    const chartDataWithDeviation = formattedViewStats.map((item, index) => ({
+        ...item,
+        deviation: smoothedTrendValues[index] || 0,
     }));
 
     // Get activity heatmap data (last 365 days)
@@ -251,10 +326,10 @@ export default function AnalyticsDashboard({ userEmail }) {
                 <h2>Analytics & Performance</h2>
                 <div className="timeframe-selector">
                     <button
-                        className={`timeframe-btn ${timeframe === "hourly" ? "active" : ""}`}
-                        onClick={() => setTimeframe("hourly")}
+                        className={`timeframe-btn ${timeframe === "quarterly" ? "active" : ""}`}
+                        onClick={() => setTimeframe("quarterly")}
                     >
-                        Hourly
+                        Quarterly
                     </button>
                     <button
                         className={`timeframe-btn ${timeframe === "daily" ? "active" : ""}`}
@@ -371,7 +446,7 @@ export default function AnalyticsDashboard({ userEmail }) {
                             <div className="chart-loading">Loading...</div>
                         ) : (
                             <ResponsiveContainer width="100%" height={320}>
-                                <ComposedChart data={formattedViewStats}>
+                                <ComposedChart data={chartDataWithDeviation} margin={{ top: 20, right: 30, bottom: 80, left: 0 }}>
                                     <defs>
                                         <linearGradient id="colorGradient" x1="0" y1="0" x2="0" y2="1">
                                             <stop offset="5%" stopColor="var(--chart-purple)" stopOpacity={0.8} />
@@ -389,14 +464,19 @@ export default function AnalyticsDashboard({ userEmail }) {
                                     />
                                     <YAxis
                                         yAxisId="left"
+                                        width={60}
                                         stroke="var(--text-muted)"
                                         tick={{ fontSize: 12 }}
+                                        domain={[0, 'auto']}
                                     />
                                     <YAxis
                                         yAxisId="right"
                                         orientation="right"
+                                        width={60}
+                                        type="number"
                                         stroke="var(--text-muted)"
                                         tick={{ fontSize: 12 }}
+                                        domain={[0, 'auto']}
                                     />
                                     <Tooltip
                                         contentStyle={{
@@ -423,13 +503,13 @@ export default function AnalyticsDashboard({ userEmail }) {
                                     />
                                     <Line
                                         yAxisId="right"
-                                        type="monotone"
-                                        dataKey="value"
+                                        type="natural"
+                                        dataKey="deviation"
                                         stroke="var(--chart-green)"
-                                        name="Trend"
+                                        name="Trend (Deviation from Avg)"
                                         strokeWidth={3}
-                                        dot={{ fill: "var(--chart-green)", r: 5 }}
-                                        activeDot={{ r: 7 }}
+                                        dot={false}
+                                        isAnimationActive={false}
                                     />
                                 </ComposedChart>
                             </ResponsiveContainer>
@@ -445,7 +525,7 @@ export default function AnalyticsDashboard({ userEmail }) {
                             <div className="chart-loading">Loading...</div>
                         ) : articleStats.length > 0 ? (
                             <ResponsiveContainer width="100%" height={320}>
-                                <PieChart>
+                                <PieChart margin={{ top: 20, right: 30, bottom: 80, left: 0 }}>
                                     <Pie
                                         data={articleStats.slice(0, 4)}
                                         cx="50%"
@@ -496,7 +576,7 @@ export default function AnalyticsDashboard({ userEmail }) {
                     <div className="chart-wrapper">
                         {articleStats.length > 0 ? (
                             <ResponsiveContainer width="100%" height={280}>
-                                <BarChart data={articleStats.slice(0, 5)}>
+                                <BarChart data={articleStats.slice(0, 5)} margin={{ top: 20, right: 30, bottom: 80, left: 0 }}>
                                     <CartesianGrid
                                         strokeDasharray="1 1"
                                         stroke="var(--chart-grid)"
@@ -562,7 +642,7 @@ export default function AnalyticsDashboard({ userEmail }) {
                             <div className="chart-loading">Loading...</div>
                         ) : (
                             <ResponsiveContainer width="100%" height={280}>
-                                <LineChart data={formattedViewStats}>
+                                <LineChart data={chartDataWithDeviation} margin={{ top: 20, right: 30, bottom: 80, left: 0 }}>
                                     <CartesianGrid
                                         strokeDasharray="1 1"
                                         stroke="var(--chart-grid)"
@@ -573,8 +653,11 @@ export default function AnalyticsDashboard({ userEmail }) {
                                         stroke="var(--text-muted)"
                                     />
                                     <YAxis
+                                        width={60}
+                                        type="number"
                                         stroke="var(--text-muted)"
                                         tick={{ fontSize: 12 }}
+                                        domain={[0, 'auto']}
                                     />
                                     <Tooltip
                                         contentStyle={{
@@ -592,12 +675,12 @@ export default function AnalyticsDashboard({ userEmail }) {
                                     />
                                     <Legend />
                                     <Line
-                                        type="monotone"
-                                        dataKey="value"
+                                        type="natural"
+                                        dataKey="deviation"
                                         stroke="var(--chart-blue)"
-                                        name="Activity"
-                                        dot={{ fill: "var(--chart-blue)", r: 5 }}
-                                        activeDot={{ r: 7 }}
+                                        name="Activity (Deviation from Avg)"
+                                        dot={false}
+                                        isAnimationActive={false}
                                         strokeWidth={3}
                                     />
                                 </LineChart>

@@ -4,7 +4,7 @@ export async function GET(req) {
     try {
         const { searchParams } = new URL(req.url);
         const userEmail = searchParams.get("email");
-        const timeframe = searchParams.get("timeframe") || "daily"; // hourly, daily, monthly, yearly
+        const timeframe = searchParams.get("timeframe") || "daily"; // quarterly, daily, monthly, yearly
 
         if (!userEmail) {
             return new Response(
@@ -24,21 +24,33 @@ export async function GET(req) {
         let startDate;
         let groupBy;
 
-        if (timeframe === "hourly") {
-            // Last 7 hours
+        if (timeframe === "quarterly") {
+            // Last 7 hours (15-minute intervals)
+            // Round to nearest 15-minute boundary using timestamp math
             startDate = new Date(now.getTime() - 7 * 60 * 60 * 1000);
-            groupBy = { $dateToString: { format: "%Y-%m-%d %H:00", date: "$timestamp" } };
+            groupBy = {
+                $dateToString: {
+                    format: "%Y-%m-%d %H:%M",
+                    date: {
+                        $toDate: {
+                            $multiply: [
+                                { $floor: { $divide: [{ $toLong: "$timestamp" }, 15 * 60 * 1000] } },
+                                15 * 60 * 1000
+                            ]
+                        }
+                    }
+                }
+            };
         } else if (timeframe === "yearly") {
-            // Last 7 years
-            startDate = new Date(now.getFullYear() - 7, 0, 1);
+            startDate = new Date(now.getFullYear() - 20, 0, 1);
             groupBy = { $dateToString: { format: "%Y", date: "$timestamp" } };
         } else if (timeframe === "monthly") {
-            // Last 10 months
-            startDate = new Date(now.getFullYear(), now.getMonth() - 10, 1);
+            // Last 36 months
+            startDate = new Date(now.getFullYear(), now.getMonth() - 36, 1);
             groupBy = { $dateToString: { format: "%Y-%m", date: "$timestamp" } };
         } else {
-            // Last 7 days (daily)
-            startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+            // Last 30 days (daily)
+            startDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
             groupBy = { $dateToString: { format: "%Y-%m-%d", date: "$timestamp" } };
         }
 
@@ -140,6 +152,10 @@ export async function GET(req) {
             .toArray();
 
         await client.close();
+
+        if (timeframe === "quarterly") {
+            console.log(`[API Debug] Timeframe: ${timeframe}, startDate: ${startDate}, viewStats count: ${viewStats.length}`, viewStats);
+        }
 
         return new Response(
             JSON.stringify({
