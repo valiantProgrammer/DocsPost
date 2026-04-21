@@ -23,7 +23,7 @@ export default function DashboardSidebar({ activeTab, onTabChange }) {
     const menuItems = [
         { id: "analytics", label: "Dashboard", icon: FiBarChart2 },
         { id: "profile", label: "Profile", icon: FiUser },
-        { id: "workplace", label: "Workplace", icon: FiBriefcase },
+        { id: "workspace", label: "Workspace", icon: FiBriefcase },
         { id: "settings", label: "Settings", icon: FiSettings },
     ];
 
@@ -56,7 +56,17 @@ export default function DashboardSidebar({ activeTab, onTabChange }) {
                                 key={item.id}
                                 className={`nav-item ${activeTab === item.id ? "active" : ""}`}
                                 onClick={() => {
-                                    onTabChange(item.id);
+                                    if (onTabChange) {
+                                        onTabChange(item.id);
+                                    } else {
+                                        const routeMap = {
+                                            analytics: "/dashboard",
+                                            profile: "/dashboard",
+                                            workspace: "/workspace",
+                                            settings: "/settings",
+                                        };
+                                        router.push(routeMap[item.id] || "/dashboard");
+                                    }
                                     setIsOpen(false); // Close on mobile
                                 }}
                             >
