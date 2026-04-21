@@ -1,6 +1,6 @@
 "use client"
 import { useRef } from "react";
-import { FiX, FiEye, FiTrash2, FiUpload } from "react-icons/fi";
+import { FiX, FiEye, FiTrash2, FiUpload, FiCamera } from "react-icons/fi";
 import "./ProfilePictureModal.css";
 
 export default function ProfilePictureModal({
@@ -66,7 +66,10 @@ export default function ProfilePictureModal({
             >
                 {/* Header */}
                 <div className="modal-header">
-                    <h2>Profile Picture</h2>
+                    <h2>
+                        <FiCamera size={24} />
+                        Change Profile Picture
+                    </h2>
                     <button
                         className="close-btn"
                         onClick={onClose}
@@ -96,7 +99,7 @@ export default function ProfilePictureModal({
                             disabled={isLoading}
                         >
                             <FiEye size={18} />
-                            <span>View DP</span>
+                            <span>View Full Size</span>
                         </button>
                     )}
 
@@ -106,7 +109,7 @@ export default function ProfilePictureModal({
                         disabled={isLoading}
                     >
                         <FiUpload size={18} />
-                        <span>{profilePicture ? "Update DP" : "Upload DP"}</span>
+                        <span>{profilePicture ? "Change Picture" : "Upload Picture"}</span>
                     </button>
 
                     {profilePicture && (
@@ -116,7 +119,7 @@ export default function ProfilePictureModal({
                             disabled={isLoading}
                         >
                             <FiTrash2 size={18} />
-                            <span>Delete DP</span>
+                            <span>Delete Picture</span>
                         </button>
                     )}
                 </div>
