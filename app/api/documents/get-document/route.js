@@ -1,17 +1,17 @@
-import { MongoClient } from "mongodb";
+import { MongoClient, ObjectId } from "mongodb";
 
 export async function GET(req) {
     let client;
     try {
         const { searchParams } = new URL(req.url);
         const slug = searchParams.get("slug");
+        const documentId = searchParams.get("documentId");
         const userEmail = searchParams.get("userEmail") || "";
 
-        if (!slug) {
-            return new Response(
-                JSON.stringify({ error: "Document slug is required" }),
-                { status: 400 }
-            );
+        if (!slug && !documentId) {
+            return new Response(JSON.stringify({ error: "Document slug or id is required" }), {
+                status: 400,
+            });
         }
 
         if (!process.env.MONGODB_URI) {
@@ -27,21 +27,16 @@ export async function GET(req) {
 
         const docsCollection = db.collection("user_documents");
 
-        // Increment view count and get updated document
-        const document = await docsCollection.findOneAndUpdate(
-            { slug },
-            { $inc: { views: 1 } },
-            { returnDocument: "after" }
-        );
+        const query = slug ? { slug } : { _id: new ObjectId(documentId), ...(userEmail ? { userEmail } : {}) };
+
+        const document = slug
+            ? await docsCollection.findOneAndUpdate(query, { $inc: { views: 1 } }, { returnDocument: "after" })
+            : await docsCollection.findOne(query);
 
         if (!document) {
-            return new Response(
-                JSON.stringify({ error: "Document not found" }),
-                { status: 404 }
-            );
+            return new Response(JSON.stringify({ error: "Document not found" }), { status: 404 });
         }
 
-        // Get author's username
         let authorUsername = "";
         if (document.userEmail) {
             try {
@@ -54,7 +49,6 @@ export async function GET(req) {
             }
         }
 
-        // View logging now handled by frontend via log-view-optimized endpoint
         return new Response(
             JSON.stringify({
                 success: true,
@@ -68,19 +62,22 @@ export async function GET(req) {
                     slug: document.slug,
                     views: document.views || 0,
                     userEmail: document.userEmail,
-                    authorUsername: authorUsername,
+                    authorUsername,
                     createdAt: document.createdAt,
                     updatedAt: document.updatedAt,
+                    status: document.status || (document.published ? "Published" : "Draft"),
+                    visibility: document.visibility || "Public",
+                    tags: document.tags || [],
+                    featuredImage: document.featuredImage || "",
                 },
             }),
             { status: 200 }
         );
     } catch (error) {
         console.error("Error fetching document:", error);
-        return new Response(
-            JSON.stringify({ error: error.message || "Failed to fetch document" }),
-            { status: 500 }
-        );
+        return new Response(JSON.stringify({ error: error.message || "Failed to fetch document" }), {
+            status: 500,
+        });
     } finally {
         if (client) {
             await client.close();

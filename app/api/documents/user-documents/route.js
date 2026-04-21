@@ -8,10 +8,9 @@ export async function GET(req) {
         const category = searchParams.get("category");
 
         if (!userEmail && !category) {
-            return new Response(
-                JSON.stringify({ error: "User email or category is required" }),
-                { status: 400 }
-            );
+            return new Response(JSON.stringify({ error: "User email or category is required" }), {
+                status: 400,
+            });
         }
 
         if (!process.env.MONGODB_URI) {
@@ -27,15 +26,11 @@ export async function GET(req) {
 
         const docsCollection = db.collection("user_documents");
 
-        // Build filter based on parameters
         const filter = {};
         if (userEmail) filter.userEmail = userEmail;
         if (category) filter.category = category;
 
-        const documents = await docsCollection
-            .find(filter)
-            .sort({ createdAt: -1 })
-            .toArray();
+        const documents = await docsCollection.find(filter).sort({ createdAt: -1 }).toArray();
 
         return new Response(
             JSON.stringify({
@@ -52,16 +47,19 @@ export async function GET(req) {
                     views: doc.views || 0,
                     createdAt: doc.createdAt,
                     updatedAt: doc.updatedAt,
+                    status: doc.status || (doc.published ? "Published" : "Draft"),
+                    visibility: doc.visibility || "Public",
+                    tags: doc.tags || [],
+                    featuredImage: doc.featuredImage || "",
                 })),
             }),
             { status: 200 }
         );
     } catch (error) {
         console.error("Error fetching documents:", error);
-        return new Response(
-            JSON.stringify({ error: error.message || "Failed to fetch documents" }),
-            { status: 500 }
-        );
+        return new Response(JSON.stringify({ error: error.message || "Failed to fetch documents" }), {
+            status: 500,
+        });
     } finally {
         if (client) {
             await client.close();

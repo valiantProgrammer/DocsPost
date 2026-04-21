@@ -1,296 +1,276 @@
 "use client";
-import { useState, useEffect } from "react";
-import { FiPlus, FiEdit2, FiTrash2, FiEye, FiArrowRight, FiFileText } from "react-icons/fi";
-import DocumentEditor from "./DocumentEditor";
+
+import { useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
+import {
+    FiEye,
+    FiEdit2,
+    FiGrid,
+    FiList,
+    FiMoreVertical,
+    FiPlus,
+    FiSearch,
+    FiTrash2,
+    FiCopy,
+    FiShare2,
+    FiChevronLeft,
+    FiChevronRight,
+} from "react-icons/fi";
 import "./UserWorkspace.css";
 
+const PAGE_SIZE = 6;
+
 export default function UserWorkspace({ userEmail }) {
+    const router = useRouter();
     const [documents, setDocuments] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
-    const [showCreateModal, setShowCreateModal] = useState(false);
-    const [editingDoc, setEditingDoc] = useState(null);
-    const [formData, setFormData] = useState({
-        title: "",
-        description: "",
-        content: "",
-        category: "DSA",
-        difficulty: "Beginner",
-    });
-
-    useEffect(() => {
-        fetchUserDocuments();
-    }, [userEmail]);
+    const [query, setQuery] = useState("");
+    const [statusFilter, setStatusFilter] = useState("All");
+    const [sortBy, setSortBy] = useState("Recently Updated");
+    const [view, setView] = useState("grid");
+    const [currentPage, setCurrentPage] = useState(1);
+    const [menuOpenFor, setMenuOpenFor] = useState("");
 
     const fetchUserDocuments = async () => {
+        if (!userEmail) return;
+
         try {
+            setIsLoading(true);
             const response = await fetch(
                 `/api/documents/user-documents?email=${encodeURIComponent(userEmail)}`
             );
-            if (response.ok) {
-                const data = await response.json();
-                setDocuments(data.documents || []);
+            if (!response.ok) {
+                throw new Error("Failed to load documents");
             }
+
+            const data = await response.json();
+            setDocuments(data.documents || []);
         } catch (error) {
             console.error("Error fetching documents:", error);
+            alert("Unable to load your documents right now.");
         } finally {
             setIsLoading(false);
         }
     };
 
-    const handleCreateNew = () => {
-        setEditingDoc(null);
-        setFormData({
-            title: "",
-            description: "",
-            content: "",
-            category: "DSA",
-            difficulty: "Beginner",
-        });
-        setShowCreateModal(true);
-    };
 
-    const handleEdit = (doc) => {
-        setEditingDoc(doc);
-        setFormData({
-            title: doc.title,
-            description: doc.description,
-            content: doc.content || "",
-            category: doc.category,
-            difficulty: doc.difficulty,
-        });
-        setShowCreateModal(true);
-    };
 
-    const handleSave = async () => {
-        if (!formData.title.trim() || !formData.description.trim()) {
-            alert("Please fill in all required fields");
-            return;
+    useEffect(() => {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        fetchUserDocuments();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [userEmail]);
+
+    const filteredDocuments = useMemo(() => {
+        const lowerQuery = query.toLowerCase();
+
+        const filtered = documents.filter((doc) => {
+            const statusMatches =
+                statusFilter === "All" ||
+                (statusFilter === "Draft" && (doc.status || "Draft") === "Draft") ||
+                (statusFilter === "Published" && (doc.status || "Draft") === "Published");
+
+            const textMatches =
+                doc.title?.toLowerCase().includes(lowerQuery) ||
+                doc.tags?.join(" ")?.toLowerCase().includes(lowerQuery) ||
+                doc.content?.toLowerCase().includes(lowerQuery);
+
+            return statusMatches && (!lowerQuery || textMatches);
+        });
+
+        const sorted = [...filtered];
+        if (sortBy === "Recently Updated") {
+            sorted.sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
+        } else if (sortBy === "Oldest") {
+            sorted.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+        } else if (sortBy === "Most Viewed") {
+            sorted.sort((a, b) => (b.views || 0) - (a.views || 0));
         }
 
-        try {
-            const endpoint = editingDoc
-                ? `/api/documents/update-document`
-                : `/api/documents/create-document`;
-            const method = editingDoc ? "PUT" : "POST";
+        return sorted;
+    }, [documents, query, statusFilter, sortBy]);
 
-            const payload = {
-                ...formData,
-                userEmail,
-                ...(editingDoc && { documentId: editingDoc._id }),
-            };
+    const totalPages = Math.max(1, Math.ceil(filteredDocuments.length / PAGE_SIZE));
+    const pagedDocuments = filteredDocuments.slice(
+        (currentPage - 1) * PAGE_SIZE,
+        currentPage * PAGE_SIZE
+    );
 
-            const response = await fetch(endpoint, {
-                method,
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(payload),
-            });
-
-            if (response.ok) {
-                // Document creation is logged via the create-document endpoint
-                setShowCreateModal(false);
-
-                fetchUserDocuments();
-                alert(editingDoc ? "Document updated!" : "Document created!");
-            } else {
-                alert("Failed to save document");
-            }
-        } catch (error) {
-            console.error("Error saving document:", error);
-            alert("Error saving document");
-        }
-    };
 
     const handleDelete = async (docId) => {
         if (!confirm("Are you sure you want to delete this document?")) return;
 
         try {
-            const response = await fetch(`/api/documents/delete-document`, {
+            const response = await fetch("/api/documents/delete-document", {
                 method: "DELETE",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ documentId: docId }),
             });
 
-            if (response.ok) {
-                fetchUserDocuments();
-                alert("Document deleted!");
-            } else {
-                alert("Failed to delete document");
-            }
+            if (!response.ok) throw new Error("Delete failed");
+
+            setMenuOpenFor("");
+            await fetchUserDocuments();
         } catch (error) {
-            console.error("Error deleting document:", error);
-            alert("Error deleting document");
+            console.error("Delete error:", error);
+            alert("Could not delete document.");
         }
     };
 
+    const handleDuplicate = async (doc) => {
+        try {
+            const response = await fetch("/api/documents/create-document", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    userEmail,
+                    title: `${doc.title} (Copy)`,
+                    description: doc.description,
+                    content: doc.content,
+                    category: doc.category,
+                    status: "Draft",
+                    visibility: doc.visibility || "Public",
+                    tags: doc.tags || [],
+                    featuredImage: doc.featuredImage || "",
+                }),
+            });
+
+            if (!response.ok) throw new Error("Duplicate failed");
+
+            setMenuOpenFor("");
+            await fetchUserDocuments();
+        } catch (error) {
+            console.error("Duplicate error:", error);
+            alert("Could not duplicate document.");
+        }
+    };
+
+    const handleShare = async (doc) => {
+        const link = `${window.location.origin}/doc/${doc.slug}`;
+
+        try {
+            await navigator.clipboard.writeText(link);
+            alert("Share link copied to clipboard");
+        } catch {
+            alert(link);
+        } finally {
+            setMenuOpenFor("");
+        }
+    };
+
+    const formatDate = (dateValue) => {
+        if (!dateValue) return "-";
+        return new Date(dateValue).toLocaleDateString(undefined, {
+            month: "short",
+            day: "numeric",
+            year: "numeric",
+        });
+    };
+
     return (
-        <div className="user-workspace">
-            <div className="workspace-header">
+        <div className="user-workspace-v2">
+            <div className="workspace-header-v2">
                 <div>
-                    <h2>Your Workspace</h2>
-                    <p>Create, edit, and manage your documentation</p>
+                    <h2>My Documents</h2>
+                    <p>Manage, edit, and publish your content from one place.</p>
                 </div>
-                <button className="btn btn-primary create-btn" onClick={handleCreateNew}>
-                    <FiPlus size={20} />
-                    Create New Document
+                <button className="workspace-primary-btn" onClick={() => router.push("/workspace/new")}>
+                    <FiPlus size={18} />
+                    New Document
                 </button>
             </div>
 
-            {isLoading ? (
-                <div className="loading">Loading your documents...</div>
-            ) : documents.length === 0 ? (
-                <div className="empty-state">
-                    <FiFileText size={48} />
-                    <h3>No documents yet</h3>
-                    <p>Start creating your first documentation</p>
-                    <button className="btn btn-primary" onClick={handleCreateNew}>
-                        <FiPlus size={18} />
-                        Create Your First Document
+            <div className="workspace-controls">
+                <label className="workspace-search">
+                    <FiSearch />
+                    <input
+                        value={query}
+                        onChange={(e) => { setQuery(e.target.value); setCurrentPage(1); }}
+                        placeholder="Search by title, tags, or content"
+                    />
+                </label>
+
+                <select value={statusFilter} onChange={(e) => { setStatusFilter(e.target.value); setCurrentPage(1); }}>
+                    <option>All</option>
+                    <option>Draft</option>
+                    <option>Published</option>
+                </select>
+
+                <select value={sortBy} onChange={(e) => { setSortBy(e.target.value); setCurrentPage(1); }}>
+                    <option>Recently Updated</option>
+                    <option>Oldest</option>
+                    <option>Most Viewed</option>
+                </select>
+
+                <div className="view-toggle-group">
+                    <button className={view === "grid" ? "active" : ""} onClick={() => setView("grid")}>
+                        <FiGrid />
+                    </button>
+                    <button className={view === "list" ? "active" : ""} onClick={() => setView("list")}>
+                        <FiList />
                     </button>
                 </div>
+            </div>
+
+            {isLoading ? (
+                <div className="workspace-empty">Loading documents...</div>
+            ) : pagedDocuments.length === 0 ? (
+                <div className="workspace-empty">No documents found for the current filters.</div>
             ) : (
-                <div className="documents-grid">
-                    {documents.map((doc) => (
-                        <div key={doc._id} className="document-card">
-                            <div className="card-header">
-                                <div className="card-title">
+                <div className={view === "grid" ? "documents-grid-v2" : "documents-list-v2"}>
+                    {pagedDocuments.map((doc) => (
+                        <article key={doc._id} className="workspace-doc-card">
+                            <div className="workspace-doc-top">
+                                <div>
                                     <h3>{doc.title}</h3>
-                                    <span className={`difficulty-badge difficulty-${doc.difficulty.toLowerCase()}`}>
-                                        {doc.difficulty}
-                                    </span>
+                                    <p>{doc.description || "No description"}</p>
                                 </div>
-                                <div className="card-actions">
-                                    <button
-                                        className="action-btn edit"
-                                        onClick={() => handleEdit(doc)}
-                                        title="Edit"
-                                    >
-                                        <FiEdit2 size={18} />
-                                    </button>
-                                    <button
-                                        className="action-btn delete"
-                                        onClick={() => handleDelete(doc._id)}
-                                        title="Delete"
-                                    >
-                                        <FiTrash2 size={18} />
-                                    </button>
-                                </div>
-                            </div>
-
-                            <p className="card-description">{doc.description}</p>
-
-                            <div className="card-meta">
-                                <span className="category-tag">{doc.category}</span>
-                                <span className="view-count">
-                                    <FiEye size={14} />
-                                    {doc.views || 0} views
+                                <span className={`status-pill ${(doc.status || "Draft").toLowerCase()}`}>
+                                    {doc.status || "Draft"}
                                 </span>
                             </div>
 
-                            <a href={`/doc/${doc.slug}`} className="card-link">
-                                View Document <FiArrowRight size={16} />
-                            </a>
-                        </div>
+                            <div className="workspace-doc-meta">
+                                <span>Updated {formatDate(doc.updatedAt)}</span>
+                                <span>{doc.views || 0} views</span>
+                            </div>
+
+                            <div className="workspace-doc-actions">
+                                <button onClick={() => router.push(`/workspace/${doc._id}`)}>
+                                    <FiEdit2 size={15} /> Edit
+                                </button>
+                                <button onClick={() => handleDelete(doc._id)}>
+                                    <FiTrash2 size={15} /> Delete
+                                </button>
+                                <button onClick={() => window.open(`/doc/${doc.slug}`, "_blank") }>
+                                    <FiEye size={15} /> Preview
+                                </button>
+                                <div className="more-wrapper">
+                                    <button onClick={() => setMenuOpenFor(menuOpenFor === doc._id ? "" : doc._id)}>
+                                        <FiMoreVertical />
+                                    </button>
+                                    {menuOpenFor === doc._id && (
+                                        <div className="more-menu">
+                                            <button onClick={() => handleDuplicate(doc)}><FiCopy size={14} /> Duplicate</button>
+                                            <button onClick={() => handleShare(doc)}><FiShare2 size={14} /> Share link</button>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        </article>
                     ))}
                 </div>
             )}
 
-            {/* Create/Edit Modal */}
-            {showCreateModal && (
-                <div className="modal-overlay" onClick={() => setShowCreateModal(false)}>
-                    <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-                        <div className="modal-header">
-                            <h3>{editingDoc ? "Edit Document" : "Create New Document"}</h3>
-                            <button
-                                className="modal-close"
-                                onClick={() => setShowCreateModal(false)}
-                            >
-                                ✕
-                            </button>
-                        </div>
-
-                        <div className="modal-body">
-                            <div className="form-group">
-                                <label>Title *</label>
-                                <input
-                                    type="text"
-                                    value={formData.title}
-                                    onChange={(e) =>
-                                        setFormData({ ...formData, title: e.target.value })
-                                    }
-                                    placeholder="Document title"
-                                />
-                            </div>
-
-                            <div className="form-group">
-                                <label>Description *</label>
-                                <textarea
-                                    value={formData.description}
-                                    onChange={(e) =>
-                                        setFormData({ ...formData, description: e.target.value })
-                                    }
-                                    placeholder="Brief description of your document"
-                                    rows={3}
-                                />
-                            </div>
-
-                            <div className="form-row">
-                                <div className="form-group">
-                                    <label>Category</label>
-                                    <select
-                                        value={formData.category}
-                                        onChange={(e) =>
-                                            setFormData({ ...formData, category: e.target.value })
-                                        }
-                                    >
-                                        <option>DSA</option>
-                                        <option>Web Development</option>
-                                        <option>System Design</option>
-                                        <option>Database</option>
-                                        <option>DevOps</option>
-                                        <option>Other</option>
-                                    </select>
-                                </div>
-
-                                <div className="form-group">
-                                    <label>Difficulty</label>
-                                    <select
-                                        value={formData.difficulty}
-                                        onChange={(e) =>
-                                            setFormData({ ...formData, difficulty: e.target.value })
-                                        }
-                                    >
-                                        <option>Beginner</option>
-                                        <option>Intermediate</option>
-                                        <option>Advanced</option>
-                                    </select>
-                                </div>
-                            </div>
-
-                            <div className="form-group">
-                                <label>Content</label>
-                                <DocumentEditor
-                                    initialContent={formData.content}
-                                    onChange={(newContent) =>
-                                        setFormData({ ...formData, content: newContent })
-                                    }
-                                />
-                            </div>
-                        </div>
-
-                        <div className="modal-footer">
-                            <button
-                                className="btn btn-secondary"
-                                onClick={() => setShowCreateModal(false)}
-                            >
-                                Cancel
-                            </button>
-                            <button className="btn btn-primary" onClick={handleSave}>
-                                {editingDoc ? "Update Document" : "Create Document"}
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
+            <div className="workspace-pagination">
+                <button disabled={currentPage === 1} onClick={() => setCurrentPage((p) => p - 1)}>
+                    <FiChevronLeft /> Prev
+                </button>
+                <span>Page {currentPage} of {totalPages}</span>
+                <button disabled={currentPage === totalPages} onClick={() => setCurrentPage((p) => p + 1)}>
+                    Next <FiChevronRight />
+                </button>
+            </div>
         </div>
     );
 }

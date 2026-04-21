@@ -64,6 +64,7 @@ export default function DashboardPage() {
                 return <AnalyticsView userEmail={userEmail} />;
             case "profile":
                 return <ProfileView userData={userData} userEmail={userEmail} userName={userName} />;
+            case "workspace":
             case "workplace":
                 return <WorkplaceView />;
             case "settings":
