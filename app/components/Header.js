@@ -226,7 +226,7 @@ export default function Header() {
                                     <div className="dropdown-menu">
                                         <button
                                             className="dropdown-item"
-                                            onClick={() => handleProfileClick("/dashboard")}
+                                            onClick={() => handleProfileClick(`/${userName}`)}
                                         >
                                             <FiHome size={18} />
                                             <span>Dashboard</span>

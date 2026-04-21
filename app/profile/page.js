@@ -75,8 +75,12 @@ export default function Profile() {
             return;
         }
 
-        // Redirect to dashboard instead
-        router.push("/dashboard");
+        // Redirect to user dashboard (username-based URL)
+        if (savedUserName) {
+            router.push(`/${savedUserName}`);
+        } else {
+            router.push("/Auth?mode=signin");
+        }
     }, [router]);
 
     useEffect(() => {

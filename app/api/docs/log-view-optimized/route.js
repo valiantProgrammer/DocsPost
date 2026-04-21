@@ -47,6 +47,13 @@ export async function POST(req) {
         const authorEmail = document.userEmail;
         console.log(`[View Logged] DocID: ${docId}, Author: ${authorEmail}, Time: ${now.toISOString()}`);
 
+        // Update views count in user_documents collection
+        await docsCollection.updateOne(
+            { slug: docId },
+            { $inc: { views: 1 }, $set: { updatedAt: now } }
+        );
+        console.log(`[View Log] Updated user_documents views for: ${docId}`);
+
         // Calculate interval identifiers
         const istDate = new Date(now.getTime() + 5.5 * 60 * 60 * 1000);
         const dailyId = istDate.toISOString().split('T')[0];

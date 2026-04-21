@@ -3,17 +3,18 @@ import { MongoClient } from "mongodb";
 /**
  * GET /api/analytics/contribution-activity
  * Fetch contribution activity for a user (articles created by day)
+ * Data fetched directly from user_documents collection
  * 
  * Query params:
  * - email: User email
- * - days: Number of days to look back (default: 30)
+ * - days: Number of days to look back (default: 365)
  */
 export async function GET(req) {
     let client;
     try {
         const { searchParams } = new URL(req.url);
         const email = searchParams.get("email");
-        const days = parseInt(searchParams.get("days")) || 30;
+        const days = parseInt(searchParams.get("days")) || 365;
 
         if (!email) {
             return new Response(
@@ -42,37 +43,64 @@ export async function GET(req) {
             0, 0, 0, 0
         ));
 
-        // Fetch contribution stats from analytics_stats
-        const statsCollection = db.collection("analytics_stats");
-        const contributionStats = await statsCollection
+        // Fetch articles directly from user_documents collection
+        const docsCollection = db.collection("user_documents");
+        const userArticles = await docsCollection
             .find({
                 userEmail: email,
-                date: { $gte: startDate }
+                createdAt: { $gte: startDate }
             })
-            .sort({ date: -1 })
+            .sort({ createdAt: -1 })
             .toArray();
 
-        // Calculate totals
-        let totalArticlesCreated = 0;
-        let totalActivity = 0;
-        const creationsByDay = [];
+        console.log(`[Contribution Activity] Found ${userArticles.length} articles for ${email} in last ${days} days`);
 
-        contributionStats.forEach(stat => {
-            totalArticlesCreated += stat.articlesCreated || 0;
-            totalActivity += stat.totalActivity || 0;
+        // Group articles by creation date (UTC)
+        const creationMap = {};
+        userArticles.forEach(article => {
+            const createdDate = new Date(article.createdAt);
+            const dateStr = createdDate.toISOString().split("T")[0]; // YYYY-MM-DD format
 
-            creationsByDay.push({
-                date: stat.date,
-                articlesCreated: stat.articlesCreated || 0,
-                articles: stat.createdArticles || [],
-                totalActivity: stat.totalActivity || 0,
+            if (!creationMap[dateStr]) {
+                creationMap[dateStr] = {
+                    date: new Date(Date.UTC(
+                        createdDate.getUTCFullYear(),
+                        createdDate.getUTCMonth(),
+                        createdDate.getUTCDate(),
+                        0, 0, 0, 0
+                    )),
+                    articles: [],
+                    articlesCreated: 0
+                };
+            }
+
+            creationMap[dateStr].articles.push({
+                articleId: article.slug,
+                title: article.title,
+                createdAt: article.createdAt,
+                category: article.category || "Other",
+                views: article.views || 0
             });
+            creationMap[dateStr].articlesCreated += 1;
         });
+
+        // Convert map to array
+        const creationsByDay = Object.values(creationMap);
+
+        // Calculate totals
+        const totalArticlesCreated = userArticles.length;
+        const activeDays = creationsByDay.filter(d => d.articlesCreated > 0).length;
+        const averagePerDay = creationsByDay.length > 0
+            ? (totalArticlesCreated / creationsByDay.length).toFixed(2)
+            : 0;
+
+        console.log(`[Contribution Activity] Total articles: ${totalArticlesCreated}, Active days: ${activeDays}`);
 
         return new Response(
             JSON.stringify({
                 success: true,
                 userEmail: email,
+                dataSource: "user_documents",
                 period: {
                     days,
                     startDate,
@@ -80,13 +108,11 @@ export async function GET(req) {
                 },
                 summary: {
                     totalArticlesCreated,
-                    totalActivity,
-                    activeDays: creationsByDay.filter(d => d.articlesCreated > 0).length,
-                    averagePerDay: creationsByDay.length > 0
-                        ? (totalArticlesCreated / creationsByDay.length).toFixed(2)
-                        : 0,
+                    activeDays,
+                    averagePerDay,
+                    totalActivity: totalArticlesCreated,
                 },
-                creationsByDay,
+                creationsByDay: creationsByDay.sort((a, b) => a.date - b.date),
             }),
             { status: 200 }
         );
