@@ -800,8 +800,8 @@ export default function AnalyticsDashboard({ userEmail }) {
                     {/* Stats text */}
                     <div className="heatmap-stats">
                         <p>
-                            {stats.todayActivity > 0
-                                ? `${stats.todayActivity} article${stats.todayActivity === 1 ? "" : "s"
+                            {heatmapStats.todayActivity > 0
+                                ? `${heatmapStats.todayActivity} article${heatmapStats.todayActivity === 1 ? "" : "s"
                                 } created today`
                                 : "No articles created today"}
                         </p>

@@ -5,7 +5,7 @@ export async function POST(request) {
     let client;
     try {
         const body = await request.json();
-        const { userId, bio, city, country, educations, domains } = body;
+        const { userId, name, bio, city, country, location, educations, domains, socialLinks, profilePicture } = body;
 
         if (!userId) {
             return NextResponse.json(
@@ -21,11 +21,22 @@ export async function POST(request) {
 
         // Build update object
         const updateData = {};
+        if (name !== undefined) updateData.name = name;
         if (bio !== undefined) updateData.bio = bio;
         if (city !== undefined) updateData.city = city;
         if (country !== undefined) updateData.country = country;
+        if (location !== undefined) updateData.location = location;
+        if (profilePicture !== undefined) updateData.profilePicture = profilePicture;
         if (educations !== undefined) updateData.educations = educations;
         if (domains !== undefined) updateData.domains = domains;
+        if (socialLinks !== undefined) {
+            // Filter out empty strings to keep storage clean
+            const cleanedSocialLinks = {};
+            Object.entries(socialLinks).forEach(([key, value]) => {
+                cleanedSocialLinks[key] = value || "";
+            });
+            updateData.socialLinks = cleanedSocialLinks;
+        }
         updateData.updatedAt = new Date();
 
         // Update user document
@@ -64,6 +75,14 @@ export async function POST(request) {
                 country: updatedUser.country || null,
                 educations: updatedUser.educations || [],
                 domains: updatedUser.domains || [],
+                socialLinks: updatedUser.socialLinks || {
+                    twitter: "",
+                    linkedin: "",
+                    github: "",
+                    youtube: "",
+                    instagram: "",
+                    portfolio: "",
+                },
                 joinDate: updatedUser.joinDate || null,
             },
         });
