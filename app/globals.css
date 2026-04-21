@@ -1613,3 +1613,9 @@ a {
     gap: 12px;
   }
 }
+
+.workspace-controls select,
+.filter-select,
+.sort-select {
+  background-color: var(--panel-bg);
+}

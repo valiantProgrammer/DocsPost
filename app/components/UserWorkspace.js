@@ -1,5 +1,6 @@
 "use client";
-
+import { FaCalendarAlt } from "react-icons/fa";
+import { IoFolder } from "react-icons/io5";
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTheme } from "@/app/providers/ThemeProvider";
@@ -294,9 +295,9 @@ export default function UserWorkspace({ userEmail }) {
                                 </div>
 
                                 <div className="workspace-doc-meta">
-                                    <span>📅 {formatDate(doc.updatedAt)}</span>
+                                    <span><FaCalendarAlt /> {formatDate(doc.updatedAt)}</span>
                                     <span>👁 {doc.views || 0}</span>
-                                    {doc.category && <span>📂 {doc.category}</span>}
+                                    {doc.category && <span><IoFolder /> {doc.category}</span>}
                                 </div>
 
                                 {doc.tags && doc.tags.length > 0 && (

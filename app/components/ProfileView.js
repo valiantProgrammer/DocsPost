@@ -218,51 +218,6 @@ export default function ProfileView({ userData, userEmail, userName }) {
                     </div>
                 )}
             </section>
-
-            {/* Profile Overview Section */}
-            <section className="profile-overview-section">
-                <div className="overview-grid">
-                    <div className="stat-card">
-                        <div className="stat-card-icon">
-                            <FiFileText size={24} />
-                        </div>
-                        <h3>Articles Written</h3>
-                        <p className="stat-card-value">{profileData.articlesCount}</p>
-                    </div>
-                    <div className="stat-card">
-                        <div className="stat-card-icon">
-                            <FiBookmark size={24} />
-                        </div>
-                        <h3>Total Views</h3>
-                        <p className="stat-card-value">9,030</p>
-                    </div>
-                    <div className="stat-card">
-                        <div className="stat-card-icon">
-                            <FiUser size={24} />
-                        </div>
-                        <h3>Followers</h3>
-                        <p className="stat-card-value">{profileData.followers}</p>
-                    </div>
-                </div>
-
-                {/* Recent Articles */}
-                <div className="recent-articles-section">
-                    <h2>Recent Articles</h2>
-                    <div className="articles-display-grid">
-                        {articles.slice(0, 2).map((article) => (
-                            <div key={article.id} className="article-card-display">
-                                <span className="article-category">{article.category}</span>
-                                <h3>{article.title}</h3>
-                                <p>{article.excerpt}</p>
-                                <div className="article-meta-display">
-                                    <span>{article.date}</span>
-                                    <span>{article.views} views</span>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                </div>
-            </section>
         </div>
     );
 }

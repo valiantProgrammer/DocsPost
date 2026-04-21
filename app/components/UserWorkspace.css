@@ -413,6 +413,11 @@
   border-top: 1px solid var(--line);
 }
 
+.workspace-doc-actions button {
+  width: fit-content;
+  height: fit-content;
+}
+
 .action-btn {
   border: 1px solid var(--line);
   background: var(--page-bg);

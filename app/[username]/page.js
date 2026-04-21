@@ -59,18 +59,14 @@ export default function DashboardPage() {
 
     const renderContent = () => {
         switch (activeTab) {
-            case "dashboard":
-                return <DashboardView userName={userName} />;
             case "analytics":
                 return <AnalyticsView userEmail={userEmail} />;
             case "profile":
                 return <ProfileView userData={userData} userEmail={userEmail} userName={userName} />;
-            case "workplace":
-                return <WorkplaceView documents={documents} userName={userName} />;
             case "settings":
                 return <SettingsView />;
             default:
-                return <DashboardView userName={userName} />;
+                return <UserWorkspace userEmail={userEmail} />;
         }
     };
 
@@ -182,145 +178,7 @@ function AnalyticsView({ userEmail }) {
     );
 }
 
-// Workplace View Component
-function WorkplaceView() {
-    const router = useRouter();
-    const [documents, setDocuments] = useState([
-        {
-            id: 1,
-            title: "Getting Started with React",
-            description: "A complete guide to get started with React development.",
-            status: "Draft",
-            category: "React",
-            updatedAt: "Updated 1d ago"
-        },
-        {
-            id: 2,
-            title: "API Integration Guide",
-            description: "Learn how to integrate and work with REST APIs effectively.",
-            status: "Published",
-            category: "Backend",
-            updatedAt: "Updated 3d ago"
-        },
-        {
-            id: 3,
-            title: "Database Design Best Practices",
-            description: "Best practices for designing scalable and maintainable databases.",
-            status: "Draft",
-            category: "Database",
-            updatedAt: "Updated 5d ago"
-        },
-        {
-            id: 4,
-            title: "Authentication in Node.js",
-            description: "Implement secure authentication in Node.js applications.",
-            status: "Published",
-            category: "Backend",
-            updatedAt: "Updated 1w ago"
-        },
-        {
-            id: 5,
-            title: "CSS Flexbox Cheatsheet",
-            description: "A quick reference guide for CSS Flexbox layout techniques.",
-            status: "Published",
-            category: "CSS",
-            updatedAt: "Updated 2w ago"
-        },
-        {
-            id: 6,
-            title: "JavaScript Array Methods",
-            description: "Comprehensive guide covering all JavaScript array methods.",
-            status: "Draft",
-            category: "JavaScript",
-            updatedAt: "Updated 2w ago"
-        }
-    ]);
 
-    const getStatusColor = (status) => {
-        switch (status.toLowerCase()) {
-            case "published":
-                return "status-published";
-            case "draft":
-                return "status-draft";
-            case "archived":
-                return "status-archived";
-            default:
-                return "status-draft";
-        }
-    };
-
-    const getCategoryIcon = (category) => {
-        const icons = {
-            "React": "⚛️",
-            "Backend": "🔧",
-            "Database": "🗄️",
-            "CSS": "🎨",
-            "JavaScript": "💻"
-        };
-        return icons[category] || "📄";
-    };
-
-    return (
-        <div className="workplace-view">
-            <div className="view-header">
-                <div>
-                    <h1>My Documents</h1>
-                    <p>Manage and organize all your documentation in one place.</p>
-                </div>
-                <button
-                    className="btn-new-document"
-                    onClick={() => router.push("/doc/create")}
-                >
-                    <span style={{ fontSize: "18px", marginRight: "8px" }}>+</span>
-                    New Document
-                </button>
-            </div>
-
-            {documents.length > 0 ? (
-                <div className="documents-grid">
-                    {documents.map(doc => (
-                        <div key={doc.id} className="document-card">
-                            <div className="card-header">
-                                <div className="card-icon-badge">
-                                    {getCategoryIcon(doc.category)}
-                                </div>
-                                <div className="card-status">
-                                    <span className={`status-badge ${getStatusColor(doc.status)}`}>
-                                        {doc.status}
-                                    </span>
-                                </div>
-                            </div>
-
-                            <div className="card-content">
-                                <h3 className="card-title">{doc.title}</h3>
-                                <p className="card-description">{doc.description}</p>
-                            </div>
-
-                            <div className="card-footer">
-                                <span className="card-category">{doc.category}</span>
-                                <span className="card-updated">{doc.updatedAt}</span>
-                            </div>
-
-                            <button className="card-menu" title="More options">⋮</button>
-                        </div>
-                    ))}
-                </div>
-            ) : (
-                <div className="empty-state">
-                    <div className="empty-icon">📄</div>
-                    <h3>No Documents Yet</h3>
-                    <p>Start creating your first document to build your knowledge base.</p>
-                    <button
-                        className="btn-create-first"
-                        onClick={() => router.push("/doc/create")}
-                    >
-                        Create First Document
-                    </button>
-                </div>
-            )}
-        </div>
-    );
-}
 
 // Settings View Component
 function SettingsView() {

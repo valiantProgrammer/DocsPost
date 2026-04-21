@@ -14,6 +14,7 @@ import {
     ResponsiveContainer,
     PieChart,
     Pie,
+    Area,
     Cell,
 } from "recharts";
 import "./AnalyticsDashboard.css";
@@ -454,41 +455,68 @@ export default function AnalyticsDashboard({ userEmail }) {
                             <div className="chart-loading">Loading...</div>
                         ) : (
                             <ResponsiveContainer width="100%" height={320}>
-                                <ComposedChart data={chartDataWithDeviation} margin={{ top: 20, right: 30, bottom: 80, left: 0 }}>
+                                <ComposedChart
+                                    data={chartDataWithDeviation}
+                                    margin={{ top: 40, right: 30, bottom: 80, left: 0 }}
+                                >
                                     <defs>
+                                        {/* Bar Gradient */}
                                         <linearGradient id="colorGradient" x1="0" y1="0" x2="0" y2="1">
-                                            <stop offset="5%" stopColor="var(--chart-purple)" stopOpacity={0.8} />
-                                            <stop offset="95%" stopColor="var(--chart-purple)" stopOpacity={0.1} />
+                                            <stop offset="0%" stopColor="var(--chart-purple)" stopOpacity={1} />
+                                            <stop offset="100%" stopColor="var(--chart-purple)" stopOpacity={1} />
+                                        </linearGradient>
+
+                                        {/* Line Area Gradient */}
+                                        <linearGradient id="lineGradient" x1="0" y1="0" x2="0" y2="1">
+                                            <stop offset="0%" stopColor="var(--chart-green)" stopOpacity={0.9} />
+                                            <stop offset="100%" stopColor="var(--chart-green)" stopOpacity={0} />
                                         </linearGradient>
                                     </defs>
+
+                                    {/* Grid */}
                                     <CartesianGrid
-                                        strokeDasharray="1 1"
+                                        strokeDasharray="3 3"
                                         stroke="var(--chart-grid)"
+                                        vertical={true}
+                                        horizontal={true}
                                     />
+
+                                    {/* X Axis */}
                                     <XAxis
                                         dataKey="name"
+                                        angle={-30}
+                                        textAnchor="end"
+                                        interval={3}
+                                        height={60}
                                         tick={{ fontSize: 12 }}
                                         stroke="var(--text-muted)"
                                     />
+
+                                    {/* Y Axis Left */}
                                     <YAxis
                                         yAxisId="left"
                                         width={60}
                                         stroke="var(--text-muted)"
                                         tick={{ fontSize: 12 }}
-                                        domain={[0, 'auto']}
+                                        domain={[0, "auto"]}
+                                        tickCount={5}
                                     />
+
+                                    {/* Y Axis Right */}
                                     <YAxis
                                         yAxisId="right"
                                         orientation="right"
                                         width={60}
-                                        type="number"
                                         stroke="var(--text-muted)"
                                         tick={{ fontSize: 12 }}
-                                        domain={[0, 'auto']}
+                                        domain={[0, "auto"]}
+                                        tickCount={5}
                                     />
+
+                                    {/* Tooltip */}
                                     <Tooltip
                                         contentStyle={{
-                                            backgroundColor: "#0c0e12",
+                                            backgroundColor: "var(--hero-bg)",
                                             border: `2px solid var(--chart-purple)`,
                                             color: "var(--text-main)",
                                             borderRadius: "8px",
@@ -498,26 +526,50 @@ export default function AnalyticsDashboard({ userEmail }) {
                                             backgroundColor: "rgba(139, 92, 246, 0.15)",
                                             borderRadius: "8px",
                                         }}
-                                        cursor={{ fill: 'rgba(139, 92, 246, 0.2)' }}
+                                        cursor={{ fill: "rgba(139, 92, 246, 0.2)" }}
                                     />
-                                    <Legend />
+
+                                    {/* Legend (more spacing) */}
+                                    <Legend
+                                        verticalAlign="top"
+                                        align="center"
+                                        wrapperStyle={{
+                                            paddingBottom: "20px",
+                                        }}
+                                    />
+
+                                    {/* Bar Chart */}
                                     <Bar
                                         yAxisId="left"
                                         dataKey="value"
-                                        fill="var(--chart-purple)"
+                                        fill="url(#colorGradient)"
                                         name="Page Views"
-                                        radius={[8, 8, 0, 0]}
-                                        opacity={0.85}
+                                        radius={[2, 2, 0, 0]}
+                                        opacity={0.9}
                                     />
+
+                                    {/* Area (gradient under line) */}
+                                    <Area
+                                        yAxisId="right"
+                                        type="natural"
+                                        dataKey="deviation"
+                                        stroke="none"
+                                        fill="url(#lineGradient)"
+                                    />
+
+                                    {/* Line Chart */}
                                     <Line
                                         yAxisId="right"
                                         type="natural"
                                         dataKey="deviation"
                                         stroke="var(--chart-green)"
                                         name="Trend (Deviation from Avg)"
-                                        strokeWidth={3}
+                                        strokeWidth={2.5}
                                         dot={false}
                                         isAnimationActive={false}
+                                        style={{
+                                            filter: "drop-shadow(0 0 6px rgba(34,197,94,0.4))",
+                                        }}
                                     />
                                 </ComposedChart>
                             </ResponsiveContainer>
@@ -645,7 +697,7 @@ export default function AnalyticsDashboard({ userEmail }) {
                 </div>
 
                 <div className="chart-section-medium">
-                    <h3>Monthly Activity Trends</h3>
+                    <h3>Activity Trends</h3>
                     <div className="chart-wrapper">
                         {isLoading ? (
                             <div className="chart-loading">Loading...</div>
