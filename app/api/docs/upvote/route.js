@@ -51,16 +51,23 @@ export async function POST(req) {
                 { upsert: true }
             );
 
-            // Remove from analytics collection
+            // Log vote removal to optimized analytics
             if (document && document.userEmail) {
-                const analyticsCollection = db.collection("analytics");
-                await analyticsCollection.deleteOne({
-                    userEmail: document.userEmail,
-                    articleId: docId,
-                    type: "vote",
-                    voteType: "like",
-                    "voterEmail": userEmail, // Track who made the vote
-                });
+                try {
+                    await fetch("http://localhost:3000/api/analytics/log-vote-removal-optimized", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                            docId,
+                            userEmail: document.userEmail,
+                            voteType: "like",
+                            articleTitle: document.title || "Untitled",
+                            voterEmail: userEmail
+                        })
+                    });
+                } catch (fetchError) {
+                    console.error("Error calling log-vote-removal-optimized:", fetchError);
+                }
             }
 
             return new Response(
@@ -91,21 +98,23 @@ export async function POST(req) {
                 { upsert: true }
             );
 
-            // Also log to analytics collection (for the document author's analytics dashboard)
+            // Log to optimized analytics collection
             if (document && document.userEmail) {
-                const analyticsCollection = db.collection("analytics");
-                await analyticsCollection.insertOne({
-                    userEmail: document.userEmail, // Author of the document
-                    articleId: docId,
-                    articleTitle: document.title || "Untitled",
-                    type: "vote",
-                    voteType: "like",
-                    voterEmail: userEmail, // Track who made the vote
-                    timestamp: now,
-                    date: new Date(now.getFullYear(), now.getMonth(), now.getDate()),
-                    month: new Date(now.getFullYear(), now.getMonth(), 1),
-                    year: now.getFullYear(),
-                });
+                try {
+                    await fetch("http://localhost:3000/api/analytics/log-vote-optimized", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                            docId,
+                            userEmail: document.userEmail,
+                            voteType: "like",
+                            articleTitle: document.title || "Untitled",
+                            voterEmail: userEmail  // Track who voted
+                        })
+                    });
+                } catch (fetchError) {
+                    console.error("Error calling log-vote-optimized:", fetchError);
+                }
             }
 
             return new Response(

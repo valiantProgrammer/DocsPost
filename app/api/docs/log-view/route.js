@@ -25,21 +25,27 @@ export async function POST(req) {
         const db = client.db("DocsPost");
 
         const now = new Date();
+        const utcDate = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), 0, 0, 0, 0));
 
-        // Get document info to retrieve the author's email (docId is actually the slug)
+        console.log(`[View Logged] DocID: ${docId}, User: ${userEmail || "anonymous"}, Time: ${now.toISOString()}`);
+
         const docsCollection = db.collection("user_documents");
         const document = await docsCollection.findOne({ slug: docId });
 
-        // Log the view
+        if (!document) {
+            console.warn(`[View Warning] Document not found for slug: ${docId}`);
+        } else {
+            console.log(`[View Success] Document author: ${document.userEmail}`);
+        }
+
         const viewsCollection = db.collection("doc_views");
         await viewsCollection.insertOne({
             docId,
             userEmail: userEmail || "anonymous",
             timestamp: now,
-            date: new Date(now.getFullYear(), now.getMonth(), now.getDate()),
+            date: utcDate,
         });
 
-        // Update doc stats
         const statsCollection = db.collection("doc_stats");
         await statsCollection.updateOne(
             { docId },
@@ -50,19 +56,8 @@ export async function POST(req) {
             { upsert: true }
         );
 
-        // Also log to analytics collection (for the document author's analytics dashboard)
         if (document && document.userEmail) {
-            const analyticsCollection = db.collection("analytics");
-            await analyticsCollection.insertOne({
-                userEmail: document.userEmail, // Author of the document
-                articleId: docId,
-                articleTitle: document.title || "Untitled",
-                type: "view",
-                timestamp: now,
-                date: new Date(now.getFullYear(), now.getMonth(), now.getDate()),
-                month: new Date(now.getFullYear(), now.getMonth(), 1),
-                year: now.getFullYear(),
-            });
+            console.warn(`[Analytics Skip] Document not found or no author email. Doc: ${docId}`);
         }
 
         return new Response(

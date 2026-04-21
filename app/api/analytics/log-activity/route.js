@@ -25,27 +25,7 @@ export async function POST(req) {
         const db = client.db("DocsPost");
 
         const now = new Date();
-        const dateOnly = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-
-        // Log to analytics collection (for heatmap and stats)
-        const analyticsCollection = db.collection("analytics");
-
-        const activityEntry = {
-            userEmail,
-            type, // "view", "vote", "create"
-            timestamp: now,
-            date: dateOnly,
-            month: new Date(now.getFullYear(), now.getMonth(), 1),
-            year: now.getFullYear(),
-        };
-
-        // Add optional fields based on type
-        if (articleId) activityEntry.articleId = articleId;
-        if (articleTitle) activityEntry.articleTitle = articleTitle;
-        if (voteType) activityEntry.voteType = voteType; // "like" or "dislike"
-
-        // Insert individual activity log
-        await analyticsCollection.insertOne(activityEntry);
+        const dateOnly = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), 0, 0, 0, 0));
 
         // Update or create daily stats
         const statsCollection = db.collection("analytics_stats");
@@ -69,6 +49,9 @@ export async function POST(req) {
             },
             { upsert: true }
         );
+
+        // Note: Legacy analytics collection writes have been removed.
+        // All analytics are now handled by optimized collections:
 
         return new Response(
             JSON.stringify({

@@ -7,7 +7,10 @@ export default function DocEngagement({ docId }) {
     const [stats, setStats] = useState({
         views: 0,
         upvotes: 0,
-        reports: 0,
+        votes: 0,
+        likes: 0,
+        dislikes: 0,
+        engagementRate: 0,
     });
     const [isUpvoted, setIsUpvoted] = useState(false);
     const [userEmail, setUserEmail] = useState("");
@@ -71,7 +74,7 @@ export default function DocEngagement({ docId }) {
 
     const logView = async () => {
         try {
-            const response = await fetch("/api/docs/log-view", {
+            const response = await fetch("/api/docs/log-view-optimized", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({

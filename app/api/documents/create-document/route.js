@@ -68,6 +68,47 @@ export async function POST(req) {
             { upsert: true }
         );
 
+        // Log contribution activity for this day
+        const dateOnly = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), 0, 0, 0, 0));
+        const contributionCollection = db.collection("analytics_stats");
+
+        console.log(`[Contribution] Creating entry for user: ${userEmail}, slug: ${slug}, date: ${dateOnly}`);
+
+        const contributionResult = await contributionCollection.updateOne(
+            {
+                userEmail,
+                date: dateOnly,
+            },
+            {
+                $inc: {
+                    totalActivity: 1,
+                    created: 1,
+                    articlesCreated: 1,
+                },
+                $set: {
+                    userEmail,
+                    lastActivity: now,
+                    updatedAt: now,
+                },
+                $addToSet: {
+                    createdArticles: {
+                        articleId: slug,
+                        title,
+                        createdAt: now,
+                    }
+                }
+            },
+            { upsert: true }
+        );
+
+        console.log(`[Contribution] Update result:`, {
+            matchedCount: contributionResult.matchedCount,
+            modifiedCount: contributionResult.modifiedCount,
+            upsertedCount: contributionResult.upsertedCount,
+        });
+
+        console.log(`[Contribution Tracked] User: ${userEmail}, Article: ${slug}, Date: ${dateOnly}`);
+
         return new Response(
             JSON.stringify({
                 success: true,

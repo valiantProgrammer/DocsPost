@@ -24,6 +24,9 @@ export async function GET(req) {
         let startDate;
         let groupBy;
 
+        // IST = UTC + 5:30 hours = 19800000 milliseconds
+        const IST_OFFSET = 5 * 60 * 60 * 1000 + 30 * 60 * 1000; // 5.5 hours in ms
+
         if (timeframe === "quarterly") {
             // Last 7 hours (15-minute intervals)
             // Round to nearest 15-minute boundary using timestamp math
@@ -31,6 +34,7 @@ export async function GET(req) {
             groupBy = {
                 $dateToString: {
                     format: "%Y-%m-%d %H:%M",
+                    timezone: "Asia/Kolkata",  // India Standard Time
                     date: {
                         $toDate: {
                             $multiply: [
@@ -43,15 +47,33 @@ export async function GET(req) {
             };
         } else if (timeframe === "yearly") {
             startDate = new Date(now.getFullYear() - 20, 0, 1);
-            groupBy = { $dateToString: { format: "%Y", date: "$timestamp" } };
+            groupBy = {
+                $dateToString: {
+                    format: "%Y",
+                    timezone: "Asia/Kolkata",
+                    date: "$timestamp"
+                }
+            };
         } else if (timeframe === "monthly") {
             // Last 36 months
             startDate = new Date(now.getFullYear(), now.getMonth() - 36, 1);
-            groupBy = { $dateToString: { format: "%Y-%m", date: "$timestamp" } };
+            groupBy = {
+                $dateToString: {
+                    format: "%Y-%m",
+                    timezone: "Asia/Kolkata",
+                    date: "$timestamp"
+                }
+            };
         } else {
             // Last 30 days (daily)
             startDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
-            groupBy = { $dateToString: { format: "%Y-%m-%d", date: "$timestamp" } };
+            groupBy = {
+                $dateToString: {
+                    format: "%Y-%m-%d",
+                    timezone: "Asia/Kolkata",
+                    date: "$timestamp"
+                }
+            };
         }
 
         // Aggregate views by time period
@@ -154,7 +176,11 @@ export async function GET(req) {
         await client.close();
 
         if (timeframe === "quarterly") {
-            console.log(`[API Debug] Timeframe: ${timeframe}, startDate: ${startDate}, viewStats count: ${viewStats.length}`, viewStats);
+            console.log(`[API Debug] Timeframe: ${timeframe}`);
+            console.log(`  StartDate: ${startDate.toISOString()}`);
+            console.log(`  UserEmail: ${userEmail}`);
+            console.log(`  Records returned: ${viewStats.length}`);
+            console.log(`  Data:`, viewStats);
         }
 
         return new Response(

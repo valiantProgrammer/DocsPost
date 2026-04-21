@@ -19,6 +19,7 @@ export async function POST(req) {
         const analyticsCollection = db.collection("analytics");
         const now = new Date();
 
+        const utcDate = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), 0, 0, 0, 0));
         await analyticsCollection.insertOne({
             userEmail,
             articleId,
@@ -26,9 +27,9 @@ export async function POST(req) {
             type: "vote",
             voteType,
             timestamp: now,
-            date: new Date(now.getFullYear(), now.getMonth(), now.getDate()),
-            month: new Date(now.getFullYear(), now.getMonth(), 1),
-            year: now.getFullYear(),
+            date: utcDate,
+            month: new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1, 0, 0, 0, 0)),
+            year: now.getUTCFullYear(),
         });
 
         // Update aggregated stats
@@ -52,6 +53,22 @@ export async function POST(req) {
             },
             { upsert: true }
         );
+
+        // Log to optimized analytics collection
+        try {
+            await fetch("http://localhost:3000/api/analytics/log-vote-optimized", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    docId: articleId,
+                    userEmail,
+                    voteType,
+                    articleTitle
+                })
+            });
+        } catch (fetchError) {
+            console.error("Error calling log-vote-optimized:", fetchError);
+        }
 
         await client.close();
 

@@ -66,11 +66,11 @@ export default function DocumentView() {
                 setDocData(data.document);
                 setViewCount(data.document.views || 0);
 
-                // Log view activity to analytics for tracking article views
+                // Log view activity to analytics for tracking article views (optimized)
                 const userEmail = localStorage.getItem("docspost-email") || "";
                 if (userEmail) {
                     try {
-                        await fetch("/api/docs/log-view", {
+                        await fetch("/api/docs/log-view-optimized", {
                             method: "POST",
                             headers: { "Content-Type": "application/json" },
                             body: JSON.stringify({
@@ -231,25 +231,7 @@ export default function DocumentView() {
             if (response.ok) {
                 const data = await response.json();
                 setIsUpvoted(data.isUpvoted);
-
-                // Log upvote/like activity
-                if (data.isUpvoted) {
-                    try {
-                        await fetch("/api/analytics/log-activity", {
-                            method: "POST",
-                            headers: { "Content-Type": "application/json" },
-                            body: JSON.stringify({
-                                userEmail: userEmail === "anonymous" ? "" : userEmail,
-                                type: "vote",
-                                voteType: "like",
-                                articleId: docData._id,
-                                articleTitle: docData.title,
-                            }),
-                        });
-                    } catch (err) {
-                        console.error("Error logging upvote activity:", err);
-                    }
-                }
+                // Vote activity is logged in the upvote route via log-vote-optimized
 
                 // Fetch updated count
                 const countResponse = await fetch(

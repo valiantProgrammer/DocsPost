@@ -25,6 +25,7 @@ export default function AnalyticsDashboard({ userEmail }) {
     const [voteStats, setVoteStats] = useState([]);
     const [articleStats, setArticleStats] = useState([]);
     const [activityLog, setActivityLog] = useState([]);
+    const [heatmapStats, setHeatmapStats] = useState([]);
     const [stats, setStats] = useState({
         totalViews: 0,
         totalVotes: 0,
@@ -33,78 +34,68 @@ export default function AnalyticsDashboard({ userEmail }) {
         todayActivity: 0,
     });
     const [isLoading, setIsLoading] = useState(true);
-    const [isMigrating, setIsMigrating] = useState(false);
-    const [showMigrationButton, setShowMigrationButton] = useState(false);
 
     // Fetch analytics data
     useEffect(() => {
         fetchAnalytics();
-        fetchActivityLog();
+        fetchHeatmapData();
     }, [userEmail, timeframe]);
 
-    const handleMigration = async () => {
-        if (!userEmail) {
-            alert("User email is required");
-            return;
-        }
 
-        setIsMigrating(true);
-        try {
-            const response = await fetch("/api/analytics/migrate", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ userEmail }),
-            });
-
-            if (response.ok) {
-                const data = await response.json();
-                alert(`Migration completed! Migrated ${data.migratedCount} records.`);
-                setShowMigrationButton(false);
-                // Refresh the analytics
-                fetchAnalytics();
-                fetchActivityLog();
-            } else {
-                const error = await response.json();
-                alert(`Migration failed: ${error.error}`);
-            }
-        } catch (error) {
-            console.error("Error during migration:", error);
-            alert("Failed to migrate data. Please try again.");
-        } finally {
-            setIsMigrating(false);
-        }
-    };
-
-    // Fetch analytics data
-    useEffect(() => {
-        fetchAnalytics();
-        fetchActivityLog();
-    }, [userEmail, timeframe]);
-
-    // Auto-refresh analytics every 30 seconds to capture new views
-    useEffect(() => {
-        const interval = setInterval(() => {
-            if (userEmail) {
-                fetchAnalytics();
-            }
-        }, 30000); // 30 seconds
-
-        return () => clearInterval(interval);
-    }, [userEmail, timeframe]);
 
     const fetchAnalytics = async () => {
         setIsLoading(true);
         try {
-            const response = await fetch(
-                `/api/analytics/get-stats?email=${encodeURIComponent(
-                    userEmail
-                )}&timeframe=${timeframe}`
-            );
+            const url = `/api/analytics/get-stats-optimized?email=${encodeURIComponent(
+                userEmail
+            )}&timeframe=${timeframe}`;
+            console.log(`[AnalyticsDashboard] Fetching: ${url}`);
+
+            const response = await fetch(url);
+            console.log(`[AnalyticsDashboard] Response status: ${response.status}`);
+
             if (response.ok) {
                 const data = await response.json();
+                console.log(`[AnalyticsDashboard] Response data:`, data);
+                console.log(`[AnalyticsDashboard] viewStats array:`, data.viewStats);
+                console.log(`[AnalyticsDashboard] viewStats length:`, data.viewStats?.length || 0);
+
                 setViewStats(data.viewStats);
                 setVoteStats(data.voteStats);
                 setArticleStats(data.articleStats);
+
+                // Calculate stats from optimized data for stat cards
+                const summary = data.summary || {};
+                const totalViews = summary.allTimeViews || 0;
+                const totalVotes = summary.allTimeVotes || 0;
+
+                // Count active days (intervals with views or votes)
+                const activeDaysCount = (data.viewStats || []).filter(
+                    interval => interval.views > 0
+                ).length;
+
+                // Get today's activity (first interval is typically the most recent)
+                const todayActivity = data.viewStats && data.viewStats.length > 0
+                    ? data.viewStats[0].views || 0
+                    : 0;
+
+                setStats({
+                    totalViews,
+                    totalVotes,
+                    totalLikes: totalVotes,
+                    activeDays: activeDaysCount,
+                    todayActivity
+                });
+
+                console.log(`[AnalyticsDashboard] State updated - viewStats set to:`, data.viewStats);
+                console.log(`[AnalyticsDashboard] Stats calculated:`, {
+                    totalViews,
+                    totalVotes,
+                    activeDays: activeDaysCount,
+                    todayActivity
+                });
+            } else {
+                console.error(`[AnalyticsDashboard] Response not OK: ${response.status}`);
             }
         } catch (error) {
             console.error("Error fetching analytics:", error);
@@ -113,39 +104,48 @@ export default function AnalyticsDashboard({ userEmail }) {
         }
     };
 
-    const fetchActivityLog = async () => {
+    const fetchHeatmapData = async () => {
         try {
-            const response = await fetch(
-                `/api/analytics/activity-log?email=${encodeURIComponent(userEmail)}`
-            );
+            // Fetch contribution activity (articles created) for the past year for heatmap
+            const url = `/api/analytics/contribution-activity?email=${encodeURIComponent(
+                userEmail
+            )}&days=365`;
+
+            const response = await fetch(url);
             if (response.ok) {
                 const data = await response.json();
-                setActivityLog(data.activityLog);
-                setStats(data.stats);
 
-                // Show migration button if no data exists but user has documents
-                if (data.stats.totalViews === 0 && data.stats.totalLikes === 0) {
-                    setShowMigrationButton(true);
-                }
+                // Transform creationsByDay into daily heatmap data (articles created per day)
+                const dailyActivityMap = {};
+                (data.creationsByDay || []).forEach(day => {
+                    const dateStr = day.date.toISOString ? day.date.toISOString().split("T")[0] : day.date.split("T")[0];
+                    dailyActivityMap[dateStr] = {
+                        count: day.articlesCreated || 0,
+                        articlesCreated: day.articlesCreated || 0
+                    };
+                });
+
+                setHeatmapStats(dailyActivityMap);
+                console.log(`[AnalyticsDashboard] Contribution heatmap data updated:`, dailyActivityMap);
             }
         } catch (error) {
-            console.error("Error fetching activity log:", error);
+            console.error("Error fetching heatmap data:", error);
         }
     };
 
-    // Get subtitle based on timeframe
+    // Get subtitle based on timeframe (with sliding window limits)
     const getTimeframeSubtitle = () => {
         switch (timeframe) {
             case "quarterly":
-                return "Last 7 hours (15-min intervals)";
+                return "Last 28 quarters (7 years, 15-min intervals)";
             case "daily":
                 return "Last 30 days";
             case "monthly":
-                return "Last 36 months";
+                return "Last 36 months (3 years)";
             case "yearly":
                 return "Last 20 years";
             default:
-                return "Last 7 days";
+                return "Last 30 days";
         }
     };
 
@@ -157,19 +157,16 @@ export default function AnalyticsDashboard({ userEmail }) {
         const now = new Date();
 
         if (timeframe === "quarterly") {
-            // Align to fixed 15-minute boundaries (:00, :15, :30, :45)
             const now = new Date();
             const minutes = now.getMinutes();
             const alignedMinutes = Math.floor(minutes / 15) * 15;
 
-            // Create aligned boundary (round down to nearest 15-min)
             const alignedTime = new Date(now);
             alignedTime.setMinutes(alignedMinutes);
             alignedTime.setSeconds(0);
             alignedTime.setMilliseconds(0);
 
-            // Go back 27 intervals from aligned current time to show last 7 hours
-            const intervals = 28; // 7 hours * 4 intervals per hour
+            const intervals = 28;
             for (let i = intervals - 1; i >= 0; i--) {
                 const date = new Date(alignedTime.getTime() - i * 15 * 60 * 1000);
                 const year = date.getFullYear();
@@ -199,7 +196,6 @@ export default function AnalyticsDashboard({ userEmail }) {
                 });
             }
         } else if (timeframe === "monthly") {
-            // Fill missing months in last 36 months
             const months = 36;
             for (let i = months - 1; i >= 0; i--) {
                 const date = new Date(now.getFullYear(), now.getMonth() - i, 1);
@@ -212,7 +208,6 @@ export default function AnalyticsDashboard({ userEmail }) {
                 });
             }
         } else if (timeframe === "yearly") {
-            // Fill missing years in last 20 years
             const years = 20;
             for (let i = years - 1; i >= 0; i--) {
                 const year = now.getFullYear() - i;
@@ -232,6 +227,11 @@ export default function AnalyticsDashboard({ userEmail }) {
     // Format data for display
     const filledViewStats = fillMissingData(viewStats);
 
+    console.log(`[AnalyticsDashboard] Timeframe: ${timeframe}`);
+    console.log(`[AnalyticsDashboard] Original viewStats length: ${viewStats?.length || 0}`);
+    console.log(`[AnalyticsDashboard] Filled viewStats length: ${filledViewStats?.length || 0}`);
+    console.log(`[AnalyticsDashboard] Filled viewStats:`, filledViewStats);
+
     if (timeframe === "quarterly") {
         console.log("[Debug] API viewStats:", viewStats);
         console.log("[Debug] Filled viewStats:", filledViewStats);
@@ -243,6 +243,8 @@ export default function AnalyticsDashboard({ userEmail }) {
         value: item.views,
     }));
 
+    console.log(`[AnalyticsDashboard] Formatted viewStats (with name/value):`, formattedViewStats);
+
     // Calculate smoothed trend line using Exponential Moving Average with trend projection
     // Adapts smoothing parameters based on timeframe and data point count
     const calculateSmoothedTrendLine = (data) => {
@@ -251,10 +253,24 @@ export default function AnalyticsDashboard({ userEmail }) {
         // Dynamically adjust smoothing based on timeframe and data volume
         let alpha, trendWindow, lookAheadWeight;
 
-        // Use same smoothing for all timeframes
-        alpha = 0.3;
-        trendWindow = Math.min(8, dataLength);
-        lookAheadWeight = 1.3;
+        // Customize smoothing parameters for each timeframe
+        if (timeframe === "quarterly") {
+            alpha = 0.3;
+            trendWindow = Math.min(8, dataLength);
+            lookAheadWeight = 1.3;
+        } else if (timeframe === "daily") {
+            alpha = 0.25;      // Lighter smoothing
+            trendWindow = Math.min(7, dataLength);
+            lookAheadWeight = 1.2;
+        } else if (timeframe === "monthly") {
+            alpha = 0.2;       // Even lighter
+            trendWindow = Math.min(6, dataLength);
+            lookAheadWeight = 1.1;
+        } else if (timeframe === "yearly") {
+            alpha = 0.25;
+            trendWindow = Math.min(5, dataLength);
+            lookAheadWeight = 1.2;
+        }
 
         // Step 1: Calculate Exponential Moving Average (EMA)
         const emaValues = [];
@@ -284,32 +300,38 @@ export default function AnalyticsDashboard({ userEmail }) {
 
     const smoothedTrendValues = calculateSmoothedTrendLine(formattedViewStats);
 
+    console.log(`[AnalyticsDashboard] Smoothed trend values:`, smoothedTrendValues);
+
     const chartDataWithDeviation = formattedViewStats.map((item, index) => ({
         ...item,
         deviation: smoothedTrendValues[index] || 0,
     }));
 
-    // Get activity heatmap data (last 365 days)
+    console.log(`[AnalyticsDashboard] Chart data with deviation (passed to ComposedChart):`, chartDataWithDeviation);
+
+    // Get activity heatmap data (last 365 days) from optimized analytics
     const getActivityHeatmap = () => {
         const heatmapData = [];
         for (let i = 364; i >= 0; i--) {
             const date = new Date();
             date.setDate(date.getDate() - i);
             const dateStr = date.toISOString().split("T")[0];
-            const activity = activityLog.find((log) => log._id === dateStr);
+            const activity = heatmapStats[dateStr];
+            const count = activity?.count || 0;
+
             heatmapData.push({
                 date: dateStr,
                 dayOfWeek: date.getDay(),
                 week: Math.floor(i / 7),
-                count: activity?.count || 0,
+                count: count,
                 level:
-                    (activity?.count || 0) === 0
+                    count === 0
                         ? 0
-                        : (activity?.count || 0) <= 1
+                        : count <= 1
                             ? 1
-                            : (activity?.count || 0) <= 3
+                            : count <= 3
                                 ? 2
-                                : (activity?.count || 0) <= 5
+                                : count <= 5
                                     ? 3
                                     : 4,
             });
@@ -352,20 +374,6 @@ export default function AnalyticsDashboard({ userEmail }) {
                 </div>
             </div>
 
-            {/* Migration Notification */}
-            {showMigrationButton && (
-                <div className="migration-banner">
-                    <p>We found your existing views and likes! Click below to load them into your analytics dashboard.</p>
-                    <button
-                        className="btn-migrate"
-                        onClick={handleMigration}
-                        disabled={isMigrating}
-                    >
-                        {isMigrating ? "Loading..." : "Load My Analytics"}
-                    </button>
-                </div>
-            )}
-
             {/* Stats Cards - Multiple columns with better organization */}
             <div className="stats-cards-grid">
                 {/* Top Row */}
@@ -387,7 +395,7 @@ export default function AnalyticsDashboard({ userEmail }) {
                     <div className="stat-content">
                         <p className="stat-label">Engagement Rate</p>
                         <h3 className="stat-value">{stats.totalLikes || 0}%</h3>
-                        <p className="stat-change">+3.2% from last week</p>
+
                     </div>
                 </div>
 
@@ -519,7 +527,7 @@ export default function AnalyticsDashboard({ userEmail }) {
 
                 <div className="chart-section-large">
                     <h3>Engagement Distribution</h3>
-                    <p className="chart-subtitle">By top performing articles</p>
+                    <p className="chart-subtitle">By top performing articles - votes and views</p>
                     <div className="chart-wrapper">
                         {isLoading ? (
                             <div className="chart-loading">Loading...</div>
@@ -533,8 +541,8 @@ export default function AnalyticsDashboard({ userEmail }) {
                                         innerRadius={80}
                                         outerRadius={120}
                                         paddingAngle={2}
-                                        dataKey="likes"
-                                        label={({ title, likes, percent }) => `${title?.substring(0, 15)}... ${(percent * 100).toFixed(1)}%`}
+                                        dataKey="votes"
+                                        label={({ title, votes, percent }) => `${title?.substring(0, 15)}... ${(percent * 100).toFixed(1)}%`}
                                     >
                                         <Cell fill="var(--chart-red)" />
                                         <Cell fill="var(--chart-green)" />
@@ -557,7 +565,7 @@ export default function AnalyticsDashboard({ userEmail }) {
                                         }}
                                         formatter={(value, name, props) => [
                                             value,
-                                            `${props.payload.title}: ${value} engagement`
+                                            `${props.payload.title}: ${value} votes`
                                         ]}
                                     />
                                 </PieChart>
@@ -573,6 +581,7 @@ export default function AnalyticsDashboard({ userEmail }) {
             <div className="charts-row">
                 <div className="chart-section-medium">
                     <h3>Top Articles Performance</h3>
+                    <p className="chart-subtitle">Views and votes by article topic</p>
                     <div className="chart-wrapper">
                         {articleStats.length > 0 ? (
                             <ResponsiveContainer width="100%" height={280}>
@@ -618,9 +627,9 @@ export default function AnalyticsDashboard({ userEmail }) {
                                         isAnimationActive={false}
                                     />
                                     <Bar
-                                        dataKey="likes"
+                                        dataKey="votes"
                                         fill="var(--chart-pink)"
-                                        name="Likes"
+                                        name="Votes (Likes)"
                                         radius={[8, 8, 0, 0]}
                                         activeBar={{ fill: 'rgba(236, 72, 153, 0.8)' }}
                                         isAnimationActive={false}
@@ -693,7 +702,7 @@ export default function AnalyticsDashboard({ userEmail }) {
             {/* Activity Heatmap (GitHub style) */}
             <div className="activity-section">
                 <h3>Contribution Activity</h3>
-                <p className="activity-subtitle">Your activity over the past year</p>
+                <p className="activity-subtitle">Articles created over the past year</p>
                 <div className="github-heatmap">
                     {/* Legend */}
                     <div className="heatmap-legend-github">
@@ -705,15 +714,15 @@ export default function AnalyticsDashboard({ userEmail }) {
                                     className={`legend-square level-${level}`}
                                     title={
                                         level === 0
-                                            ? "No activity"
+                                            ? "No articles"
                                             : `${level === 1
-                                                ? "1-2"
+                                                ? "1"
                                                 : level === 2
-                                                    ? "3-5"
+                                                    ? "2-3"
                                                     : level === 3
-                                                        ? "6-10"
-                                                        : "11+"
-                                            } contributions`
+                                                        ? "4-5"
+                                                        : "6+"
+                                            } articles created`
                                     }
                                 />
                             ))}
@@ -771,10 +780,10 @@ export default function AnalyticsDashboard({ userEmail }) {
                                                         }`}
                                                     title={
                                                         cell
-                                                            ? `${cell.date}: ${cell.count} ${cell.count === 1
-                                                                ? "contribution"
-                                                                : "contributions"
-                                                            }`
+                                                            ? `${cell.date}: ${cell.count} article${cell.count === 1
+                                                                ? ""
+                                                                : "s"
+                                                            } created`
                                                             : "No data"
                                                     }
                                                     data-date={cell?.date}
@@ -792,12 +801,12 @@ export default function AnalyticsDashboard({ userEmail }) {
                     <div className="heatmap-stats">
                         <p>
                             {stats.todayActivity > 0
-                                ? `${stats.todayActivity} contribution${stats.todayActivity === 1 ? "" : "s"
-                                } today`
-                                : "No contributions today"}
+                                ? `${stats.todayActivity} article${stats.todayActivity === 1 ? "" : "s"
+                                } created today`
+                                : "No articles created today"}
                         </p>
                         <p>
-                            {stats.activeDays} active days in the last year
+                            {stats.activeDays} days with articles created in the last year
                         </p>
                     </div>
                 </div>
@@ -805,26 +814,24 @@ export default function AnalyticsDashboard({ userEmail }) {
 
             {/* Article Performance Table */}
             <div className="articles-performance-section">
-                <h3>Article Performance Breakdown</h3>
-                <p className="section-subtitle">Detailed view of each article's performance</p>
+                <h3>Article Performance Breakdown - Votes by Topic</h3>
+                <p className="section-subtitle">Track which topics your readers are voting on</p>
 
                 {articleStats.length > 0 ? (
                     <div className="articles-table-wrapper">
                         <table className="articles-table">
                             <thead>
                                 <tr>
-                                    <th>Article Title</th>
+                                    <th>Article Topic</th>
                                     <th className="numeric">Views</th>
-                                    <th className="numeric">Likes</th>
-                                    <th className="numeric">Dislikes</th>
-                                    <th className="numeric">Engagement</th>
+                                    <th className="numeric">Votes (Likes)</th>
+                                    <th className="numeric">Vote Rate</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {articleStats.map((article, index) => {
-                                    const totalEngagement = (article.likes || 0) + (article.dislikes || 0);
-                                    const engagementRate = article.views > 0
-                                        ? ((totalEngagement / article.views) * 100).toFixed(1)
+                                    const voteRate = article.views > 0
+                                        ? ((article.votes / article.views) * 100).toFixed(1)
                                         : 0;
 
                                     return (
@@ -832,6 +839,7 @@ export default function AnalyticsDashboard({ userEmail }) {
                                             <td className="article-title">
                                                 <div className="title-content">
                                                     <span className="title-text">{article.title || "Untitled"}</span>
+                                                    <span className="article-id">{article.articleId}</span>
                                                 </div>
                                             </td>
                                             <td className="numeric">
@@ -840,17 +848,12 @@ export default function AnalyticsDashboard({ userEmail }) {
                                                 </span>
                                             </td>
                                             <td className="numeric">
-                                                <span className="metric-badge likes-badge">
-                                                    {article.likes || 0}
+                                                <span className="metric-badge votes-badge">
+                                                    {article.votes || 0}
                                                 </span>
                                             </td>
                                             <td className="numeric">
-                                                <span className="metric-badge dislikes-badge">
-                                                    {article.dislikes || 0}
-                                                </span>
-                                            </td>
-                                            <td className="numeric">
-                                                <span className="engagement-percent">{engagementRate}%</span>
+                                                <span className="vote-rate">{voteRate}%</span>
                                             </td>
                                         </tr>
                                     );
@@ -860,7 +863,7 @@ export default function AnalyticsDashboard({ userEmail }) {
                     </div>
                 ) : (
                     <div className="empty-state">
-                        <p>No article data available yet. Your articles will appear here once they get views.</p>
+                        <p>No article data available yet. Your articles will appear here once they get views and votes.</p>
                     </div>
                 )}
             </div>

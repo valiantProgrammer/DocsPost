@@ -54,29 +54,7 @@ export async function GET(req) {
             }
         }
 
-        // Log to analytics collection for the document author
-        if (document.userEmail) {
-            try {
-                const analyticsCollection = db.collection("analytics");
-                const now = new Date();
-
-                await analyticsCollection.insertOne({
-                    userEmail: document.userEmail, // Author of the document
-                    articleId: slug,
-                    articleTitle: document.title || "Untitled",
-                    type: "view",
-                    viewerEmail: userEmail || "anonymous",
-                    timestamp: now,
-                    date: new Date(now.getFullYear(), now.getMonth(), now.getDate()),
-                    month: new Date(now.getFullYear(), now.getMonth(), 1),
-                    year: now.getFullYear(),
-                });
-            } catch (analyticsErr) {
-                // Log analytics error but don't fail the document fetch
-                console.error("Error logging analytics:", analyticsErr);
-            }
-        }
-
+        // View logging now handled by frontend via log-view-optimized endpoint
         return new Response(
             JSON.stringify({
                 success: true,

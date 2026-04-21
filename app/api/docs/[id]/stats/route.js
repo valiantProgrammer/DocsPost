@@ -5,6 +5,8 @@ export async function GET(req, { params }) {
     try {
         const resolvedParams = await params;
         const { id: docId } = resolvedParams;
+        const { searchParams } = new URL(req.url);
+        const authorEmail = searchParams.get("authorEmail");
 
         if (!docId) {
             return new Response(
@@ -25,31 +27,65 @@ export async function GET(req, { params }) {
         await client.connect();
         const db = client.db("DocsPost");
 
-        // Get doc stats
-        const statsCollection = db.collection("doc_stats");
-        const stats = await statsCollection.findOne({ docId });
+        let stats = {
+            views: 0,
+            upvotes: 0,
+            likes: 0,
+            dislikes: 0,
+            votes: 0,
+            engagementRate: 0,
+            lastUpdated: new Date(),
+        };
 
-        // Get view count
-        const viewsCollection = db.collection("doc_views");
-        const viewCount = await viewsCollection.countDocuments({ docId });
+        // Always fetch from analytics_optimized (only source of truth now)
+        const analyticsCollection = db.collection("analytics_optimized");
 
-        // Get upvote count
-        const upvotesCollection = db.collection("doc_upvotes");
-        const upvoteCount = await upvotesCollection.countDocuments({ docId });
+        if (authorEmail) {
+            // If authorEmail provided, fetch directly
+            const analyticsDoc = await analyticsCollection.findOne(
+                { userEmail: authorEmail },
+                { projection: { "summary.topArticles": 1 } }
+            );
 
-        // Get report count
-        const reportsCollection = db.collection("doc_reports");
-        const reportCount = await reportsCollection.countDocuments({ docId });
+            if (analyticsDoc?.summary?.topArticles) {
+                const article = analyticsDoc.summary.topArticles.find(a => a.articleId === docId);
+                if (article) {
+                    stats = {
+                        views: article.views || 0,
+                        upvotes: article.votes || 0,
+                        likes: article.votes || 0,
+                        dislikes: article.dislikes || 0,
+                        votes: article.votes || 0,
+                        engagementRate: article.views > 0 ? ((article.votes / article.views) * 100).toFixed(2) : 0,
+                        lastUpdated: analyticsDoc.updatedAt || new Date(),
+                    };
+                }
+            }
+        } else {
+            // If no authorEmail, search across all users (slower but works)
+            const analyticsDoc = await analyticsCollection.findOne(
+                { "summary.topArticles.articleId": docId },
+                { projection: { "summary.topArticles.$": 1, updatedAt: 1 } }
+            );
+
+            if (analyticsDoc?.summary?.topArticles?.[0]) {
+                const article = analyticsDoc.summary.topArticles[0];
+                stats = {
+                    views: article.views || 0,
+                    upvotes: article.votes || 0,
+                    likes: article.votes || 0,
+                    dislikes: article.dislikes || 0,
+                    votes: article.votes || 0,
+                    engagementRate: article.views > 0 ? ((article.votes / article.views) * 100).toFixed(2) : 0,
+                    lastUpdated: analyticsDoc.updatedAt || new Date(),
+                };
+            }
+        }
 
         return new Response(
             JSON.stringify({
                 success: true,
-                stats: {
-                    views: viewCount,
-                    upvotes: upvoteCount,
-                    reports: reportCount,
-                    lastUpdated: stats?.lastViewed || new Date(),
-                },
+                stats,
             }),
             { status: 200 }
         );
