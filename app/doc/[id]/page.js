@@ -1,4 +1,4 @@
-﻿"use client"
+﻿"use client";
 import { useState, useEffect, useRef } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
@@ -14,38 +14,49 @@ import remarkGfm from "remark-gfm";
 import { useTheme } from "../../providers/ThemeProvider";
 import "./page.css";
 
+// ================= HELPERS =================
 
-const HeadingRenderer = ({ level, children }) => {
-    const id = children?.[0]
-        ?.toString()
-        .toLowerCase()
-        .replace(/[^\w\s-]/g, "")
-        .replace(/\s+/g, "-");
-    const HeadingTag = `h${level}`;
-    return <HeadingTag id={id}>{children}</HeadingTag>;
+const getTextFromHTML = (html) => {
+    if (!html || typeof document === "undefined") return "";
+    const div = document.createElement("div");
+    div.innerHTML = html;
+    return div.textContent || "";
 };
 
-const parseCodeBlockContent = (content) => {
-    if (!content || typeof content !== "string") return { language: "javascript", code: "" };
-    const separatorIndex = content.indexOf("\n");
-    if (separatorIndex === -1) return { language: "javascript", code: content };
-    const language = content.slice(0, separatorIndex).trim() || "javascript";
-    const code = content.slice(separatorIndex + 1);
-    return { language, code };
+const stringifyChildren = (children) => {
+    if (children == null) return "";
+    if (typeof children === "string" || typeof children === "number")
+        return String(children);
+    if (Array.isArray(children)) return children.map(stringifyChildren).join("");
+    if (typeof children === "object" && children?.props?.children) {
+        return stringifyChildren(children.props.children);
+    }
+    return "";
 };
 
-const generateHeadingId = (text) => {
-    return text
-        ?.toString()
+const generateHeadingId = (text, index = 0) => {
+    const base = (text || "heading")
         .toLowerCase()
         .replace(/[^\w\s-]/g, "")
         .replace(/\s+/g, "-")
         .replace(/-+/g, "-")
         .trim();
+    return `${base || "heading"}-${index}`;
+};
+
+const parseCodeBlockContent = (content) => {
+    if (!content) return { language: "javascript", code: "" };
+    const idx = content.indexOf("\n");
+    if (idx === -1) return { language: "javascript", code: content };
+    return {
+        language: content.slice(0, idx),
+        code: content.slice(idx + 1),
+    };
 };
 
 const getVideoEmbedUrl = (url) => {
     if (!url) return "";
+
     if (url.includes("youtube.com") || url.includes("youtu.be")) {
         try {
             if (url.includes("youtu.be/")) {
@@ -59,12 +70,16 @@ const getVideoEmbedUrl = (url) => {
             return url;
         }
     }
+
     if (url.includes("vimeo.com")) {
         const id = url.split("/").pop();
         return id ? `https://player.vimeo.com/video/${id}` : url;
     }
+
     return url;
 };
+
+// ================= MAIN =================
 
 export default function DocumentView() {
     const params = useParams();
@@ -75,14 +90,19 @@ export default function DocumentView() {
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState(null);
     const [headings, setHeadings] = useState([]);
+    const [activeHeadingId, setActiveHeadingId] = useState("");
     const [relatedDocs, setRelatedDocs] = useState([]);
     const [isUpvoted, setIsUpvoted] = useState(false);
     const [upvoteCount, setUpvoteCount] = useState(0);
     const [viewCount, setViewCount] = useState(0);
-    const [notification, setNotification] = useState({ message: "", type: "success" });
+    const [notification, setNotification] = useState({
+        message: "",
+        type: "success",
+    });
     const [isReportModalOpen, setIsReportModalOpen] = useState(false);
     const [isSubmittingReport, setIsSubmittingReport] = useState(false);
     const contentRef = useRef(null);
+
     const hasBlocks = Array.isArray(docData?.blocks) && docData.blocks.length > 0;
 
     useEffect(() => {
@@ -90,25 +110,25 @@ export default function DocumentView() {
         document.documentElement.setAttribute("data-theme", isDark ? "dark" : "light");
     }, [isDark]);
 
+    // ================= FETCH DOC =================
     useEffect(() => {
         if (!slug) return;
 
         const fetchDocument = async () => {
             try {
                 setIsLoading(true);
+                setError(null);
+
                 const response = await fetch(
                     `/api/documents/get-document?slug=${encodeURIComponent(slug)}`
                 );
 
-                if (!response.ok) {
-                    throw new Error("Document not found");
-                }
+                if (!response.ok) throw new Error("Document not found");
 
                 const data = await response.json();
                 setDocData(data.document);
                 setViewCount(data.document.views || 0);
 
-                // Log view activity to analytics for tracking article views (optimized)
                 const userEmail = localStorage.getItem("docspost-email") || "";
                 if (userEmail) {
                     try {
@@ -126,7 +146,7 @@ export default function DocumentView() {
                 }
             } catch (err) {
                 console.error("Error fetching document:", err);
-                setError(err.message);
+                setError(err.message || "Failed to load document");
             } finally {
                 setIsLoading(false);
             }
@@ -135,64 +155,98 @@ export default function DocumentView() {
         fetchDocument();
     }, [slug]);
 
-    // Extract headings from content after render
+    // ================= EXTRACT HEADINGS FOR TOC =================
     useEffect(() => {
         if (!contentRef.current) return;
 
-        // Use setTimeout to ensure DOM is fully updated
+        let rafId = 0;
+
         const extractHeadings = () => {
-            const headingElements = contentRef.current?.querySelectorAll("h1, h2, h3, h4, h5, h6");
+            const headingElements = contentRef.current?.querySelectorAll(
+                "h1, h2, h3, h4, h5, h6"
+            );
+
             if (!headingElements || headingElements.length === 0) {
                 setHeadings([]);
+                setActiveHeadingId("");
                 return;
             }
 
-            const extractedHeadings = Array.from(headingElements).map((el, index) => {
-                const text = el.textContent?.trim() || `Heading ${index}`;
-                const id = generateHeadingId(text) + "-" + index;
-                // Update the element's ID if it doesn't have one
-                if (!el.id && text && text !== "") {
+            const extracted = Array.from(headingElements)
+                .map((el, index) => {
+                    const text = (el.textContent || "").trim();
+                    if (!text) return null;
+
+                    const id = el.id || generateHeadingId(text, index);
                     el.id = id;
-                }
-                return {
-                    id,
-                    text,
-                    level: parseInt(el.tagName[1]),
-                };
-            }).filter(h => h.text && h.text !== ""); // Filter out empty headings
 
-            // Filter to include h2, h3, h4 for TOC (skip main h1 title)
-            // If no h2/h3 found, include h1 as fallback (except the page title which is usually first)
-            let filteredHeadings = extractedHeadings.filter(h => h.level >= 2);
+                    return {
+                        id,
+                        text,
+                        level: Number(el.tagName[1]),
+                    };
+                })
+                .filter(Boolean);
 
-            if (filteredHeadings.length === 0 && extractedHeadings.some(h => h.level === 1)) {
-                filteredHeadings = extractedHeadings
-                    .filter(h => h.level === 1)
-                    .slice(1);
+            // Prefer h2+ in TOC
+            let toc = extracted.filter((h) => h.level >= 2);
+
+            // fallback to h1 (except likely page title as first heading)
+            if (toc.length === 0) {
+                toc = extracted.filter((h) => h.level === 1).slice(1);
             }
 
-            setHeadings(filteredHeadings);
+            setHeadings(toc);
+            setActiveHeadingId(toc[0]?.id || "");
         };
 
-        // Small delay to ensure React has updated the DOM
-        const timer = requestAnimationFrame(extractHeadings);
-        return () => clearTimeout(timer);
+        rafId = requestAnimationFrame(extractHeadings);
+        return () => cancelAnimationFrame(rafId);
     }, [docData?.content, docData?.blocks]);
 
-    // Fetch related documents by category
+    // ================= INTERSECTION OBSERVER FOR ACTIVE TOC =================
+    useEffect(() => {
+        if (!headings.length) return;
+
+        const observer = new IntersectionObserver(
+            (entries) => {
+                const visible = entries
+                    .filter((e) => e.isIntersecting)
+                    .sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top);
+
+                if (visible[0]?.target?.id) {
+                    setActiveHeadingId(visible[0].target.id);
+                }
+            },
+            {
+                rootMargin: "-90px 0px -70% 0px",
+                threshold: 0.1,
+            }
+        );
+
+        headings.forEach((h) => {
+            const el = document.getElementById(h.id);
+            if (el) observer.observe(el);
+        });
+
+        return () => observer.disconnect();
+    }, [headings]);
+
+    // ================= RELATED DOCS =================
     useEffect(() => {
         if (!docData?.category) return;
 
         const fetchRelatedDocs = async () => {
             try {
                 const response = await fetch(
-                    `/api/documents/user-documents?category=${encodeURIComponent(docData.category)}`
+                    `/api/documents/user-documents?category=${encodeURIComponent(
+                        docData.category
+                    )}`
                 );
                 if (response.ok) {
                     const data = await response.json();
-                    // Filter out current document and limit to 10
-                    const filtered = data.documents
-                        .filter(doc => doc.slug !== slug)
+                    const filtered = (data.documents || [])
+                        .filter((doc) => doc.slug !== slug)
                         .slice(0, 10);
                     setRelatedDocs(filtered);
                 }
@@ -204,7 +258,7 @@ export default function DocumentView() {
         fetchRelatedDocs();
     }, [docData?.category, slug]);
 
-    // Fetch upvote data after document loads
+    // ================= UPVOTE STATE =================
     useEffect(() => {
         if (!slug) return;
 
@@ -228,52 +282,18 @@ export default function DocumentView() {
         fetchUpvoteData();
     }, [slug]);
 
-    const toggleTheme = () => {
-        if (typeof window === "undefined") return;
-        const newDark = !isDark;
-        setIsDark(newDark);
-        const theme = newDark ? "dark" : "light";
-        localStorage.setItem("theme", theme);
-        document.documentElement.setAttribute("data-theme", theme);
-    };
-
+    // ================= ACTIONS =================
     const scrollToHeading = (id) => {
         const element = document.getElementById(id);
-        if (element) {
-            const offset = 120; // Account for sticky header
-            const top = element.getBoundingClientRect().top + window.scrollY - offset;
-            window.scrollTo({ top, behavior: "smooth" });
-        }
-    };
+        if (!element) return;
 
+        const offset = 120;
+        const top = element.getBoundingClientRect().top + window.scrollY - offset;
+        window.scrollTo({ top, behavior: "smooth" });
 
-    const TableOfContents = ({ headings, activeId }) => {
-        if (headings.length === 0) {
-            return null;
-        }
-
-        const handleClick = (id) => {
-            scrollToHeading(id);
-        };
-
-        return (
-            <section className="table-of-contents">
-                <h3>Table of Contents</h3>
-                <ul className="toc-list">
-                    {headings.map((heading) => (
-                        <li key={heading.id} className={`toc-item level-${heading.level}`}>
-                            <button
-                                className={`toc-link ${activeId === heading.id ? "active" : ""}`}
-                                onClick={() => handleClick(heading.id)}
-                                title={heading.text}
-                            >
-                                {heading.text}
-                            </button>
-                        </li>
-                    ))}
-                </ul>
-            </section>
-        );
+        setActiveHeadingId(id);
+        element.classList.add("active-heading");
+        setTimeout(() => element.classList.remove("active-heading"), 1200);
     };
 
     const showNotification = (message, type = "success") => {
@@ -315,21 +335,14 @@ export default function DocumentView() {
         try {
             const response = await fetch(`/api/docs/upvote`, {
                 method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify({
-                    docId: slug,
-                    userEmail,
-                }),
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ docId: slug, userEmail }),
             });
 
             if (response.ok) {
                 const data = await response.json();
                 setIsUpvoted(data.isUpvoted);
-                // Vote activity is logged in the upvote route via log-vote-optimized
 
-                // Fetch updated count
                 const countResponse = await fetch(
                     `/api/docs/upvote?docId=${slug}&userEmail=${encodeURIComponent(userEmail)}`
                 );
@@ -337,6 +350,7 @@ export default function DocumentView() {
                     const countData = await countResponse.json();
                     setUpvoteCount(countData.upvoteCount || 0);
                 }
+
                 showNotification(data.isUpvoted ? "Upvoted!" : "Upvote removed", "success");
             } else {
                 showNotification("Error updating upvote", "error");
@@ -360,9 +374,7 @@ export default function DocumentView() {
         try {
             const response = await fetch(`/api/docs/report`, {
                 method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
+                headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
                     docId: slug,
                     userEmail,
@@ -376,8 +388,8 @@ export default function DocumentView() {
                 showNotification(data.message || "Report submitted successfully!", "success");
                 setIsReportModalOpen(false);
             } else {
-                const error = await response.json();
-                showNotification(error.error || "Error submitting report", "error");
+                const err = await response.json();
+                showNotification(err.error || "Error submitting report", "error");
             }
         } catch (err) {
             console.error("Error reporting doc:", err);
@@ -387,6 +399,120 @@ export default function DocumentView() {
         }
     };
 
+    // ================= RENDER BLOCKS =================
+    const renderBlock = (block, index) => {
+        if (!block) return null;
+
+        switch (block.type) {
+            case "paragraph":
+                return (
+                    <p
+                        key={block.id || index}
+                        dangerouslySetInnerHTML={{ __html: block.content || "" }}
+                    />
+                );
+
+            case "heading1":
+            case "heading2":
+            case "heading3": {
+                const level = Number(block.type.replace("heading", ""));
+                const text = getTextFromHTML(block.content);
+                const headingId = generateHeadingId(text, index);
+                const Tag = `h${level}`;
+
+                return (
+                    <Tag
+                        key={block.id || index}
+                        id={headingId}
+                        dangerouslySetInnerHTML={{ __html: block.content || "" }}
+                    />
+                );
+            }
+
+            case "quote":
+                return (
+                    <blockquote
+                        key={block.id || index}
+                        dangerouslySetInnerHTML={{ __html: block.content || "" }}
+                    />
+                );
+
+            case "bulletList":
+                return (
+                    <ul key={block.id || index}>
+                        {(block.content || "")
+                            .split("\n")
+                            .filter((item) => item.trim() !== "")
+                            .map((item, i) => (
+                                <li key={i}>{item.trim()}</li>
+                            ))}
+                    </ul>
+                );
+
+            case "numberedList":
+                return (
+                    <ol key={block.id || index}>
+                        {(block.content || "")
+                            .split("\n")
+                            .filter((item) => item.trim() !== "")
+                            .map((item, i) => (
+                                <li key={i}>{item.trim()}</li>
+                            ))}
+                    </ol>
+                );
+
+            case "image":
+                return (
+                    <div key={block.id || index} className="doc-media-wrap">
+                        <img src={block.content} alt="Document media" />
+                    </div>
+                );
+
+            case "video": {
+                const url = block.content || "";
+                const embedUrl = getVideoEmbedUrl(url);
+                const isEmbed =
+                    embedUrl.includes("youtube.com/embed/") ||
+                    embedUrl.includes("player.vimeo.com/video/");
+
+                return (
+                    <div key={block.id || index} className="doc-media-wrap">
+                        {isEmbed ? (
+                            <iframe
+                                src={embedUrl}
+                                width="100%"
+                                height="420"
+                                frameBorder="0"
+                                allowFullScreen
+                                title={`Video-${index}`}
+                            />
+                        ) : (
+                            <video controls src={url} />
+                        )}
+                    </div>
+                );
+            }
+
+            case "code": {
+                const parsed = parseCodeBlockContent(block.content);
+                return (
+                    <div key={block.id || index} className="doc-code-wrap">
+                        <CodeBlock inline={false} className={`language-${parsed.language}`}>
+                            {parsed.code}
+                        </CodeBlock>
+                    </div>
+                );
+            }
+
+            case "divider":
+                return <hr key={block.id || index} className="doc-divider" />;
+
+            default:
+                return null;
+        }
+    };
+
+    // ================= UI STATES =================
     if (isLoading) {
         return (
             <main className="doc-view" data-theme={isDark ? "dark" : "light"}>
@@ -419,109 +545,8 @@ export default function DocumentView() {
         month: "short",
         day: "numeric",
     });
+
     const shouldShowDescription = Boolean(docData.description) && !hasBlocks;
-
-    const renderBlock = (block, index) => {
-        if (!block) return null;
-
-        switch (block.type) {
-            case "paragraph":
-                return <p key={block.id || index} dangerouslySetInnerHTML={{ __html: block.content || "" }} />;
-            case "heading1": {
-                const getTextFromHTML = (html) => {
-                    if (!html) return "";
-                    const div = document.createElement("div");
-                    div.innerHTML = html;
-                    return div.textContent || div.innerText || "";
-                };
-                const headingId = generateHeadingId(headingText);
-                return <h1 key={block.id || index} id={headingId} dangerouslySetInnerHTML={{ __html: block.content || "" }} />;
-            }
-            case "heading2": {
-                const text = getTextFromHTML(block.content);
-                const id = generateHeadingId(text + "-" + index);
-
-                return (
-                    <h2
-                        key={block.id || index}
-                        id={id}
-                        dangerouslySetInnerHTML={{ __html: block.content || "" }}
-                    />
-                );
-            }
-            case "heading3": {
-                const headingText = block.content ? block.content.replace(/<[^>]*>?/gm, "") : `Heading ${index}`;
-                const headingId = generateHeadingId(headingText);
-                return <h3 key={block.id || index} id={headingId} dangerouslySetInnerHTML={{ __html: block.content || "" }} />;
-            }
-            case "quote":
-                return <blockquote key={block.id || index} dangerouslySetInnerHTML={{ __html: block.content || "" }} />;
-            case "bulletList":
-                return (
-                    <ul key={block.id || index}>
-                        {(block.content || "")
-                            .split("\n")
-                            .filter(item => item.trim() !== "")
-                            .map((item, i) => (
-                                <li key={i}>{item.trim()}</li>
-                            ))}
-                    </ul>
-                );
-
-            case "numberedList":
-                return (
-                    <ol key={block.id || index}>
-                        {(block.content || "")
-                            .split("\n")
-                            .filter(item => item.trim() !== "")
-                            .map((item, i) => (
-                                <li key={i}>{item.trim()}</li>
-                            ))}
-                    </ol>
-                );
-            case "image":
-                return (
-                    <div key={block.id || index} className="doc-media-wrap">
-                        <img src={block.content} alt="Document media" />
-                    </div>
-                );
-            case "video": {
-                const url = block.content || "";
-                const embedUrl = getVideoEmbedUrl(url);
-                const isEmbed = embedUrl.includes("youtube.com/embed/") || embedUrl.includes("player.vimeo.com/video/");
-                return (
-                    <div key={block.id || index} className="doc-media-wrap">
-                        {isEmbed ? (
-                            <iframe
-                                src={embedUrl}
-                                width="100%"
-                                height="420"
-                                frameBorder="0"
-                                allowFullScreen
-                                title={`Video-${index}`}
-                            />
-                        ) : (
-                            <video controls src={url} />
-                        )}
-                    </div>
-                );
-            }
-            case "code": {
-                const parsed = parseCodeBlockContent(block.content);
-                return (
-                    <div key={block.id || index} className="doc-code-wrap">
-                        <CodeBlock inline={false} className={`language-${parsed.language}`}>
-                            {parsed.code}
-                        </CodeBlock>
-                    </div>
-                );
-            }
-            case "divider":
-                return <hr key={block.id || index} className="doc-divider" />;
-            default:
-                return null;
-        }
-    };
 
     return (
         <main className="doc-view" data-theme={isDark ? "dark" : "light"}>
@@ -536,24 +561,33 @@ export default function DocumentView() {
                             <ul className="related-docs-list">
                                 {relatedDocs.map((doc) => (
                                     <li key={doc._id} className="related-doc-item">
-                                        <a href={`/doc/${doc.slug}`} className="related-doc-link">
+                                        <Link href={`/doc/${doc.slug}`} className="related-doc-link">
                                             <h4>{doc.title}</h4>
-                                            <span className="difficulty-badge" style={{
-                                                background: doc.difficulty === 'Beginner' ? 'rgba(34, 197, 94, 0.15)' :
-                                                    doc.difficulty === 'Intermediate' ? 'rgba(59, 130, 246, 0.15)' :
-                                                        'rgba(239, 68, 68, 0.15)',
-                                                color: doc.difficulty === 'Beginner' ? '#22c55e' :
-                                                    doc.difficulty === 'Intermediate' ? '#3b82f6' :
-                                                        '#ef4444',
-                                                fontSize: '0.7rem',
-                                                padding: '2px 8px',
-                                                borderRadius: '4px',
-                                                display: 'inline-block',
-                                                marginTop: '4px'
-                                            }}>
+                                            <span
+                                                className="difficulty-badge"
+                                                style={{
+                                                    background:
+                                                        doc.difficulty === "Beginner"
+                                                            ? "rgba(34, 197, 94, 0.15)"
+                                                            : doc.difficulty === "Intermediate"
+                                                                ? "rgba(59, 130, 246, 0.15)"
+                                                                : "rgba(239, 68, 68, 0.15)",
+                                                    color:
+                                                        doc.difficulty === "Beginner"
+                                                            ? "#22c55e"
+                                                            : doc.difficulty === "Intermediate"
+                                                                ? "#3b82f6"
+                                                                : "#ef4444",
+                                                    fontSize: "0.7rem",
+                                                    padding: "2px 8px",
+                                                    borderRadius: "4px",
+                                                    display: "inline-block",
+                                                    marginTop: "4px",
+                                                }}
+                                            >
                                                 {doc.difficulty}
                                             </span>
-                                        </a>
+                                        </Link>
                                     </li>
                                 ))}
                             </ul>
@@ -568,7 +602,11 @@ export default function DocumentView() {
                     <header className="doc-header">
                         <div className="doc-header-content">
                             <div className="doc-badges">
-                                <span className={`difficulty-badge difficulty-${docData.difficulty.toLowerCase()}`}>
+                                <span
+                                    className={`difficulty-badge difficulty-${docData.difficulty
+                                        .toLowerCase()
+                                        .replace(/\s+/g, "-")}`}
+                                >
                                     {docData.difficulty}
                                 </span>
                                 <span className="category-badge">{docData.category}</span>
@@ -611,7 +649,9 @@ export default function DocumentView() {
                                 disabled
                             >
                                 <div className="btn-content">
-                                    <span><FaRegEye /></span>
+                                    <span>
+                                        <FaRegEye />
+                                    </span>
                                 </div>
                                 {viewCount > 0 && <span className="btn-count">{viewCount}</span>}
                             </button>
@@ -628,9 +668,7 @@ export default function DocumentView() {
                     </header>
 
                     {shouldShowDescription && (
-                        <div className="doc-description">
-                            {docData.description}
-                        </div>
+                        <div className="doc-description">{docData.description}</div>
                     )}
 
                     <div className="doc-content markdown-body" ref={contentRef}>
@@ -640,12 +678,36 @@ export default function DocumentView() {
                             <ReactMarkdown
                                 remarkPlugins={[remarkGfm]}
                                 components={{
-                                    h1: ({ children }) => <HeadingRenderer level={1}>{children}</HeadingRenderer>,
-                                    h2: ({ children }) => <HeadingRenderer level={2}>{children}</HeadingRenderer>,
-                                    h3: ({ children }) => <HeadingRenderer level={3}>{children}</HeadingRenderer>,
-                                    h4: ({ children }) => <HeadingRenderer level={4}>{children}</HeadingRenderer>,
-                                    h5: ({ children }) => <HeadingRenderer level={5}>{children}</HeadingRenderer>,
-                                    h6: ({ children }) => <HeadingRenderer level={6}>{children}</HeadingRenderer>,
+                                    h1: ({ children }) => {
+                                        const text = stringifyChildren(children);
+                                        const id = generateHeadingId(text, 0);
+                                        return <h1 id={id}>{children}</h1>;
+                                    },
+                                    h2: ({ children }) => {
+                                        const text = stringifyChildren(children);
+                                        const id = generateHeadingId(text, 1);
+                                        return <h2 id={id}>{children}</h2>;
+                                    },
+                                    h3: ({ children }) => {
+                                        const text = stringifyChildren(children);
+                                        const id = generateHeadingId(text, 2);
+                                        return <h3 id={id}>{children}</h3>;
+                                    },
+                                    h4: ({ children }) => {
+                                        const text = stringifyChildren(children);
+                                        const id = generateHeadingId(text, 3);
+                                        return <h4 id={id}>{children}</h4>;
+                                    },
+                                    h5: ({ children }) => {
+                                        const text = stringifyChildren(children);
+                                        const id = generateHeadingId(text, 4);
+                                        return <h5 id={id}>{children}</h5>;
+                                    },
+                                    h6: ({ children }) => {
+                                        const text = stringifyChildren(children);
+                                        const id = generateHeadingId(text, 5);
+                                        return <h6 id={id}>{children}</h6>;
+                                    },
                                     code: CodeBlock,
                                 }}
                             >
@@ -680,8 +742,10 @@ export default function DocumentView() {
                                         className={`toc-item toc-level-${heading.level}`}
                                     >
                                         <button
-                                            className="toc-link"
+                                            className={`toc-link ${activeHeadingId === heading.id ? "active" : ""
+                                                }`}
                                             onClick={() => scrollToHeading(heading.id)}
+                                            title={heading.text}
                                         >
                                             {heading.text}
                                         </button>
@@ -718,9 +782,7 @@ export default function DocumentView() {
                             </li>
                             <li>
                                 <span>Created:</span>
-                                <strong>
-                                    {new Date(docData.createdAt).toLocaleDateString()}
-                                </strong>
+                                <strong>{new Date(docData.createdAt).toLocaleDateString()}</strong>
                             </li>
                         </ul>
                     </section>
@@ -737,5 +799,3 @@ export default function DocumentView() {
         </main>
     );
 }
-
-
