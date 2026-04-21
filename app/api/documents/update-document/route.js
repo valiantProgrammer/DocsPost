@@ -1,5 +1,25 @@
 import { MongoClient, ObjectId } from "mongodb";
 
+const stripHtml = (value) => (value || "").replace(/<[^>]*>?/gm, " ").replace(/\s+/g, " ").trim();
+
+const normalizeBlocks = (blocks) => {
+    if (!Array.isArray(blocks)) return [];
+    return blocks
+        .filter((block) => block && typeof block === "object" && typeof block.type === "string")
+        .map((block, index) => ({
+            id: block.id || `block-${Date.now()}-${index}`,
+            type: block.type,
+            content: typeof block.content === "string" ? block.content : "",
+        }));
+};
+
+const deriveContentFromBlocks = (blocks) =>
+    blocks
+        .map((block) => stripHtml(block.content || ""))
+        .filter(Boolean)
+        .join("\n")
+        .slice(0, 5000);
+
 export async function PUT(req) {
     let client;
     try {
@@ -15,6 +35,7 @@ export async function PUT(req) {
             visibility,
             tags,
             featuredImage,
+            blocks,
         } = await req.json();
 
         if (!documentId || !title || !userEmail) {
@@ -40,14 +61,18 @@ export async function PUT(req) {
             .replace(/^-|-$/g, "");
 
         const normalizedStatus = status === "Published" ? "Published" : "Draft";
+        const normalizedBlocks = normalizeBlocks(blocks);
+        const hasIncomingContent = typeof content === "string" && content.trim().length > 0;
+        const normalizedContent = hasIncomingContent ? content : deriveContentFromBlocks(normalizedBlocks);
 
         const result = await docsCollection.updateOne(
             { _id: new ObjectId(documentId), userEmail },
             {
                 $set: {
                     title,
-                    description: description || (content || "").slice(0, 140),
-                    content: content || "",
+                    description: description || normalizedContent.slice(0, 140),
+                    content: normalizedContent,
+                    blocks: normalizedBlocks,
                     category: category || "Other",
                     difficulty: difficulty || "Beginner",
                     slug,

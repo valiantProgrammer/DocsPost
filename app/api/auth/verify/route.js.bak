@@ -1,5 +1,5 @@
 import clientPromise from "../../../lib/db";
-import { generateAccessToken, generateRefreshToken } from "../../../lib/auth";
+import { generateAccessToken, generateRefreshToken } from "../../../lib/authUtils";
 import { sanitizeUser } from "../../../lib/utils";
 import { NextResponse } from "next/server";
 

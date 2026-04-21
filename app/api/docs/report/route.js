@@ -114,7 +114,6 @@ export async function GET(req) {
             JSON.stringify({ error: error.message || "Failed to fetch reports" }),
             { status: 500, headers: { "Content-Type": "application/json" } }
         );
-        );
     } finally {
         if (client) {
             await client.close();

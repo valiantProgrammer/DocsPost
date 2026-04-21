@@ -1,5 +1,26 @@
 import { MongoClient, ObjectId } from "mongodb";
 
+const parseDocumentBlocks = (document) => {
+    if (Array.isArray(document.blocks)) {
+        return document.blocks;
+    }
+
+    if (typeof document.content === "string" && document.content.trim()) {
+        try {
+            const parsed = JSON.parse(document.content);
+            if (Array.isArray(parsed)) {
+                return parsed;
+            }
+        } catch {
+            return [{ id: "legacy-1", type: "paragraph", content: document.content }];
+        }
+
+        return [{ id: "legacy-1", type: "paragraph", content: document.content }];
+    }
+
+    return [];
+};
+
 export async function GET(req) {
     let client;
     try {
@@ -36,6 +57,7 @@ export async function GET(req) {
         if (!document) {
             return new Response(JSON.stringify({ error: "Document not found" }), { status: 404 });
         }
+        const normalizedBlocks = parseDocumentBlocks(document);
 
         let authorUsername = "";
         if (document.userEmail) {
@@ -57,6 +79,7 @@ export async function GET(req) {
                     title: document.title,
                     description: document.description,
                     content: document.content,
+                    blocks: normalizedBlocks,
                     category: document.category,
                     difficulty: document.difficulty,
                     slug: document.slug,

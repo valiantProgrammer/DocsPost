@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useTheme } from "@/app/providers/ThemeProvider";
 import {
     FiEye,
     FiEdit2,
@@ -15,6 +16,10 @@ import {
     FiShare2,
     FiChevronLeft,
     FiChevronRight,
+    FiMoon,
+    FiSun,
+    FiFilter,
+    FiDownload,
 } from "react-icons/fi";
 import "./UserWorkspace.css";
 
@@ -22,6 +27,7 @@ const PAGE_SIZE = 6;
 
 export default function UserWorkspace({ userEmail }) {
     const router = useRouter();
+    const { isDark, toggleTheme } = useTheme();
     const [documents, setDocuments] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
     const [query, setQuery] = useState("");
@@ -169,108 +175,215 @@ export default function UserWorkspace({ userEmail }) {
 
     return (
         <div className="user-workspace-v2">
+            {/* Header Section */}
             <div className="workspace-header-v2">
-                <div>
+                <div className="header-content">
                     <h2>My Documents</h2>
-                    <p>Manage, edit, and publish your content from one place.</p>
+                    <p>Create, manage, and publish your content from one place.</p>
                 </div>
-                <button className="workspace-primary-btn" onClick={() => router.push("/workspace/new")}>
-                    <FiPlus size={18} />
-                    New Document
-                </button>
-            </div>
-
-            <div className="workspace-controls">
-                <label className="workspace-search">
-                    <FiSearch />
-                    <input
-                        value={query}
-                        onChange={(e) => { setQuery(e.target.value); setCurrentPage(1); }}
-                        placeholder="Search by title, tags, or content"
-                    />
-                </label>
-
-                <select value={statusFilter} onChange={(e) => { setStatusFilter(e.target.value); setCurrentPage(1); }}>
-                    <option>All</option>
-                    <option>Draft</option>
-                    <option>Published</option>
-                </select>
-
-                <select value={sortBy} onChange={(e) => { setSortBy(e.target.value); setCurrentPage(1); }}>
-                    <option>Recently Updated</option>
-                    <option>Oldest</option>
-                    <option>Most Viewed</option>
-                </select>
-
-                <div className="view-toggle-group">
-                    <button className={view === "grid" ? "active" : ""} onClick={() => setView("grid")}>
-                        <FiGrid />
+                <div className="header-actions">
+                    <button
+                        className="theme-toggle-btn"
+                        onClick={toggleTheme}
+                        title={isDark ? "Switch to Light Mode" : "Switch to Dark Mode"}
+                    >
+                        {isDark ? <FiSun size={18} /> : <FiMoon size={18} />}
                     </button>
-                    <button className={view === "list" ? "active" : ""} onClick={() => setView("list")}>
-                        <FiList />
+                    <button
+                        className="workspace-primary-btn"
+                        onClick={() => router.push("/workspace/new")}
+                    >
+                        <FiPlus size={18} />
+                        New Document
                     </button>
                 </div>
             </div>
 
-            {isLoading ? (
-                <div className="workspace-empty">Loading documents...</div>
-            ) : pagedDocuments.length === 0 ? (
-                <div className="workspace-empty">No documents found for the current filters.</div>
-            ) : (
-                <div className={view === "grid" ? "documents-grid-v2" : "documents-list-v2"}>
-                    {pagedDocuments.map((doc) => (
-                        <article key={doc._id} className="workspace-doc-card">
-                            <div className="workspace-doc-top">
-                                <div>
-                                    <h3>{doc.title}</h3>
-                                    <p>{doc.description || "No description"}</p>
+            {/* Controls Section */}
+            <div className="workspace-controls-section">
+                <div className="workspace-controls">
+                    <label className="workspace-search">
+                        <FiSearch size={18} />
+                        <input
+                            value={query}
+                            onChange={(e) => { setQuery(e.target.value); setCurrentPage(1); }}
+                            placeholder="Search by title, tags, or content"
+                        />
+                    </label>
+
+                    <div className="controls-group">
+                        <select
+                            value={statusFilter}
+                            onChange={(e) => { setStatusFilter(e.target.value); setCurrentPage(1); }}
+                            className="filter-select"
+                        >
+                            <option>All</option>
+                            <option>Draft</option>
+                            <option>Published</option>
+                        </select>
+
+                        <select
+                            value={sortBy}
+                            onChange={(e) => { setSortBy(e.target.value); setCurrentPage(1); }}
+                            className="sort-select"
+                        >
+                            <option>Recently Updated</option>
+                            <option>Oldest</option>
+                            <option>Most Viewed</option>
+                        </select>
+
+                        <div className="view-toggle-group">
+                            <button
+                                className={view === "grid" ? "active" : ""}
+                                onClick={() => setView("grid")}
+                                title="Grid view"
+                            >
+                                <FiGrid />
+                            </button>
+                            <button
+                                className={view === "list" ? "active" : ""}
+                                onClick={() => setView("list")}
+                                title="List view"
+                            >
+                                <FiList />
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Results Count */}
+                <div className="results-info">
+                    <span>{filteredDocuments.length} document{filteredDocuments.length !== 1 ? 's' : ''}</span>
+                </div>
+            </div>
+
+            {/* Documents Section */}
+            <div className="workspace-documents-section">
+                {isLoading ? (
+                    <div className="workspace-loading">
+                        <div className="spinner"></div>
+                        <p>Loading your documents...</p>
+                    </div>
+                ) : pagedDocuments.length === 0 ? (
+                    <div className="workspace-empty">
+                        <FiPlus size={48} />
+                        <h3>No documents found</h3>
+                        <p>{query || statusFilter !== "All" ? "Try adjusting your filters." : "Create your first document to get started!"}</p>
+                        <button className="workspace-primary-btn" onClick={() => router.push("/workspace/new")}>
+                            <FiPlus size={16} /> Create Document
+                        </button>
+                    </div>
+                ) : (
+                    <div className={view === "grid" ? "documents-grid-v2" : "documents-list-v2"}>
+                        {pagedDocuments.map((doc) => (
+                            <article key={doc._id} className="workspace-doc-card">
+                                {doc.featuredImage && (
+                                    <div className="doc-featured-image">
+                                        <img src={doc.featuredImage} alt={doc.title} />
+                                    </div>
+                                )}
+
+                                <div className="workspace-doc-top">
+                                    <div className="doc-title-section">
+                                        <h3>{doc.title}</h3>
+                                        <p>{doc.description || "No description"}</p>
+                                    </div>
+                                    <span className={`status-pill ${(doc.status || "Draft").toLowerCase()}`}>
+                                        {doc.status || "Draft"}
+                                    </span>
                                 </div>
-                                <span className={`status-pill ${(doc.status || "Draft").toLowerCase()}`}>
-                                    {doc.status || "Draft"}
-                                </span>
-                            </div>
 
-                            <div className="workspace-doc-meta">
-                                <span>Updated {formatDate(doc.updatedAt)}</span>
-                                <span>{doc.views || 0} views</span>
-                            </div>
+                                <div className="workspace-doc-meta">
+                                    <span>📅 {formatDate(doc.updatedAt)}</span>
+                                    <span>👁 {doc.views || 0}</span>
+                                    {doc.category && <span>📂 {doc.category}</span>}
+                                </div>
 
-                            <div className="workspace-doc-actions">
-                                <button onClick={() => router.push(`/workspace/${doc._id}`)}>
-                                    <FiEdit2 size={15} /> Edit
-                                </button>
-                                <button onClick={() => handleDelete(doc._id)}>
-                                    <FiTrash2 size={15} /> Delete
-                                </button>
-                                <button onClick={() => window.open(`/doc/${doc.slug}`, "_blank") }>
-                                    <FiEye size={15} /> Preview
-                                </button>
-                                <div className="more-wrapper">
-                                    <button onClick={() => setMenuOpenFor(menuOpenFor === doc._id ? "" : doc._id)}>
-                                        <FiMoreVertical />
+                                {doc.tags && doc.tags.length > 0 && (
+                                    <div className="doc-tags">
+                                        {doc.tags.slice(0, 3).map((tag) => (
+                                            <span key={tag} className="doc-tag">{tag}</span>
+                                        ))}
+                                        {doc.tags.length > 3 && <span className="doc-tag-more">+{doc.tags.length - 3}</span>}
+                                    </div>
+                                )}
+
+                                <div className="workspace-doc-actions">
+                                    <button
+                                        onClick={() => router.push(`/workspace/${doc._id}`)}
+                                        className="action-btn edit-btn"
+                                        title="Edit document"
+                                    >
+                                        <FiEdit2 size={15} /> Edit
                                     </button>
-                                    {menuOpenFor === doc._id && (
-                                        <div className="more-menu">
-                                            <button onClick={() => handleDuplicate(doc)}><FiCopy size={14} /> Duplicate</button>
-                                            <button onClick={() => handleShare(doc)}><FiShare2 size={14} /> Share link</button>
-                                        </div>
-                                    )}
+                                    <button
+                                        onClick={() => window.open(`/doc/${doc.slug}`, "_blank")}
+                                        className="action-btn preview-btn"
+                                        title="Preview document"
+                                    >
+                                        <FiEye size={15} /> Preview
+                                    </button>
+                                    <button
+                                        onClick={() => handleDelete(doc._id)}
+                                        className="action-btn delete-btn"
+                                        title="Delete document"
+                                    >
+                                        <FiTrash2 size={15} />
+                                    </button>
+                                    <div className="more-wrapper">
+                                        <button
+                                            onClick={() => setMenuOpenFor(menuOpenFor === doc._id ? "" : doc._id)}
+                                            className="action-btn more-btn"
+                                            title="More options"
+                                        >
+                                            <FiMoreVertical size={15} />
+                                        </button>
+                                        {menuOpenFor === doc._id && (
+                                            <div className="more-menu">
+                                                <button
+                                                    onClick={() => handleDuplicate(doc)}
+                                                    className="more-menu-item"
+                                                >
+                                                    <FiCopy size={14} /> Duplicate
+                                                </button>
+                                                <button
+                                                    onClick={() => handleShare(doc)}
+                                                    className="more-menu-item"
+                                                >
+                                                    <FiShare2 size={14} /> Share
+                                                </button>
+                                            </div>
+                                        )}
+                                    </div>
                                 </div>
-                            </div>
-                        </article>
-                    ))}
+                            </article>
+                        ))}
+                    </div>
+                )}
+            </div>
+
+            {/* Pagination */}
+            {totalPages > 1 && (
+                <div className="workspace-pagination">
+                    <button
+                        disabled={currentPage === 1}
+                        onClick={() => setCurrentPage((p) => p - 1)}
+                        className="pagination-btn"
+                    >
+                        <FiChevronLeft size={16} /> Previous
+                    </button>
+                    <div className="pagination-info">
+                        <span>Page <strong>{currentPage}</strong> of <strong>{totalPages}</strong></span>
+                    </div>
+                    <button
+                        disabled={currentPage === totalPages}
+                        onClick={() => setCurrentPage((p) => p + 1)}
+                        className="pagination-btn"
+                    >
+                        Next <FiChevronRight size={16} />
+                    </button>
                 </div>
             )}
-
-            <div className="workspace-pagination">
-                <button disabled={currentPage === 1} onClick={() => setCurrentPage((p) => p - 1)}>
-                    <FiChevronLeft /> Prev
-                </button>
-                <span>Page {currentPage} of {totalPages}</span>
-                <button disabled={currentPage === totalPages} onClick={() => setCurrentPage((p) => p + 1)}>
-                    Next <FiChevronRight />
-                </button>
-            </div>
         </div>
     );
 }

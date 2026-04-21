@@ -33,9 +33,17 @@ export default function CodeBlock({ inline, className, children }) {
     // Calculate height based on content
     useEffect(() => {
         const lineCount = code.split("\n").length;
-        const lineHeight = 24; // Monaco's default line height
-        const calculatedHeight = Math.max(lineCount * lineHeight + 20, 300); // min 150px, no max limit
-        setEditorHeight(`${calculatedHeight}px`);
+        const lineHeight = 14;
+        const calculatedHeight = lineCount * lineHeight; // min 150px, no max limit
+        let newHeight;
+        if (calculatedHeight >= 1000) {
+            newHeight = 600
+        } else if (calculatedHeight >= 500) {
+            newHeight = 400
+        } else {
+            newHeight = 200
+        }
+        setEditorHeight(`${newHeight}px`);
     }, [code]);
 
     const handleCopy = async () => {

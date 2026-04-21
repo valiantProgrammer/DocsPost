@@ -1,4 +1,4 @@
-"use client"
+﻿"use client"
 import { useState, useEffect, useRef } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
@@ -14,7 +14,7 @@ import remarkGfm from "remark-gfm";
 import { useTheme } from "../../providers/ThemeProvider";
 import "./page.css";
 
-// Custom heading renderer with IDs for TOC links
+
 const HeadingRenderer = ({ level, children }) => {
     const id = children?.[0]
         ?.toString()
@@ -23,6 +23,47 @@ const HeadingRenderer = ({ level, children }) => {
         .replace(/\s+/g, "-");
     const HeadingTag = `h${level}`;
     return <HeadingTag id={id}>{children}</HeadingTag>;
+};
+
+const parseCodeBlockContent = (content) => {
+    if (!content || typeof content !== "string") return { language: "javascript", code: "" };
+    const separatorIndex = content.indexOf("\n");
+    if (separatorIndex === -1) return { language: "javascript", code: content };
+    const language = content.slice(0, separatorIndex).trim() || "javascript";
+    const code = content.slice(separatorIndex + 1);
+    return { language, code };
+};
+
+const generateHeadingId = (text) => {
+    return text
+        ?.toString()
+        .toLowerCase()
+        .replace(/[^\w\s-]/g, "")
+        .replace(/\s+/g, "-")
+        .replace(/-+/g, "-")
+        .trim();
+};
+
+const getVideoEmbedUrl = (url) => {
+    if (!url) return "";
+    if (url.includes("youtube.com") || url.includes("youtu.be")) {
+        try {
+            if (url.includes("youtu.be/")) {
+                const id = url.split("youtu.be/")[1]?.split(/[?&]/)[0];
+                return id ? `https://www.youtube.com/embed/${id}` : url;
+            }
+            const parsed = new URL(url);
+            const id = parsed.searchParams.get("v");
+            return id ? `https://www.youtube.com/embed/${id}` : url;
+        } catch {
+            return url;
+        }
+    }
+    if (url.includes("vimeo.com")) {
+        const id = url.split("/").pop();
+        return id ? `https://player.vimeo.com/video/${id}` : url;
+    }
+    return url;
 };
 
 export default function DocumentView() {
@@ -42,6 +83,7 @@ export default function DocumentView() {
     const [isReportModalOpen, setIsReportModalOpen] = useState(false);
     const [isSubmittingReport, setIsSubmittingReport] = useState(false);
     const contentRef = useRef(null);
+    const hasBlocks = Array.isArray(docData?.blocks) && docData.blocks.length > 0;
 
     useEffect(() => {
         if (typeof window === "undefined") return;
@@ -93,25 +135,49 @@ export default function DocumentView() {
         fetchDocument();
     }, [slug]);
 
-    useEffect(() => {
-        return () => {
-            // Cleanup if needed
-        };
-    }, []);
-
     // Extract headings from content after render
     useEffect(() => {
         if (!contentRef.current) return;
 
-        const headingElements = contentRef.current.querySelectorAll("h2, h3");
-        const extractedHeadings = Array.from(headingElements).map((el, index) => ({
-            id: el.id || `heading-${index}`,
-            text: el.textContent,
-            level: parseInt(el.tagName[1]),
-        }));
+        // Use setTimeout to ensure DOM is fully updated
+        const extractHeadings = () => {
+            const headingElements = contentRef.current?.querySelectorAll("h1, h2, h3, h4, h5, h6");
+            if (!headingElements || headingElements.length === 0) {
+                setHeadings([]);
+                return;
+            }
 
-        setHeadings(extractedHeadings);
-    }, [docData?.content]);
+            const extractedHeadings = Array.from(headingElements).map((el, index) => {
+                const text = el.textContent?.trim() || `Heading ${index}`;
+                const id = generateHeadingId(text) + "-" + index;
+                // Update the element's ID if it doesn't have one
+                if (!el.id && text && text !== "") {
+                    el.id = id;
+                }
+                return {
+                    id,
+                    text,
+                    level: parseInt(el.tagName[1]),
+                };
+            }).filter(h => h.text && h.text !== ""); // Filter out empty headings
+
+            // Filter to include h2, h3, h4 for TOC (skip main h1 title)
+            // If no h2/h3 found, include h1 as fallback (except the page title which is usually first)
+            let filteredHeadings = extractedHeadings.filter(h => h.level >= 2);
+
+            if (filteredHeadings.length === 0 && extractedHeadings.some(h => h.level === 1)) {
+                filteredHeadings = extractedHeadings
+                    .filter(h => h.level === 1)
+                    .slice(1);
+            }
+
+            setHeadings(filteredHeadings);
+        };
+
+        // Small delay to ensure React has updated the DOM
+        const timer = requestAnimationFrame(extractHeadings);
+        return () => clearTimeout(timer);
+    }, [docData?.content, docData?.blocks]);
 
     // Fetch related documents by category
     useEffect(() => {
@@ -174,10 +240,40 @@ export default function DocumentView() {
     const scrollToHeading = (id) => {
         const element = document.getElementById(id);
         if (element) {
-            const offset = 100;
+            const offset = 120; // Account for sticky header
             const top = element.getBoundingClientRect().top + window.scrollY - offset;
             window.scrollTo({ top, behavior: "smooth" });
         }
+    };
+
+
+    const TableOfContents = ({ headings, activeId }) => {
+        if (headings.length === 0) {
+            return null;
+        }
+
+        const handleClick = (id) => {
+            scrollToHeading(id);
+        };
+
+        return (
+            <section className="table-of-contents">
+                <h3>Table of Contents</h3>
+                <ul className="toc-list">
+                    {headings.map((heading) => (
+                        <li key={heading.id} className={`toc-item level-${heading.level}`}>
+                            <button
+                                className={`toc-link ${activeId === heading.id ? "active" : ""}`}
+                                onClick={() => handleClick(heading.id)}
+                                title={heading.text}
+                            >
+                                {heading.text}
+                            </button>
+                        </li>
+                    ))}
+                </ul>
+            </section>
+        );
     };
 
     const showNotification = (message, type = "success") => {
@@ -310,9 +406,9 @@ export default function DocumentView() {
                 <div className="error-container">
                     <h2>Document Not Found</h2>
                     <p>{error || "The document you're looking for doesn't exist."}</p>
-                    <a href="/learning" className="btn btn-primary">
-                        Back to Learning
-                    </a>
+                    <Link href="/learning" className="btn btn-primary">
+                        ← Back to Learning
+                    </Link>
                 </div>
             </main>
         );
@@ -323,6 +419,109 @@ export default function DocumentView() {
         month: "short",
         day: "numeric",
     });
+    const shouldShowDescription = Boolean(docData.description) && !hasBlocks;
+
+    const renderBlock = (block, index) => {
+        if (!block) return null;
+
+        switch (block.type) {
+            case "paragraph":
+                return <p key={block.id || index} dangerouslySetInnerHTML={{ __html: block.content || "" }} />;
+            case "heading1": {
+                const getTextFromHTML = (html) => {
+                    if (!html) return "";
+                    const div = document.createElement("div");
+                    div.innerHTML = html;
+                    return div.textContent || div.innerText || "";
+                };
+                const headingId = generateHeadingId(headingText);
+                return <h1 key={block.id || index} id={headingId} dangerouslySetInnerHTML={{ __html: block.content || "" }} />;
+            }
+            case "heading2": {
+                const text = getTextFromHTML(block.content);
+                const id = generateHeadingId(text + "-" + index);
+
+                return (
+                    <h2
+                        key={block.id || index}
+                        id={id}
+                        dangerouslySetInnerHTML={{ __html: block.content || "" }}
+                    />
+                );
+            }
+            case "heading3": {
+                const headingText = block.content ? block.content.replace(/<[^>]*>?/gm, "") : `Heading ${index}`;
+                const headingId = generateHeadingId(headingText);
+                return <h3 key={block.id || index} id={headingId} dangerouslySetInnerHTML={{ __html: block.content || "" }} />;
+            }
+            case "quote":
+                return <blockquote key={block.id || index} dangerouslySetInnerHTML={{ __html: block.content || "" }} />;
+            case "bulletList":
+                return (
+                    <ul key={block.id || index}>
+                        {(block.content || "")
+                            .split("\n")
+                            .filter(item => item.trim() !== "")
+                            .map((item, i) => (
+                                <li key={i}>{item.trim()}</li>
+                            ))}
+                    </ul>
+                );
+
+            case "numberedList":
+                return (
+                    <ol key={block.id || index}>
+                        {(block.content || "")
+                            .split("\n")
+                            .filter(item => item.trim() !== "")
+                            .map((item, i) => (
+                                <li key={i}>{item.trim()}</li>
+                            ))}
+                    </ol>
+                );
+            case "image":
+                return (
+                    <div key={block.id || index} className="doc-media-wrap">
+                        <img src={block.content} alt="Document media" />
+                    </div>
+                );
+            case "video": {
+                const url = block.content || "";
+                const embedUrl = getVideoEmbedUrl(url);
+                const isEmbed = embedUrl.includes("youtube.com/embed/") || embedUrl.includes("player.vimeo.com/video/");
+                return (
+                    <div key={block.id || index} className="doc-media-wrap">
+                        {isEmbed ? (
+                            <iframe
+                                src={embedUrl}
+                                width="100%"
+                                height="420"
+                                frameBorder="0"
+                                allowFullScreen
+                                title={`Video-${index}`}
+                            />
+                        ) : (
+                            <video controls src={url} />
+                        )}
+                    </div>
+                );
+            }
+            case "code": {
+                const parsed = parseCodeBlockContent(block.content);
+                return (
+                    <div key={block.id || index} className="doc-code-wrap">
+                        <CodeBlock inline={false} className={`language-${parsed.language}`}>
+                            {parsed.code}
+                        </CodeBlock>
+                    </div>
+                );
+            }
+            case "divider":
+                return <hr key={block.id || index} className="doc-divider" />;
+            default:
+                return null;
+        }
+    };
 
     return (
         <main className="doc-view" data-theme={isDark ? "dark" : "light"}>
@@ -428,25 +627,31 @@ export default function DocumentView() {
                         </div>
                     </header>
 
-                    <div className="doc-description">
-                        {docData.description}
-                    </div>
+                    {shouldShowDescription && (
+                        <div className="doc-description">
+                            {docData.description}
+                        </div>
+                    )}
 
                     <div className="doc-content markdown-body" ref={contentRef}>
-                        <ReactMarkdown
-                            remarkPlugins={[remarkGfm]}
-                            components={{
-                                h1: ({ children }) => <HeadingRenderer level={1}>{children}</HeadingRenderer>,
-                                h2: ({ children }) => <HeadingRenderer level={2}>{children}</HeadingRenderer>,
-                                h3: ({ children }) => <HeadingRenderer level={3}>{children}</HeadingRenderer>,
-                                h4: ({ children }) => <HeadingRenderer level={4}>{children}</HeadingRenderer>,
-                                h5: ({ children }) => <HeadingRenderer level={5}>{children}</HeadingRenderer>,
-                                h6: ({ children }) => <HeadingRenderer level={6}>{children}</HeadingRenderer>,
-                                code: CodeBlock,
-                            }}
-                        >
-                            {docData.content || "No content yet."}
-                        </ReactMarkdown>
+                        {hasBlocks ? (
+                            docData.blocks.map((block, idx) => renderBlock(block, idx))
+                        ) : (
+                            <ReactMarkdown
+                                remarkPlugins={[remarkGfm]}
+                                components={{
+                                    h1: ({ children }) => <HeadingRenderer level={1}>{children}</HeadingRenderer>,
+                                    h2: ({ children }) => <HeadingRenderer level={2}>{children}</HeadingRenderer>,
+                                    h3: ({ children }) => <HeadingRenderer level={3}>{children}</HeadingRenderer>,
+                                    h4: ({ children }) => <HeadingRenderer level={4}>{children}</HeadingRenderer>,
+                                    h5: ({ children }) => <HeadingRenderer level={5}>{children}</HeadingRenderer>,
+                                    h6: ({ children }) => <HeadingRenderer level={6}>{children}</HeadingRenderer>,
+                                    code: CodeBlock,
+                                }}
+                            >
+                                {docData.content || "No content yet."}
+                            </ReactMarkdown>
+                        )}
                     </div>
 
                     <footer className="doc-footer">
@@ -456,9 +661,9 @@ export default function DocumentView() {
                             </span>
                         </div>
                         <div className="footer-actions">
-                            <a href="/learning" className="back-link">
+                            <Link href="/learning" className="back-link">
                                 ← Back to Learning
-                            </a>
+                            </Link>
                         </div>
                     </footer>
                 </article>
@@ -532,3 +737,5 @@ export default function DocumentView() {
         </main>
     );
 }
+
+

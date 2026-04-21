@@ -58,7 +58,7 @@
     background: transparent;
     border: none;
     border-radius: 0;
-    padding: 0;
+    padding-top: 5px;
     overflow: hidden;
 }
 
@@ -234,6 +234,34 @@
     margin-bottom: 32px;
 }
 
+.doc-media-wrap {
+    margin: 20px 0;
+}
+
+.doc-media-wrap img,
+.doc-media-wrap video,
+.doc-media-wrap iframe {
+    width: 100%;
+    max-width: 100%;
+    border-radius: 8px;
+    border: 1px solid var(--line);
+    background: var(--page-bg);
+}
+
+.doc-media-wrap video {
+    max-height: 520px;
+}
+
+.doc-code-wrap {
+    margin: 20px 0;
+}
+
+.doc-divider {
+    border: none;
+    border-top: 1px solid var(--line);
+    margin: 28px 0;
+}
+
 .markdown-body {
     color: var(--text-main);
     line-height: 1.8;
@@ -271,9 +299,159 @@
     margin: 20px 0 20px 32px;
 }
 
+.markdown-body ul {
+    list-style-type: disc;
+}
+
+.markdown-body ol {
+    list-style-type: decimal;
+}
+
+.markdown-body ul ul,
+.markdown-body ol ol,
+.markdown-body ul ol,
+.markdown-body ol ul {
+    margin: 8px 0 8px 24px;
+}
+
 .markdown-body li {
     margin: 10px 0;
     line-height: 1.7;
+}
+
+.markdown-body li>ul,
+.markdown-body li>ol {
+    margin: 8px 0 8px 24px;
+}
+
+/* List styling in doc content blocks */
+.doc-content ul,
+.doc-content ol {
+    margin: 20px 0 20px 32px;
+}
+
+.doc-content ul {
+    list-style-type: disc;
+}
+
+.doc-content ol {
+    list-style-type: decimal;
+}
+
+.doc-content ul li,
+.doc-content ol li {
+    margin: 10px 0;
+    line-height: 1.7;
+    color: var(--text-main);
+}
+
+.doc-content ul ul,
+.doc-content ol ol,
+.doc-content ul ol,
+.doc-content ol ul {
+    margin: 8px 0 8px 24px;
+}
+
+/* Table of Contents Styling */
+.table-of-contents {
+    background: var(--panel-bg);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 20px;
+    position: sticky;
+    top: 100px;
+    max-height: 80vh;
+    overflow-y: auto;
+}
+
+.table-of-contents h3 {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--text-main);
+    margin: 0 0 16px 0;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-size: 0.85rem;
+}
+
+.toc-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.toc-item {
+    margin: 0;
+    padding: 0;
+}
+
+.toc-link {
+    display: block;
+    color: var(--text-main);
+    text-decoration: none;
+    padding: 10px 12px;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    transition: all 0.2s ease;
+    border-left: 3px solid transparent;
+    margin: 6px 0;
+    line-height: 1.5;
+    word-break: break-word;
+}
+
+.toc-link:hover {
+    background: rgba(124, 58, 237, 0.05);
+    color: var(--brand);
+    border-left-color: var(--brand);
+    padding-left: 16px;
+}
+
+.toc-link.active {
+    color: var(--brand);
+    background: rgba(124, 58, 237, 0.08);
+    border-left-color: var(--brand);
+    font-weight: 600;
+}
+
+.toc-item.level-2 .toc-link {
+    padding-left: 12px;
+}
+
+.toc-item.level-3 .toc-link {
+    padding-left: 28px;
+    font-size: 0.85rem;
+}
+
+.toc-item.toc-level-2 .toc-link {
+    padding-left: 12px;
+}
+
+.toc-item.toc-level-3 .toc-link {
+    padding-left: 28px;
+    font-size: 0.85rem;
+}
+
+.toc-empty {
+    color: var(--text-muted);
+    font-size: 0.85rem;
+    padding: 10px 12px;
+    text-align: center;
+}
+
+/* Heading anchor styles */
+h1[id],
+h2[id],
+h3[id] {
+    scroll-margin-top: 120px;
+}
+
+h2[id]::before,
+h3[id]::before {
+    content: "§";
+    margin-right: 8px;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+    color: var(--brand);
 }
 
 .markdown-body code {
