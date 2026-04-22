@@ -14,12 +14,11 @@ export default function ProfilePictureModal({
 }) {
     const fileInputRef = useRef(null);
 
-    const handleViewClick = () => {
-        if (profilePicture) {
-            window.open(profilePicture, "_blank");
-            print(profilePicture);
-        }
-    };
+    // const handleViewClick = () => {
+    //     if (profilePicture) {
+    //         window.open(profilePicture, "_blank");
+    //     }
+    // };
 
     const handleUploadClick = () => {
         fileInputRef.current?.click();
@@ -65,7 +64,7 @@ export default function ProfilePictureModal({
                 <div className="modal-header">
                     <h2>
                         <FiCamera size={24} />
-                        Change Profile Picture
+                        Profile Picture
                     </h2>
                     <button
                         className="close-btn"
@@ -88,7 +87,7 @@ export default function ProfilePictureModal({
                 )}
 
                 <div className="modal-options">
-                    {profilePicture && (
+                    {/* {profilePicture && (
                         <button
                             className="option-btn view-btn"
                             onClick={handleViewClick}
@@ -97,10 +96,10 @@ export default function ProfilePictureModal({
                             <FiEye size={18} />
                             <span>View Full Size</span>
                         </button>
-                    )}
+                    )} */}
 
                     <button
-                        className="option-btn upload-btn"
+                        className="option-btn view-btn"
                         onClick={handleUploadClick}
                         disabled={isLoading}
                     >

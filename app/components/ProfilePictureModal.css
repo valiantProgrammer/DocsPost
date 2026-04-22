@@ -86,6 +86,9 @@
     font-size: 1.5rem;
     font-weight: 600;
     color: var(--text-main);
+    display: flex;
+    align-items: center;
+    gap: 10px;
 }
 
 .close-btn {
@@ -124,11 +127,11 @@
 }
 
 .preview-image {
-    width: 50px;
-    height: 50px;
-    border-radius: 50%;
     object-fit: cover;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    border-radius: 6%;
+    width: 300px;
+    height: 300px;
+    box-shadow: rgba(0, 0, 0, 0.1) 0px 4px 12px;
 }
 
 .modal-options {
@@ -136,6 +139,10 @@
     display: flex;
     flex-direction: column;
     gap: 12px;
+}
+
+.modal-options button {
+    border-radius: 999px;
 }
 
 .option-btn {
@@ -209,22 +216,22 @@
     border-radius: 8px;
     color: var(--text-main);
     background:
-        /* inner background */
         linear-gradient(var(--bg, var(--but-col)), var(--bg, var(--but-col))) padding-box,
 
-        /* border gradient (arc) */
         conic-gradient(from var(--angle),
-            transparent 0deg,
-            transparent 320deg,
-            rgb(0, 255, 200) 330deg,
-            rgb(0, 150, 255) 350deg,
-            transparent 360deg) border-box;
+            rgb(255, 0, 51) 0deg,
+            rgb(255, 127, 0) 51.43deg,
+            rgb(255, 255, 0) 102.86deg,
+            rgb(0, 255, 0) 154.29deg,
+            rgb(0, 255, 255) 205.71deg,
+            rgb(0, 0, 255) 257.14deg,
+            rgb(179, 0, 255) 308.57deg,
+            rgb(255, 0, 51) 360deg) border-box;
 
     background-clip: padding-box, border-box;
     transition: box-shadow 0.3s ease;
 }
 
-/* Animate gradient itself */
 .upload-btn:hover {
     animation: rotateBorder 1.5s linear infinite;
     box-shadow: 0 4px 12px rgba(0, 255, 200, 0.3);
@@ -236,7 +243,6 @@
     }
 }
 
-/* Animate ONLY on hover */
 .upload-btn:hover::before {
     opacity: 1;
     animation: rotateGradient 1.5s linear infinite;
@@ -246,7 +252,6 @@
     box-shadow: 0 4px 12px rgba(0, 255, 200, 0.3);
 }
 
-/* This changes gradient start position */
 @keyframes rotateGradient {
     to {
         --angle: 360deg;
@@ -254,14 +259,16 @@
 }
 
 .delete-btn {
-    background: #ff1313;
-    color: white;
+    background: transparent;
+    color: #ff0000;
+    border: 1px solid #ff0000;
 }
 
 .delete-btn:hover:not(:disabled) {
-    background: #ff0000;
-    transform: translateY(-2px);
     box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+    background-color: #ff0000;
+    color: wheat;
+    transition: color 1.0s ease, background-color 1.0s ease, box-shadow 1.0s ease;
 }
 
 .modal-loading {

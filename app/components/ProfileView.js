@@ -46,6 +46,38 @@ export default function ProfileView({ userData, userEmail, userName }) {
     const [isUploadingPicture, setIsUploadingPicture] = useState(false);
     const [isModalOpen, setIsModalOpen] = useState(false);
 
+
+    useEffect(() => {
+        console.log(userData);
+    }, [userData]);
+
+    useEffect(() => {
+        if (userData) {
+            setProfileData(prev => ({
+                ...prev,
+                userId: userData._id,
+                profilePicture: userData.profilePicture,
+            }));
+        }
+    }, [userData]);
+
+    useEffect(() => {
+        const handleUpdate = async () => {
+            // ...
+        };
+
+        window.addEventListener("profilePictureUpdated", handleUpdate);
+
+        return () => {
+            window.removeEventListener("profilePictureUpdated", handleUpdate);
+        };
+    }, [profileData.userId]);
+
+
+
+    useEffect(() => {
+        console.log(userData);
+    }, []);
     useEffect(() => {
         const handleUpdate = async () => {
             try {
@@ -177,7 +209,16 @@ export default function ProfileView({ userData, userEmail, userName }) {
                             onDelete={handleProfilePictureDelete}
                             isLoading={isUploadingPicture}
                         />
-
+                        <div
+                            className="profile-avatar"
+                            onClick={() => setIsModalOpen(true)}
+                        >
+                            {profileData.profilePicture ? (
+                                <img src={profileData.profilePicture} alt="profile" />
+                            ) : (
+                                <span>{profileData.profileImage}</span>
+                            )}
+                        </div>
                         <div className="profile-header-info">
                             <h1 className="profile-name">{profileData.name}</h1>
 
