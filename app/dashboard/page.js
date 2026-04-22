@@ -41,7 +41,8 @@ export default function DashboardPage() {
                     );
                     if (response.ok) {
                         const data = await response.json();
-                        setUserData(data.user);
+                        await setUserData(data.user);
+                        console.log(data.user);
                     }
                 }
             } catch (error) {

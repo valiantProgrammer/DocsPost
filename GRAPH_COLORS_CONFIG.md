@@ -106,7 +106,7 @@ The bar hover colors in the "Top Articles Performance" chart use darker versions
 - Views Bar: `--chart-orange`
 - Likes Bar: `--chart-pink`
 
-### Activity Trends Chart
+### console.log Chart
 - Activity Line: `--chart-blue`
 - Tooltip Border: `--chart-cyan`
 

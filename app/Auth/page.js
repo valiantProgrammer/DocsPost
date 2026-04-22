@@ -76,7 +76,7 @@ function AuthPageContent() {
         if (isSignUp && name) {
             const isAlphanumeric = /^[a-zA-Z0-9]+$/.test(name);
             const isValidLength = name.length >= 3 && name.length <= 20;
-            
+
             setUsernameValidation({
                 isValid: isAlphanumeric && isValidLength,
                 message: !isAlphanumeric ? "Username can only contain letters (A-Z, a-z) and numbers (0-9). No special characters, spaces, or symbols allowed." : !isValidLength ? "Username must be between 3 and 20 characters" : "",
@@ -344,18 +344,18 @@ function AuthPageContent() {
                 setError("Username must be at least 3 characters");
                 return false;
             }
-            
+
             // Validate username format: only alphanumeric characters
             if (!/^[a-zA-Z0-9]+$/.test(name)) {
                 setError("Username can only contain letters (A-Z, a-z) and numbers (0-9). No special characters, spaces, or symbols allowed.");
                 return false;
             }
-            
+
             if (name.length > 20) {
                 setError("Username must not exceed 20 characters");
                 return false;
             }
-            
+
             if (password.length < 8) {
                 setError("Password must be at least 8 characters");
                 return false;

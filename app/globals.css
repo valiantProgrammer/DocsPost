@@ -1619,3 +1619,8 @@ a {
 .sort-select {
   background-color: var(--panel-bg);
 }
+
+.sort-select,
+.sort-select option {
+  background-color: var(--page-bg);
+}

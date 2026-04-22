@@ -1,9 +1,10 @@
 "use client"
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { FiMail, FiMapPin, FiUser, FiFileText, FiBookmark, FiExternalLink, FiGithub, FiLinkedin } from "react-icons/fi";
 import { FaTwitter, FaYoutube, FaInstagram, FaGlobe } from "react-icons/fa";
 import ProfileEdit from "./ProfileEdit";
 import "./ProfileView.css";
+import ProfilePictureModal from "./ProfilePictureModal";
 
 const SOCIAL_ICONS = {
     twitter: FaTwitter,
@@ -42,45 +43,106 @@ export default function ProfileView({ userData, userEmail, userName }) {
         profilePicture: userData?.profilePicture,
         userId: userData?._id,
     });
+    const [isUploadingPicture, setIsUploadingPicture] = useState(false);
+    const [isModalOpen, setIsModalOpen] = useState(false);
 
-    const articles = [
-        {
-            id: 1,
-            title: "Understanding Data Structures: Arrays vs Linked Lists",
-            excerpt: "A comprehensive guide to choosing the right data structure for your use case.",
-            date: "April 15, 2024",
-            views: 2340,
-            likes: 156,
-            category: "DSA"
-        },
-        {
-            id: 2,
-            title: "React Hooks Deep Dive: useContext and useReducer",
-            excerpt: "Learn advanced React patterns and optimize your component architecture.",
-            date: "April 10, 2024",
-            views: 1890,
-            likes: 234,
-            category: "React"
-        },
-        {
-            id: 3,
-            title: "Building Scalable APIs with Node.js and MongoDB",
-            excerpt: "Best practices for creating production-ready backend applications.",
-            date: "April 5, 2024",
-            views: 3120,
-            likes: 412,
-            category: "Backend"
-        },
-        {
-            id: 4,
-            title: "CSS Grid vs Flexbox: When to Use Each",
-            excerpt: "Master modern CSS layout techniques and responsive design patterns.",
-            date: "March 28, 2024",
-            views: 2680,
-            likes: 389,
-            category: "CSS"
+    useEffect(() => {
+        const handleUpdate = async () => {
+            try {
+                const res = await fetch(`/api/user/${profileData.userId}`);
+                const data = await res.json();
+
+                setProfileData(prev => ({
+                    ...prev,
+                    profilePicture: data.profilePicture
+                }));
+            } catch (err) {
+                console.error(err);
+            }
+        };
+
+        window.addEventListener("profilePictureUpdated", handleUpdate);
+
+        return () => {
+            window.removeEventListener("profilePictureUpdated", handleUpdate);
+        };
+    }, [profileData.userId]);
+
+    const handleProfilePictureUpload = async (base64String) => {
+        if (!profileData.userId) {
+            alert("User ID not found. Please refresh the page.");
+            return;
         }
-    ];
+
+        setIsUploadingPicture(true);
+        try {
+            const response = await fetch("/api/profile/upload-picture", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    imageBase64: base64String,
+                    userId: profileData.userId,
+                }),
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                setIsModalOpen(false);
+                alert("Profile picture updated successfully!");
+                window.dispatchEvent(new Event("profilePictureUpdated"));
+            } else {
+                alert(data.error || "Failed to upload profile picture");
+            }
+        } catch (error) {
+            console.error("Upload error:", error);
+            alert("Failed to upload profile picture");
+        } finally {
+            setIsUploadingPicture(false);
+        }
+    };
+
+    const handleProfilePictureDelete = async () => {
+        if (!profileData.userId) {
+            alert("User ID not found. Please refresh the page.");
+            return;
+        }
+
+        if (!confirm("Are you sure you want to delete your profile picture?")) {
+            return;
+        }
+
+        setIsUploadingPicture(true);
+        try {
+            const response = await fetch("/api/profile/delete-picture", {
+                method: "DELETE",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    userId: profileData.userId,
+                    publicId: "",
+                }),
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                setIsModalOpen(false);
+                alert("Profile picture deleted successfully!");
+                window.dispatchEvent(new Event("profilePictureUpdated"));
+            } else {
+                alert(data.error || "Failed to delete profile picture");
+            }
+        } catch (error) {
+            console.error("Delete error:", error);
+            alert("Failed to delete profile picture");
+        } finally {
+            setIsUploadingPicture(false);
+        }
+    };
 
     const handleEditClose = (updatedData) => {
         if (updatedData) {
@@ -105,19 +167,16 @@ export default function ProfileView({ userData, userEmail, userName }) {
                     />
                 ) : (
                     <div className="profile-header-content">
-                        <div className="profile-avatar-wrapper">
-                            {profileData.profilePicture ? (
-                                <img
-                                    src={profileData.profilePicture}
-                                    alt={profileData.name}
-                                    className="profile-avatar-image"
-                                />
-                            ) : (
-                                <div className="profile-avatar-placeholder">
-                                    {profileData.profileImage}
-                                </div>
-                            )}
-                        </div>
+
+                        <ProfilePictureModal
+                            isOpen={isModalOpen}
+                            onClose={() => setIsModalOpen(false)}
+                            profilePicture={profileData?.profilePicture}
+                            userName={profileData.name}
+                            onUpload={handleProfilePictureUpload}
+                            onDelete={handleProfilePictureDelete}
+                            isLoading={isUploadingPicture}
+                        />
 
                         <div className="profile-header-info">
                             <h1 className="profile-name">{profileData.name}</h1>

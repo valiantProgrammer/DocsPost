@@ -432,290 +432,290 @@ const styles = `
 `;
 
 export default function NewDocumentModal({ isOpen, onClose, onCreateDocument }) {
-    const [formData, setFormData] = useState({
-        title: "Add a Catchy Title",
-        content: "",
-        category: "React",
-        visibility: "Public",
-        status: "Draft"
+  const [formData, setFormData] = useState({
+    title: "Add a Catchy Title",
+    content: "",
+    category: "React",
+    visibility: "Public",
+    status: "Draft"
+  });
+  const [activeMetaTab, setActiveMetaTab] = useState("Document");
+  const [showPreview, setShowPreview] = useState(false);
+
+  const categories = ["React", "Backend", "Database", "CSS", "JavaScript", "Node.js", "TypeScript", "Other"];
+  const visibilityOptions = ["Public", "Private", "Draft"];
+  const statusOptions = ["Draft", "Published", "Archived"];
+
+  const handleTitleChange = (e) => setFormData(prev => ({ ...prev, title: e.target.value }));
+  const handleContentChange = (e) => setFormData(prev => ({ ...prev, content: e.target.value }));
+  const handleSelectChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleCreate = () => {
+    if (!formData.title.trim() || formData.title === "Add a Catchy Title") {
+      alert("Please enter a document title");
+      return;
+    }
+    if (onCreateDocument) onCreateDocument(formData);
+    setFormData({
+      title: "Add a Catchy Title",
+      content: "",
+      category: "React",
+      visibility: "Public",
+      status: "Draft"
     });
-    const [activeMetaTab, setActiveMetaTab] = useState("Document");
-    const [showPreview, setShowPreview] = useState(false);
+    if (onClose) onClose();
+  };
 
-    const categories = ["React", "Backend", "Database", "CSS", "JavaScript", "Node.js", "TypeScript", "Other"];
-    const visibilityOptions = ["Public", "Private", "Draft"];
-    const statusOptions = ["Draft", "Published", "Archived"];
+  const wordCount = formData.content.trim() ? formData.content.trim().split(/\s+/).length : 0;
+  const readingTime = Math.max(1, Math.round(wordCount / 200));
 
-    const handleTitleChange = (e) => setFormData(prev => ({ ...prev, title: e.target.value }));
-    const handleContentChange = (e) => setFormData(prev => ({ ...prev, content: e.target.value }));
-    const handleSelectChange = (e) => {
-        const { name, value } = e.target;
-        setFormData(prev => ({ ...prev, [name]: value }));
-    };
+  const insertItems = [
+    { icon: <RiText size={15} />, label: "Text" },
+    { icon: <BsTypeH1 size={15} />, label: "Heading 1", prefix: "H" },
+    { icon: <BsTypeH2 size={15} />, label: "Heading 2", prefix: "H" },
+    { icon: <BsTypeH3 size={15} />, label: "Heading 3", prefix: "H" },
+    null,
+    { icon: <FiList size={15} />, label: "Bulleted List" },
+    { icon: <TbListNumbers size={15} />, label: "Numbered List" },
+    null,
+    { icon: <RiImageLine size={15} />, label: "Image" },
+    { icon: <RiVideoLine size={15} />, label: "Video" },
+    { icon: <RiCodeBoxLine size={15} />, label: "Code Block" },
+    { icon: <MdOutlineFormatQuote size={15} />, label: "Quote" },
+    { icon: <PiTable size={15} />, label: "Table" },
+    { icon: <RiSeparator size={15} />, label: "Divider" },
+  ];
 
-    const handleCreate = () => {
-        if (!formData.title.trim() || formData.title === "Add a Catchy Title") {
-            alert("Please enter a document title");
-            return;
-        }
-        if (onCreateDocument) onCreateDocument(formData);
-        setFormData({
-            title: "Add a Catchy Title",
-            content: "",
-            category: "React",
-            visibility: "Public",
-            status: "Draft"
-        });
-        if (onClose) onClose();
-    };
+  const sampleContent = (
+    <div className="content-preview">
+      <p>Start writing your documentation here...</p>
+      <h2>Features</h2>
+      <ul>
+        <li>Rich text editing</li>
+        <li>Insert images and videos</li>
+        <li>Code syntax highlighting</li>
+        <li>Table support</li>
+        <li>And much more!</li>
+      </ul>
+      <p>You can write your content in a clean and distraction-free environment.</p>
+      <div className="code-block">
+        <div className="lang-label">javascript</div>
+        <button className="copy-btn">Copy</button>
+        <pre>{`const greet = (name) => {\n  console.log(\`Hello, \${name}!\`);\n};`}</pre>
+      </div>
+    </div>
+  );
 
-    const wordCount = formData.content.trim() ? formData.content.trim().split(/\s+/).length : 0;
-    const readingTime = Math.max(1, Math.round(wordCount / 200));
-
-    const insertItems = [
-        { icon: <RiText size={15} />, label: "Text" },
-        { icon: <BsTypeH1 size={15} />, label: "Heading 1", prefix: "H" },
-        { icon: <BsTypeH2 size={15} />, label: "Heading 2", prefix: "H" },
-        { icon: <BsTypeH3 size={15} />, label: "Heading 3", prefix: "H" },
-        null,
-        { icon: <FiList size={15} />, label: "Bulleted List" },
-        { icon: <TbListNumbers size={15} />, label: "Numbered List" },
-        null,
-        { icon: <RiImageLine size={15} />, label: "Image" },
-        { icon: <RiVideoLine size={15} />, label: "Video" },
-        { icon: <RiCodeBoxLine size={15} />, label: "Code Block" },
-        { icon: <MdOutlineFormatQuote size={15} />, label: "Quote" },
-        { icon: <PiTable size={15} />, label: "Table" },
-        { icon: <RiSeparator size={15} />, label: "Divider" },
-    ];
-
-    const sampleContent = (
-        <div className="content-preview">
-            <p>Start writing your documentation here...</p>
-            <h2>Features</h2>
-            <ul>
-                <li>Rich text editing</li>
-                <li>Insert images and videos</li>
-                <li>Code syntax highlighting</li>
-                <li>Table support</li>
-                <li>And much more!</li>
-            </ul>
-            <p>You can write your content in a clean and distraction-free environment.</p>
-            <div className="code-block">
-                <div className="lang-label">javascript</div>
-                <button className="copy-btn">Copy</button>
-                <pre>{`const greet = (name) => {\n  console.log(\`Hello, \${name}!\`);\n};`}</pre>
+  return (
+    <>
+      <style>{styles}</style>
+      <div className="docspost-page">
+        {/* Top Bar */}
+        <div className="editor-top-bar">
+          <div className="editor-title">
+            <span className="back-arrow" onClick={onClose}>←</span>
+            <span className="doc-icon">📄</span>
+            <span>Untitled Document</span>
+          </div>
+          <div className="topbar-center">
+            <div className="saved-badge">
+              <span className="saved-dot"></span>
+              Saved
             </div>
+          </div>
+          <div className="topbar-actions">
+            <button className="btn-preview" onClick={() => setShowPreview(v => !v)}>
+              Preview
+            </button>
+            <button className="btn-publish" onClick={handleCreate}>
+              Publish
+            </button>
+            <button className="btn-editor-close" onClick={onClose} title="More options">
+              <FiMoreVertical size={18} />
+            </button>
+          </div>
         </div>
-    );
 
-    return (
-        <>
-            <style>{styles}</style>
-            <div className="docspost-page">
-                {/* Top Bar */}
-                <div className="editor-top-bar">
-                    <div className="editor-title">
-                        <span className="back-arrow" onClick={onClose}>←</span>
-                        <span className="doc-icon">📄</span>
-                        <span>Untitled Document</span>
-                    </div>
-                    <div className="topbar-center">
-                        <div className="saved-badge">
-                            <span className="saved-dot"></span>
-                            Saved
-                        </div>
-                    </div>
-                    <div className="topbar-actions">
-                        <button className="btn-preview" onClick={() => setShowPreview(v => !v)}>
-                            Preview
-                        </button>
-                        <button className="btn-publish" onClick={handleCreate}>
-                            Publish
-                        </button>
-                        <button className="btn-editor-close" onClick={onClose} title="More options">
-                            <FiMoreVertical size={18} />
-                        </button>
-                    </div>
-                </div>
+        {/* Formatting Toolbar */}
+        <div className="editor-toolbar">
+          <div className="toolbar-group">
+            <select className="toolbar-select">
+              <option>Normal</option>
+              <option>Heading 1</option>
+              <option>Heading 2</option>
+              <option>Heading 3</option>
+            </select>
+          </div>
+          <div className="toolbar-divider" />
+          <div className="toolbar-group">
+            <button className="toolbar-btn" title="Bold"><b>B</b></button>
+            <button className="toolbar-btn" title="Italic"><i>I</i></button>
+            <button className="toolbar-btn" title="Underline"><u>U</u></button>
+            <button className="toolbar-btn" title="Strikethrough"><s>S</s></button>
+            <button className="toolbar-btn" title="Link"><TbLink size={15} /></button>
+          </div>
+          <div className="toolbar-divider" />
+          <div className="toolbar-group">
+            <button className="toolbar-btn" title="Align Left"><TbAlignLeft size={15} /></button>
+            <button className="toolbar-btn" title="Align Center"><TbAlignCenter size={15} /></button>
+            <button className="toolbar-btn" title="Align Right"><TbAlignRight size={15} /></button>
+            <button className="toolbar-btn" title="Justify"><TbAlignJustified size={15} /></button>
+          </div>
+          <div className="toolbar-divider" />
+          <div className="toolbar-group">
+            <button className="toolbar-btn" title="Bullet List"><FiList size={15} /></button>
+            <button className="toolbar-btn" title="Numbered List"><TbListNumbers size={15} /></button>
+            <button className="toolbar-btn" title="Indent"><TbIndentIncrease size={15} /></button>
+            <button className="toolbar-btn" title="Outdent"><TbIndentDecrease size={15} /></button>
+          </div>
+          <div className="toolbar-divider" />
+          <div className="toolbar-group">
+            <button className="toolbar-btn" title="Quote"><MdOutlineFormatQuote size={15} /></button>
+            <button className="toolbar-btn" title="Code"><TbCode size={15} /></button>
+          </div>
+          <div className="toolbar-divider" />
+          <div className="toolbar-group">
+            <button className="toolbar-btn" title="Undo"><TbArrowBackUp size={15} /></button>
+            <button className="toolbar-btn" title="Redo"><TbArrowForwardUp size={15} /></button>
+          </div>
+        </div>
 
-                {/* Formatting Toolbar */}
-                <div className="editor-toolbar">
-                    <div className="toolbar-group">
-                        <select className="toolbar-select">
-                            <option>Normal</option>
-                            <option>Heading 1</option>
-                            <option>Heading 2</option>
-                            <option>Heading 3</option>
-                        </select>
-                    </div>
-                    <div className="toolbar-divider" />
-                    <div className="toolbar-group">
-                        <button className="toolbar-btn" title="Bold"><b>B</b></button>
-                        <button className="toolbar-btn" title="Italic"><i>I</i></button>
-                        <button className="toolbar-btn" title="Underline"><u>U</u></button>
-                        <button className="toolbar-btn" title="Strikethrough"><s>S</s></button>
-                        <button className="toolbar-btn" title="Link"><TbLink size={15} /></button>
-                    </div>
-                    <div className="toolbar-divider" />
-                    <div className="toolbar-group">
-                        <button className="toolbar-btn" title="Align Left"><TbAlignLeft size={15} /></button>
-                        <button className="toolbar-btn" title="Align Center"><TbAlignCenter size={15} /></button>
-                        <button className="toolbar-btn" title="Align Right"><TbAlignRight size={15} /></button>
-                        <button className="toolbar-btn" title="Justify"><TbAlignJustified size={15} /></button>
-                    </div>
-                    <div className="toolbar-divider" />
-                    <div className="toolbar-group">
-                        <button className="toolbar-btn" title="Bullet List"><FiList size={15} /></button>
-                        <button className="toolbar-btn" title="Numbered List"><TbListNumbers size={15} /></button>
-                        <button className="toolbar-btn" title="Indent"><TbIndentIncrease size={15} /></button>
-                        <button className="toolbar-btn" title="Outdent"><TbIndentDecrease size={15} /></button>
-                    </div>
-                    <div className="toolbar-divider" />
-                    <div className="toolbar-group">
-                        <button className="toolbar-btn" title="Quote"><MdOutlineFormatQuote size={15} /></button>
-                        <button className="toolbar-btn" title="Code"><TbCode size={15} /></button>
-                    </div>
-                    <div className="toolbar-divider" />
-                    <div className="toolbar-group">
-                        <button className="toolbar-btn" title="Undo"><TbArrowBackUp size={15} /></button>
-                        <button className="toolbar-btn" title="Redo"><TbArrowForwardUp size={15} /></button>
-                    </div>
-                </div>
+        {/* Main 3-column layout */}
+        <div className="editor-main">
+          {/* Left Insert Sidebar */}
+          <div className="editor-sidebar">
+            <div className="sidebar-section-title">Insert</div>
+            {insertItems.map((item, i) =>
+              item === null
+                ? <div key={i} className="sidebar-divider" />
+                : (
+                  <div key={i} className="insert-item">
+                    <div className="item-icon-box">{item.icon}</div>
+                    <span>{item.label}</span>
+                  </div>
+                )
+            )}
+          </div>
 
-                {/* Main 3-column layout */}
-                <div className="editor-main">
-                    {/* Left Insert Sidebar */}
-                    <div className="editor-sidebar">
-                        <div className="sidebar-section-title">Insert</div>
-                        {insertItems.map((item, i) =>
-                            item === null
-                                ? <div key={i} className="sidebar-divider" />
-                                : (
-                                    <div key={i} className="insert-item">
-                                        <div className="item-icon-box">{item.icon}</div>
-                                        <span>{item.label}</span>
-                                    </div>
-                                )
-                        )}
-                    </div>
+          {/* Center Editor */}
+          <div className="editor-content">
+            <input
+              type="text"
+              value={formData.title}
+              onChange={handleTitleChange}
+              className="editor-title-input"
+              placeholder="Add a Catchy Title"
+              onFocus={e => { if (e.target.value === "Add a Catchy Title") setFormData(p => ({ ...p, title: "" })); }}
+              onBlur={e => { if (!e.target.value) setFormData(p => ({ ...p, title: "Add a Catchy Title" })); }}
+            />
 
-                    {/* Center Editor */}
-                    <div className="editor-content">
-                        <input
-                            type="text"
-                            value={formData.title}
-                            onChange={handleTitleChange}
-                            className="editor-title-input"
-                            placeholder="Add a Catchy Title"
-                            onFocus={e => { if (e.target.value === "Add a Catchy Title") setFormData(p => ({ ...p, title: "" })); }}
-                            onBlur={e => { if (!e.target.value) setFormData(p => ({ ...p, title: "Add a Catchy Title" })); }}
-                        />
+            {showPreview
+              ? sampleContent
+              : (
+                <textarea
+                  value={formData.content}
+                  onChange={handleContentChange}
+                  className="editor-textarea"
+                  placeholder="Start writing your documentation here..."
+                />
+              )
+            }
 
-                        {showPreview
-                            ? sampleContent
-                            : (
-                                <textarea
-                                    value={formData.content}
-                                    onChange={handleContentChange}
-                                    className="editor-textarea"
-                                    placeholder="Start writing your documentation here..."
-                                />
-                            )
-                        }
-
-                        <div className="featured-image-section">
-                            <div className="image-placeholder">
-                                <FiImage size={40} />
-                                <p>Upload Featured Image</p>
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Right Metadata Sidebar */}
-                    <div className="editor-meta-sidebar">
-                        <div className="meta-tab-row">
-                            {["Document", "Block"].map(tab => (
-                                <div
-                                    key={tab}
-                                    className={`meta-tab${activeMetaTab === tab ? " active" : ""}`}
-                                    onClick={() => setActiveMetaTab(tab)}
-                                >
-                                    {tab}
-                                </div>
-                            ))}
-                        </div>
-
-                        <div className="meta-panel">
-                            <div className="meta-section">
-                                <label className="sidebar-label">Status</label>
-                                <select
-                                    name="status"
-                                    value={formData.status}
-                                    onChange={handleSelectChange}
-                                    className="sidebar-select"
-                                >
-                                    {statusOptions.map(o => <option key={o}>{o}</option>)}
-                                </select>
-                            </div>
-
-                            <div className="meta-section">
-                                <label className="sidebar-label">Visibility</label>
-                                <select
-                                    name="visibility"
-                                    value={formData.visibility}
-                                    onChange={handleSelectChange}
-                                    className="sidebar-select"
-                                >
-                                    {visibilityOptions.map(o => <option key={o}>{o}</option>)}
-                                </select>
-                            </div>
-
-                            <div className="meta-section">
-                                <label className="sidebar-label">Category</label>
-                                <select
-                                    name="category"
-                                    value={formData.category}
-                                    onChange={handleSelectChange}
-                                    className="sidebar-select"
-                                >
-                                    {categories.map(c => <option key={c}>{c}</option>)}
-                                </select>
-                            </div>
-
-                            <div className="meta-section">
-                                <label className="sidebar-label">Tags</label>
-                                <input type="text" placeholder="Add tags..." className="sidebar-input" />
-                            </div>
-
-                            <div className="meta-section">
-                                <label className="sidebar-label">Featured Image</label>
-                                <div className="meta-featured-image">
-                                    <FiImage size={28} />
-                                    <p>Upload Image</p>
-                                </div>
-                            </div>
-
-                            <div className="meta-stats">
-                                <div className="stat-row">
-                                    <span className="stat-label">Word Count</span>
-                                    <span className="stat-value">{wordCount}</span>
-                                </div>
-                                <div className="stat-row">
-                                    <span className="stat-label">Reading Time</span>
-                                    <span className="stat-value">{readingTime} min read</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                {/* Footer (hidden but class kept) */}
-                <div className="editor-footer">
-                    <button className="btn-cancel" onClick={onClose}>Cancel</button>
-                    <button className="btn-publish" onClick={handleCreate}>Publish</button>
-                </div>
+            <div className="featured-image-section">
+              <div className="image-placeholder">
+                <FiImage size={40} />
+                <p>Upload Featured Image</p>
+              </div>
             </div>
-        </>
-    );
+          </div>
+
+          {/* Right Metadata Sidebar */}
+          <div className="editor-meta-sidebar">
+            <div className="meta-tab-row">
+              {["Document", "Block"].map(tab => (
+                <div
+                  key={tab}
+                  className={`meta-tab${activeMetaTab === tab ? " active" : ""}`}
+                  onClick={() => setActiveMetaTab(tab)}
+                >
+                  {tab}
+                </div>
+              ))}
+            </div>
+
+            <div className="meta-panel">
+              <div className="meta-section">
+                <label className="sidebar-label">Status</label>
+                <select
+                  name="status"
+                  value={formData.status}
+                  onChange={handleSelectChange}
+                  className="sidebar-select"
+                >
+                  {statusOptions.map(o => <option key={o}>{o}</option>)}
+                </select>
+              </div>
+
+              <div className="meta-section">
+                <label className="sidebar-label">Visibility</label>
+                <select
+                  name="visibility"
+                  value={formData.visibility}
+                  onChange={handleSelectChange}
+                  className="sidebar-select"
+                >
+                  {visibilityOptions.map(o => <option key={o}>{o}</option>)}
+                </select>
+              </div>
+
+              <div className="meta-section">
+                <label className="sidebar-label">Category</label>
+                <select
+                  name="category"
+                  value={formData.category}
+                  onChange={handleSelectChange}
+                  className="sidebar-select"
+                >
+                  {categories.map(c => <option key={c}>{c}</option>)}
+                </select>
+              </div>
+
+              <div className="meta-section">
+                <label className="sidebar-label">Tags</label>
+                <input type="text" placeholder="Add tags..." className="sidebar-input" />
+              </div>
+
+              <div className="meta-section">
+                <label className="sidebar-label">Featured Image</label>
+                <div className="meta-featured-image">
+                  <FiImage size={28} />
+                  <p>Upload Image</p>
+                </div>
+              </div>
+
+              <div className="meta-stats">
+                <div className="stat-row">
+                  <span className="stat-label">Word Count</span>
+                  <span className="stat-value">{wordCount}</span>
+                </div>
+                <div className="stat-row">
+                  <span className="stat-label">Reading Time</span>
+                  <span className="stat-value">{readingTime} min read</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Footer (hidden but class kept) */}
+        <div className="editor-footer">
+          <button className="btn-cancel" onClick={onClose}>Cancel</button>
+          <button className="btn-publish" onClick={handleCreate}>Publish</button>
+        </div>
+      </div>
+    </>
+  );
 }

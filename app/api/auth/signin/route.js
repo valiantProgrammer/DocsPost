@@ -111,7 +111,7 @@ export async function POST(request) {
     const db = client.db();
 
     // Find user by email or username
-    const user = await db.collection("users").findOne({ 
+    const user = await db.collection("users").findOne({
       $or: [
         { email: email.toLowerCase() },
         { username: { $regex: `^${email}$`, $options: "i" } }

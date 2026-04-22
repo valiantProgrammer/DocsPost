@@ -697,7 +697,7 @@ export default function AnalyticsDashboard({ userEmail }) {
                 </div>
 
                 <div className="chart-section-medium">
-                    <h3>Activity Trends</h3>
+                    <h3>console.log</h3>
                     <div className="chart-wrapper">
                         {isLoading ? (
                             <div className="chart-loading">Loading...</div>

@@ -15,7 +15,7 @@ export async function POST(req) {
     let client;
     try {
         const { docId, userEmail } = await req.json();
-        console.log(`[View Log] POST /api/docs/log-view-optimized called`);
+        console.logends(`[View Log] POST /api/docs/log-view-optimized called`);
         console.log(`[View Log]   docId: ${docId}, userEmail: ${userEmail}`);
 
         if (!docId) {

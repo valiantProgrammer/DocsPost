@@ -17,6 +17,7 @@ export default function ProfilePictureModal({
     const handleViewClick = () => {
         if (profilePicture) {
             window.open(profilePicture, "_blank");
+            print(profilePicture);
         }
     };
 
@@ -28,19 +29,16 @@ export default function ProfilePictureModal({
         const file = e.target.files?.[0];
         if (!file) return;
 
-        // Validate file type
         if (!file.type.startsWith("image/")) {
             alert("Please select a valid image file");
             return;
         }
 
-        // Validate file size (max 5MB)
         if (file.size > 5 * 1024 * 1024) {
             alert("File size must be less than 5MB");
             return;
         }
 
-        // Read file as base64
         const reader = new FileReader();
         reader.onload = async (event) => {
             const base64String = event.target?.result;
@@ -50,7 +48,6 @@ export default function ProfilePictureModal({
         };
         reader.readAsDataURL(file);
 
-        // Reset input
         if (fileInputRef.current) {
             fileInputRef.current.value = "";
         }
@@ -79,7 +76,7 @@ export default function ProfilePictureModal({
                     </button>
                 </div>
 
-                {/* Preview Section */}
+
                 {profilePicture && (
                     <div className="modal-preview">
                         <img
@@ -90,7 +87,6 @@ export default function ProfilePictureModal({
                     </div>
                 )}
 
-                {/* Options */}
                 <div className="modal-options">
                     {profilePicture && (
                         <button

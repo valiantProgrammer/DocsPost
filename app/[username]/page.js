@@ -54,6 +54,7 @@ export default function DashboardPage() {
 
         if (savedEmail) {
             fetchUserData();
+            console.log("[CSR] User Data fetched : ", userData);
         }
     }, [router]);
 
