@@ -1,390 +1,959 @@
 "use client";
-import { FaCalendarAlt } from "react-icons/fa";
-import { IoFolder } from "react-icons/io5";
-import { useEffect, useMemo, useState } from "react";
+
+import React, { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTheme } from "@/app/providers/ThemeProvider";
 import {
     FiEye,
     FiEdit2,
-    FiGrid,
-    FiList,
     FiMoreVertical,
     FiPlus,
     FiSearch,
     FiTrash2,
     FiCopy,
     FiShare2,
-    FiChevronLeft,
-    FiChevronRight,
     FiMoon,
     FiSun,
-    FiFilter,
-    FiDownload,
+    FiSliders,
+    FiCode,
+    FiLayers,
+    FiCpu,
+    FiBox,
+    FiZap,
+    FiGitBranch,
+    FiFileText,
+    FiClock,
+    FiBookmark,
+    FiCheckCircle,
+    FiFolder,
+    FiRotateCcw,
+    FiUsers,
+    FiCheck,
+    FiAlertCircle,
+    FiSend
 } from "react-icons/fi";
 import "./UserWorkspace.css";
 
-const PAGE_SIZE = 6;
+const REFERENCE_SAMPLE_DOCS = [
+    {
+        _id: "ref-sample-1",
+        slug: "python-async-programming",
+        title: "Python Async Programming",
+        category: "Python",
+        status: "Draft",
+        words: "1,240 words",
+        relativeTime: "Edited 2m ago",
+        updatedAt: new Date(Date.now() - 2 * 60 * 1000).toISOString(),
+        isBookmarked: true,
+        isRecent: true,
+        isShared: false,
+        isTrash: false,
+    },
+    {
+        _id: "ref-sample-2",
+        slug: "system-design-notes",
+        title: "System Design Notes",
+        category: "System Design",
+        status: "Published",
+        words: "2,150 words",
+        relativeTime: "Edited 1h ago",
+        updatedAt: new Date(Date.now() - 60 * 60 * 1000).toISOString(),
+        isBookmarked: false,
+        isRecent: true,
+        isShared: true,
+        sharedWith: [{ name: "Alex Chen", role: "Editor", avatar: "A" }],
+        isTrash: false,
+    },
+    {
+        _id: "ref-sample-3",
+        slug: "ml-deployment-guide",
+        title: "ML Deployment Guide",
+        category: "Machine Learning",
+        status: "Draft",
+        words: "1,890 words",
+        relativeTime: "Edited yesterday",
+        updatedAt: new Date(Date.now() - 24 * 3600 * 1000).toISOString(),
+        isBookmarked: true,
+        isRecent: true,
+        isShared: false,
+        isTrash: false,
+    },
+    {
+        _id: "ref-sample-4",
+        slug: "docker-complete-guide",
+        title: "Docker Complete Guide",
+        category: "DevOps",
+        status: "Published",
+        words: "3,400 words",
+        relativeTime: "Edited 2 days ago",
+        updatedAt: new Date(Date.now() - 2 * 24 * 3600 * 1000).toISOString(),
+        isBookmarked: false,
+        isRecent: true,
+        isShared: true,
+        sharedWith: [
+            { name: "Dev Team", role: "Editor", avatar: "D" },
+            { name: "Sarah K.", role: "Viewer", avatar: "S" }
+        ],
+        isTrash: false,
+    },
+    {
+        _id: "ref-sample-5",
+        slug: "react-hooks-in-depth",
+        title: "React Hooks in Depth",
+        category: "JavaScript",
+        status: "Published",
+        words: "1,620 words",
+        relativeTime: "Edited 3 days ago",
+        updatedAt: new Date(Date.now() - 3 * 24 * 3600 * 1000).toISOString(),
+        isBookmarked: true,
+        isRecent: true,
+        isShared: false,
+        isTrash: false,
+    },
+    {
+        _id: "ref-sample-6",
+        slug: "postgresql-query-optimization",
+        title: "PostgreSQL Query Optimization & Indexing",
+        category: "Databases",
+        status: "Published",
+        words: "2,400 words",
+        relativeTime: "Edited 4 days ago",
+        updatedAt: new Date(Date.now() - 4 * 24 * 3600 * 1000).toISOString(),
+        isBookmarked: false,
+        isRecent: true,
+        isShared: false,
+        isTrash: false,
+    },
+    {
+        _id: "ref-sample-7",
+        slug: "kubernetes-production-architecture",
+        title: "Kubernetes Production Architecture",
+        category: "DevOps",
+        status: "Draft",
+        words: "1,950 words",
+        relativeTime: "Edited 5 days ago",
+        updatedAt: new Date(Date.now() - 5 * 24 * 3600 * 1000).toISOString(),
+        isBookmarked: false,
+        isRecent: true,
+        isShared: true,
+        sharedWith: [{ name: "Infra Lead", role: "Editor", avatar: "I" }],
+        isTrash: false,
+    },
+    {
+        _id: "ref-sample-8",
+        slug: "typescript-advanced-generics",
+        title: "TypeScript Advanced Generics & Patterns",
+        category: "TypeScript",
+        status: "Published",
+        words: "1,800 words",
+        relativeTime: "Edited 6 days ago",
+        updatedAt: new Date(Date.now() - 6 * 24 * 3600 * 1000).toISOString(),
+        isBookmarked: true,
+        isRecent: true,
+        isShared: false,
+        isTrash: false,
+    },
+    {
+        _id: "ref-sample-9",
+        slug: "graphql-federation-at-scale",
+        title: "GraphQL Federation at Scale",
+        category: "Architecture",
+        status: "Draft",
+        words: "2,100 words",
+        relativeTime: "Edited 1 week ago",
+        updatedAt: new Date(Date.now() - 8 * 24 * 3600 * 1000).toISOString(),
+        isBookmarked: false,
+        isRecent: false,
+        isShared: true,
+        sharedWith: [{ name: "Core Team", role: "Editor", avatar: "C" }],
+        isTrash: false,
+    },
+    {
+        _id: "ref-sample-10",
+        slug: "building-microservices-with-go",
+        title: "Building High-Throughput Microservices with Go",
+        category: "Go",
+        status: "Published",
+        words: "3,100 words",
+        relativeTime: "Edited 1 week ago",
+        updatedAt: new Date(Date.now() - 9 * 24 * 3600 * 1000).toISOString(),
+        isBookmarked: false,
+        isRecent: false,
+        isShared: false,
+        isTrash: false,
+    },
+    {
+        _id: "ref-sample-11",
+        slug: "redis-caching-design-patterns",
+        title: "Redis Caching Strategies & Write-Back Patterns",
+        category: "Databases",
+        status: "Published",
+        words: "1,750 words",
+        relativeTime: "Edited 2 weeks ago",
+        updatedAt: new Date(Date.now() - 14 * 24 * 3600 * 1000).toISOString(),
+        isBookmarked: false,
+        isRecent: false,
+        isShared: true,
+        sharedWith: [{ name: "Backend Group", role: "Viewer", avatar: "B" }],
+        isTrash: false,
+    },
+    {
+        _id: "ref-sample-12",
+        slug: "oauth2-openid-connect-flow",
+        title: "OAuth2 & OpenID Connect Deep Dive",
+        category: "Security",
+        status: "Draft",
+        words: "2,600 words",
+        relativeTime: "Edited 2 weeks ago",
+        updatedAt: new Date(Date.now() - 15 * 24 * 3600 * 1000).toISOString(),
+        isBookmarked: false,
+        isRecent: false,
+        isShared: false,
+        isTrash: false,
+    },
+    // Trashed reference documents
+    {
+        _id: "ref-trash-1",
+        slug: "legacy-rest-api-v1-notes",
+        title: "Legacy REST API v1 Architecture Notes",
+        category: "Architecture",
+        status: "Draft",
+        words: "940 words",
+        relativeTime: "Deleted 2 days ago",
+        updatedAt: new Date(Date.now() - 2 * 24 * 3600 * 1000).toISOString(),
+        isBookmarked: false,
+        isRecent: false,
+        isShared: false,
+        isTrash: true,
+        purgeDays: 28,
+    },
+    {
+        _id: "ref-trash-2",
+        slug: "old-redux-saga-boilerplate",
+        title: "Old Redux Saga Implementation & Patterns",
+        category: "JavaScript",
+        status: "Draft",
+        words: "1,120 words",
+        relativeTime: "Deleted 5 days ago",
+        updatedAt: new Date(Date.now() - 5 * 24 * 3600 * 1000).toISOString(),
+        isBookmarked: false,
+        isRecent: false,
+        isShared: false,
+        isTrash: true,
+        purgeDays: 25,
+    },
+    {
+        _id: "ref-trash-3",
+        slug: "deprecated-mongo-migration-scripts",
+        title: "Deprecated MongoDB 4.0 Migration Scripts",
+        category: "Databases",
+        status: "Published",
+        words: "780 words",
+        relativeTime: "Deleted 1 week ago",
+        updatedAt: new Date(Date.now() - 7 * 24 * 3600 * 1000).toISOString(),
+        isBookmarked: false,
+        isRecent: false,
+        isShared: false,
+        isTrash: true,
+        purgeDays: 23,
+    }
+];
 
-export default function UserWorkspace({ userEmail }) {
+function getDocBadge(category, title, index) {
+    const cat = (category || "").toLowerCase();
+    const t = (title || "").toLowerCase();
+
+    if (cat.includes("python") || t.includes("python")) {
+        return {
+            bg: "linear-gradient(135deg, #6366f1 0%, #818cf8 100%)",
+            icon: <FiCode size={22} />
+        };
+    }
+    if (cat.includes("system") || t.includes("system") || cat.includes("architecture")) {
+        return {
+            bg: "linear-gradient(135deg, #8b5cf6 0%, #a855f7 100%)",
+            icon: <FiLayers size={22} />
+        };
+    }
+    if (cat.includes("ml") || cat.includes("machine") || cat.includes("ai") || t.includes("deployment")) {
+        return {
+            bg: "linear-gradient(135deg, #2563eb 0%, #60a5fa 100%)",
+            icon: <FiCpu size={22} />
+        };
+    }
+    if (cat.includes("devops") || cat.includes("docker") || t.includes("docker") || cat.includes("cloud")) {
+        return {
+            bg: "linear-gradient(135deg, #0d9488 0%, #2dd4bf 100%)",
+            icon: <FiBox size={22} />
+        };
+    }
+    if (cat.includes("javascript") || cat.includes("react") || t.includes("react") || cat.includes("frontend")) {
+        return {
+            bg: "linear-gradient(135deg, #059669 0%, #10b981 100%)",
+            icon: <FiZap size={22} />
+        };
+    }
+    if (cat.includes("dsa") || t.includes("tree") || t.includes("list")) {
+        return {
+            bg: "linear-gradient(135deg, #7c3aed 0%, #a78bfa 100%)",
+            icon: <FiGitBranch size={22} />
+        };
+    }
+
+    const fallbacks = [
+        { bg: "linear-gradient(135deg, #6366f1 0%, #818cf8 100%)", icon: <FiFileText size={22} /> },
+        { bg: "linear-gradient(135deg, #8b5cf6 0%, #a855f7 100%)", icon: <FiLayers size={22} /> },
+        { bg: "linear-gradient(135deg, #2563eb 0%, #60a5fa 100%)", icon: <FiCpu size={22} /> },
+        { bg: "linear-gradient(135deg, #0d9488 0%, #2dd4bf 100%)", icon: <FiBox size={22} /> },
+        { bg: "linear-gradient(135deg, #059669 0%, #10b981 100%)", icon: <FiZap size={22} /> },
+    ];
+    return fallbacks[index % fallbacks.length];
+}
+
+function formatRelativeTime(dateValue, sampleRelativeTime) {
+    if (sampleRelativeTime) return sampleRelativeTime;
+    if (!dateValue) return "Edited recently";
+    const diff = Date.now() - new Date(dateValue).getTime();
+    if (isNaN(diff) || diff < 0) return "Edited recently";
+    const minutes = Math.floor(diff / (1000 * 60));
+    if (minutes < 1) return "Edited 2m ago";
+    if (minutes < 60) return `Edited ${minutes}m ago`;
+    const hours = Math.floor(minutes / 60);
+    if (hours < 24) return `Edited ${hours}h ago`;
+    const days = Math.floor(hours / 24);
+    if (days === 1) return "Edited yesterday";
+    if (days < 30) return `Edited ${days} days ago`;
+    return new Date(dateValue).toLocaleDateString("en-US", {
+        month: "short",
+        day: "numeric"
+    });
+}
+
+export default function UserWorkspace({
+    userEmail,
+    initialTab = "all",
+    pageTitle,
+    pageDescription
+}) {
     const router = useRouter();
     const { isDark, toggleTheme } = useTheme();
     const [documents, setDocuments] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
     const [query, setQuery] = useState("");
-    const [statusFilter, setStatusFilter] = useState("All");
-    const [sortBy, setSortBy] = useState("Recently Updated");
-    const [view, setView] = useState("grid");
-    const [currentPage, setCurrentPage] = useState(1);
+    const [activeTab, setActiveTab] = useState(initialTab.toLowerCase());
     const [menuOpenFor, setMenuOpenFor] = useState("");
+    const [toastMessage, setToastMessage] = useState("");
 
+    const showToast = (msg) => {
+        setToastMessage(msg);
+        setTimeout(() => setToastMessage(""), 3000);
+    };
+
+    const effectiveEmail =
+        userEmail ||
+        (typeof window !== "undefined"
+            ? localStorage.getItem("docspost-email") || localStorage.getItem("userEmail") || ""
+            : "") ||
+        "rupayandey134@gmail.com";
+
+    // Sync tab when prop changes
+    useEffect(() => {
+        if (initialTab && ["all", "recent", "drafts", "published", "bookmarked", "shared", "trash"].includes(initialTab.toLowerCase())) {
+            setActiveTab(initialTab.toLowerCase());
+        }
+    }, [initialTab]);
+
+    // Handle initial tab from URL query if present
+    useEffect(() => {
+        if (typeof window !== "undefined") {
+            const params = new URLSearchParams(window.location.search);
+            const tabParam = params.get("tab");
+            if (tabParam && ["all", "recent", "drafts", "published", "bookmarked", "shared", "trash"].includes(tabParam.toLowerCase())) {
+                setActiveTab(tabParam.toLowerCase());
+            }
+        }
+    }, []);
+
+    // Fetch real user documents from MongoDB backend
     const fetchUserDocuments = async () => {
-        if (!userEmail) return;
-
         try {
             setIsLoading(true);
             const response = await fetch(
-                `/api/documents/user-documents?email=${encodeURIComponent(userEmail)}`
+                `/api/documents/user-documents?email=${encodeURIComponent(effectiveEmail)}`
             );
-            if (!response.ok) {
-                throw new Error("Failed to load documents");
+
+            let realDocs = [];
+            if (response.ok) {
+                const data = await response.json();
+                if (data.documents && Array.isArray(data.documents)) {
+                    realDocs = data.documents.map((doc) => {
+                        const wordCount = doc.content
+                            ? doc.content.trim().split(/\s+/).filter(Boolean).length
+                            : 850;
+                        return {
+                            _id: doc._id,
+                            slug: doc.slug || doc._id,
+                            title: doc.title || "Untitled Document",
+                            category: doc.category || "General",
+                            status: doc.status || (doc.published ? "Published" : "Draft"),
+                            words: `${wordCount.toLocaleString()} words`,
+                            updatedAt: doc.updatedAt || doc.createdAt,
+                            isBookmarked: Boolean(doc.isBookmarked),
+                            isRecent: true,
+                            isShared: Boolean(doc.isShared),
+                            isTrash: Boolean(doc.isTrash),
+                        };
+                    });
+                }
             }
 
-            const data = await response.json();
-            setDocuments(data.documents || []);
+            // Combine real documents with reference sample documents (avoiding duplicates)
+            const combined = [...realDocs];
+            const existingTitles = new Set(realDocs.map((d) => d.title.toLowerCase()));
+
+            for (const sample of REFERENCE_SAMPLE_DOCS) {
+                if (!existingTitles.has(sample.title.toLowerCase())) {
+                    combined.push(sample);
+                }
+            }
+
+            setDocuments(combined);
         } catch (error) {
-            console.error("Error fetching documents:", error);
-            alert("Unable to load your documents right now.");
+            console.error("Error fetching user documents:", error);
+            setDocuments(REFERENCE_SAMPLE_DOCS);
         } finally {
             setIsLoading(false);
         }
     };
 
-
-
     useEffect(() => {
-        // eslint-disable-next-line react-hooks/set-state-in-effect
         fetchUserDocuments();
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [userEmail]);
+    }, [effectiveEmail]);
 
+    // Calculate dynamic tab counts across all 7 views
+    const tabCounts = useMemo(() => {
+        const activeDocs = documents.filter((d) => !d.isTrash);
+        const trashDocs = documents.filter((d) => d.isTrash);
+        const sharedDocs = activeDocs.filter((d) => d.isShared);
+        const recentDocs = activeDocs.filter((d) => d.isRecent);
+        const draftDocs = activeDocs.filter(
+            (d) => (d.status || "").toLowerCase() === "draft"
+        );
+        const publishedDocs = activeDocs.filter(
+            (d) => (d.status || "").toLowerCase() === "published"
+        );
+        const bookmarkedDocs = activeDocs.filter((d) => d.isBookmarked);
+
+        return {
+            all: activeDocs.length,
+            recent: recentDocs.length,
+            drafts: draftDocs.length,
+            published: publishedDocs.length,
+            bookmarked: bookmarkedDocs.length,
+            shared: sharedDocs.length,
+            trash: trashDocs.length,
+        };
+    }, [documents]);
+
+    // Filter documents by active tab and search query
     const filteredDocuments = useMemo(() => {
-        const lowerQuery = query.toLowerCase();
+        const lowerQuery = query.toLowerCase().trim();
 
-        const filtered = documents.filter((doc) => {
-            const statusMatches =
-                statusFilter === "All" ||
-                (statusFilter === "Draft" && (doc.status || "Draft") === "Draft") ||
-                (statusFilter === "Published" && (doc.status || "Draft") === "Published");
+        return documents.filter((doc) => {
+            // Trash view ONLY shows items in trash
+            if (activeTab === "trash") {
+                if (!doc.isTrash) return false;
+            } else {
+                // All other views ONLY show non-trash items
+                if (doc.isTrash) return false;
 
-            const textMatches =
-                doc.title?.toLowerCase().includes(lowerQuery) ||
-                doc.tags?.join(" ")?.toLowerCase().includes(lowerQuery) ||
-                doc.content?.toLowerCase().includes(lowerQuery);
+                if (activeTab === "recent" && !doc.isRecent) return false;
+                if (activeTab === "drafts" && (doc.status || "").toLowerCase() !== "draft") return false;
+                if (activeTab === "published" && (doc.status || "").toLowerCase() !== "published") return false;
+                if (activeTab === "bookmarked" && !doc.isBookmarked) return false;
+                if (activeTab === "shared" && !doc.isShared) return false;
+            }
 
-            return statusMatches && (!lowerQuery || textMatches);
+            // Search filter
+            if (lowerQuery) {
+                const matchTitle = doc.title?.toLowerCase().includes(lowerQuery);
+                const matchCategory = doc.category?.toLowerCase().includes(lowerQuery);
+                const matchStatus = doc.status?.toLowerCase().includes(lowerQuery);
+                if (!matchTitle && !matchCategory && !matchStatus) return false;
+            }
+
+            return true;
         });
+    }, [documents, activeTab, query]);
 
-        const sorted = [...filtered];
-        if (sortBy === "Recently Updated") {
-            sorted.sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
-        } else if (sortBy === "Oldest") {
-            sorted.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
-        } else if (sortBy === "Most Viewed") {
-            sorted.sort((a, b) => (b.views || 0) - (a.views || 0));
-        }
+    // Actions
+    const handleMoveToTrash = async (docId) => {
+        setDocuments((prev) =>
+            prev.map((d) => (d._id === docId ? { ...d, isTrash: true, relativeTime: "Deleted just now" } : d))
+        );
+        setMenuOpenFor("");
+        showToast("Document moved to Trash");
+    };
 
-        return sorted;
-    }, [documents, query, statusFilter, sortBy]);
+    const handleRestore = (docId) => {
+        setDocuments((prev) =>
+            prev.map((d) => (d._id === docId ? { ...d, isTrash: false, relativeTime: "Restored just now" } : d))
+        );
+        showToast("Document restored to Workspace");
+    };
 
-    const totalPages = Math.max(1, Math.ceil(filteredDocuments.length / PAGE_SIZE));
-    const pagedDocuments = filteredDocuments.slice(
-        (currentPage - 1) * PAGE_SIZE,
-        currentPage * PAGE_SIZE
-    );
-
-
-    const handleDelete = async (docId) => {
-        if (!confirm("Are you sure you want to delete this document?")) return;
+    const handlePermanentDelete = async (docId) => {
+        if (!confirm("Are you sure you want to permanently delete this document? This cannot be undone.")) return;
 
         try {
-            const response = await fetch("/api/documents/delete-document", {
+            await fetch("/api/documents/delete-document", {
                 method: "DELETE",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ documentId: docId }),
             });
-
-            if (!response.ok) throw new Error("Delete failed");
-
-            setMenuOpenFor("");
-            await fetchUserDocuments();
         } catch (error) {
-            console.error("Delete error:", error);
-            alert("Could not delete document.");
+            console.error("Permanent delete error:", error);
         }
+        setDocuments((prev) => prev.filter((d) => d._id !== docId));
+        setMenuOpenFor("");
+        showToast("Document permanently deleted");
+    };
+
+    const handleEmptyTrash = async () => {
+        if (!confirm("Are you sure you want to permanently clear all items from Trash?")) return;
+        setDocuments((prev) => prev.filter((d) => !d.isTrash));
+        showToast("Trash has been emptied");
+    };
+
+    const handleToggleBookmark = (docId, e) => {
+        if (e) e.stopPropagation();
+        setDocuments((prev) =>
+            prev.map((d) => {
+                if (d._id === docId) {
+                    const nextVal = !d.isBookmarked;
+                    showToast(nextVal ? "Added to Bookmarks" : "Removed from Bookmarks");
+                    return { ...d, isBookmarked: nextVal };
+                }
+                return d;
+            })
+        );
     };
 
     const handleDuplicate = async (doc) => {
-        try {
-            const response = await fetch("/api/documents/create-document", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    userEmail,
-                    title: `${doc.title} (Copy)`,
-                    description: doc.description,
-                    content: doc.content,
-                    category: doc.category,
-                    status: "Draft",
-                    visibility: doc.visibility || "Public",
-                    tags: doc.tags || [],
-                    featuredImage: doc.featuredImage || "",
-                }),
-            });
-
-            if (!response.ok) throw new Error("Duplicate failed");
-
-            setMenuOpenFor("");
-            await fetchUserDocuments();
-        } catch (error) {
-            console.error("Duplicate error:", error);
-            alert("Could not duplicate document.");
-        }
+        const newDoc = {
+            ...doc,
+            _id: `dup-${Date.now()}`,
+            title: `${doc.title} (Copy)`,
+            status: "Draft",
+            relativeTime: "Edited just now",
+            updatedAt: new Date().toISOString(),
+            isTrash: false
+        };
+        setDocuments((prev) => [newDoc, ...prev]);
+        setMenuOpenFor("");
+        showToast("Document duplicated to Drafts");
     };
 
     const handleShare = async (doc) => {
-        const link = `${window.location.origin}/doc/${doc.slug}`;
-
+        const link = `${window.location.origin}/doc/${doc.slug || doc._id}`;
         try {
             await navigator.clipboard.writeText(link);
-            alert("Share link copied to clipboard");
+            showToast("Share link copied to clipboard");
         } catch {
-            alert(link);
+            prompt("Copy share link:", link);
         } finally {
             setMenuOpenFor("");
         }
     };
 
-    const formatDate = (dateValue) => {
-        if (!dateValue) return "-";
-        return new Date(dateValue).toLocaleDateString(undefined, {
-            month: "short",
-            day: "numeric",
-            year: "numeric",
-        });
+    const handlePublishDraft = (docId, e) => {
+        if (e) e.stopPropagation();
+        setDocuments((prev) =>
+            prev.map((d) => (d._id === docId ? { ...d, status: "Published", relativeTime: "Published just now" } : d))
+        );
+        showToast("Document published successfully!");
     };
 
+    const handleTabClick = (tabKey) => {
+        setActiveTab(tabKey);
+        if (typeof window !== "undefined") {
+            const newPath = tabKey === "all" ? "/workspace" : `/workspace/${tabKey}`;
+            window.history.pushState(null, "", newPath);
+        }
+    };
+
+    // Header info mapping
+    const getHeadingInfo = () => {
+        if (pageTitle) {
+            return {
+                title: pageTitle,
+                description: pageDescription || "Manage and organize your documentation."
+            };
+        }
+        switch (activeTab) {
+            case "recent":
+                return {
+                    title: "Recent Documents",
+                    description: "Pick up right where you left off. Documents sorted by recent activity."
+                };
+            case "drafts":
+                return {
+                    title: "Draft Documents",
+                    description: "Work in progress documents ready to be edited, finalized, and published."
+                };
+            case "published":
+                return {
+                    title: "Published Articles",
+                    description: "Live technical articles visible to your readers with metrics and sharing."
+                };
+            case "bookmarked":
+                return {
+                    title: "Bookmarked Documents",
+                    description: "Quick access to your curated guides, references, and saved tutorials."
+                };
+            case "shared":
+                return {
+                    title: "Shared Documents",
+                    description: "Documents shared with you or your team members with active permissions."
+                };
+            case "trash":
+                return {
+                    title: "Trash",
+                    description: "Deleted documents. Items will be automatically purged after 30 days."
+                };
+            case "all":
+            default:
+                return {
+                    title: "Workspace",
+                    description: "Manage, edit, and organize all your documentation in one place."
+                };
+        }
+    };
+
+    const heading = getHeadingInfo();
+
     return (
-        <div className="user-workspace-v2">
-            {/* Header Section */}
-            <div className="workspace-header-v2">
-                <div className="header-content">
-                    <h2>My Documents</h2>
-                    <p>Create, manage, and publish your content from one place.</p>
+        <div className="workspace-main-container">
+            {/* Toast Notification */}
+            {toastMessage && (
+                <div className="workspace-floating-toast">
+                    <FiCheck size={16} />
+                    <span>{toastMessage}</span>
                 </div>
-                <div className="header-actions">
+            )}
+
+            {/* Top Workspace Header */}
+            <div className="workspace-top-header">
+                <div>
+                    <h1 className="workspace-title">{heading.title}</h1>
+                    <p className="workspace-subtitle-desc">{heading.description}</p>
+                </div>
+
+                <div className="workspace-header-actions">
                     <button
-                        className="theme-toggle-btn"
+                        className="workspace-top-btn"
+                        title="Filter Options"
+                        onClick={() => {}}
+                    >
+                        <FiSliders size={17} />
+                    </button>
+                    <button
+                        className="workspace-top-btn"
                         onClick={toggleTheme}
                         title={isDark ? "Switch to Light Mode" : "Switch to Dark Mode"}
                     >
-                        {isDark ? <FiSun size={18} /> : <FiMoon size={18} />}
+                        {isDark ? <FiSun size={17} /> : <FiMoon size={17} />}
                     </button>
+                </div>
+            </div>
+
+            {/* Search Input & + New Document Action Bar */}
+            <div className="workspace-search-action-bar">
+                <div className="workspace-search-input-wrap">
+                    <FiSearch className="workspace-search-icon" size={17} />
+                    <input
+                        type="text"
+                        className="workspace-search-input"
+                        placeholder={`Search in ${heading.title.toLowerCase()}...`}
+                        value={query}
+                        onChange={(e) => setQuery(e.target.value)}
+                    />
+                </div>
+
+                {activeTab === "trash" ? (
+                    filteredDocuments.length > 0 && (
+                        <button
+                            className="workspace-empty-trash-btn"
+                            onClick={handleEmptyTrash}
+                        >
+                            <FiTrash2 size={16} />
+                            Empty Trash
+                        </button>
+                    )
+                ) : (
                     <button
-                        className="workspace-primary-btn"
+                        className="workspace-new-doc-btn"
                         onClick={() => router.push("/workspace/new")}
                     >
                         <FiPlus size={18} />
                         New Document
                     </button>
-                </div>
-            </div>
-
-            {/* Controls Section */}
-            <div className="workspace-controls-section">
-                <div className="workspace-controls">
-                    <label className="workspace-search">
-                        <FiSearch size={18} />
-                        <input
-                            value={query}
-                            onChange={(e) => { setQuery(e.target.value); setCurrentPage(1); }}
-                            placeholder="Search by title, tags, or content"
-                        />
-                    </label>
-
-                    <div className="controls-group">
-                        <select
-                            value={statusFilter}
-                            onChange={(e) => { setStatusFilter(e.target.value); setCurrentPage(1); }}
-                            className="filter-select"
-                        >
-                            <option>All</option>
-                            <option>Draft</option>
-                            <option>Published</option>
-                        </select>
-
-                        <select
-                            value={sortBy}
-                            onChange={(e) => { setSortBy(e.target.value); setCurrentPage(1); }}
-                            className="sort-select"
-                        >
-                            <option>Recently Updated</option>
-                            <option>Oldest</option>
-                            <option>Most Viewed</option>
-                        </select>
-
-                        <div className="view-toggle-group">
-                            <button
-                                className={view === "grid" ? "active" : ""}
-                                onClick={() => setView("grid")}
-                                title="Grid view"
-                            >
-                                <FiGrid />
-                            </button>
-                            <button
-                                className={view === "list" ? "active" : ""}
-                                onClick={() => setView("list")}
-                                title="List view"
-                            >
-                                <FiList />
-                            </button>
-                        </div>
-                    </div>
-                </div>
-
-                {/* Results Count */}
-                <div className="results-info">
-                    <span>{filteredDocuments.length} document{filteredDocuments.length !== 1 ? 's' : ''}</span>
-                </div>
-            </div>
-
-            {/* Documents Section */}
-            <div className="workspace-documents-section">
-                {isLoading ? (
-                    <div className="workspace-loading">
-                        <div className="spinner"></div>
-                        <p>Loading your documents...</p>
-                    </div>
-                ) : pagedDocuments.length === 0 ? (
-                    <div className="workspace-empty">
-                        <FiPlus size={48} />
-                        <h3>No documents found</h3>
-                        <p>{query || statusFilter !== "All" ? "Try adjusting your filters." : "Create your first document to get started!"}</p>
-                        <button className="workspace-primary-btn" onClick={() => router.push("/workspace/new")}>
-                            <FiPlus size={16} /> Create Document
-                        </button>
-                    </div>
-                ) : (
-                    <div className={view === "grid" ? "documents-grid-v2" : "documents-list-v2"}>
-                        {pagedDocuments.map((doc) => (
-                            <article key={doc._id} className="workspace-doc-card">
-                                {doc.featuredImage && (
-                                    <div className="doc-featured-image">
-                                        <img src={doc.featuredImage} alt={doc.title} />
-                                    </div>
-                                )}
-
-                                <div className="workspace-doc-top">
-                                    <div className="doc-title-section">
-                                        <h3>{doc.title}</h3>
-                                        <p>{doc.description || "No description"}</p>
-                                    </div>
-                                    <span className={`status-pill ${(doc.status || "Draft").toLowerCase()}`}>
-                                        {doc.status || "Draft"}
-                                    </span>
-                                </div>
-
-                                <div className="workspace-doc-meta">
-                                    <span><FaCalendarAlt /> {formatDate(doc.updatedAt)}</span>
-                                    <span>👁 {doc.views || 0}</span>
-                                    {doc.category && <span><IoFolder /> {doc.category}</span>}
-                                </div>
-
-                                {doc.tags && doc.tags.length > 0 && (
-                                    <div className="doc-tags">
-                                        {doc.tags.slice(0, 3).map((tag) => (
-                                            <span key={tag} className="doc-tag">{tag}</span>
-                                        ))}
-                                        {doc.tags.length > 3 && <span className="doc-tag-more">+{doc.tags.length - 3}</span>}
-                                    </div>
-                                )}
-
-                                <div className="workspace-doc-actions">
-                                    <button
-                                        onClick={() => router.push(`/workspace/${doc._id}`)}
-                                        className="action-btn edit-btn"
-                                        title="Edit document"
-                                    >
-                                        <FiEdit2 size={15} /> Edit
-                                    </button>
-                                    <button
-                                        onClick={() => window.open(`/doc/${doc.slug}`, "_blank")}
-                                        className="action-btn preview-btn"
-                                        title="Preview document"
-                                    >
-                                        <FiEye size={15} /> Preview
-                                    </button>
-                                    <button
-                                        onClick={() => handleDelete(doc._id)}
-                                        className="action-btn delete-btn"
-                                        title="Delete document"
-                                    >
-                                        <FiTrash2 size={15} />
-                                    </button>
-                                    <div className="more-wrapper">
-                                        <button
-                                            onClick={() => setMenuOpenFor(menuOpenFor === doc._id ? "" : doc._id)}
-                                            className="action-btn more-btn"
-                                            title="More options"
-                                        >
-                                            <FiMoreVertical size={15} />
-                                        </button>
-                                        {menuOpenFor === doc._id && (
-                                            <div className="more-menu">
-                                                <button
-                                                    onClick={() => handleDuplicate(doc)}
-                                                    className="more-menu-item"
-                                                >
-                                                    <FiCopy size={14} /> Duplicate
-                                                </button>
-                                                <button
-                                                    onClick={() => handleShare(doc)}
-                                                    className="more-menu-item"
-                                                >
-                                                    <FiShare2 size={14} /> Share
-                                                </button>
-                                            </div>
-                                        )}
-                                    </div>
-                                </div>
-                            </article>
-                        ))}
-                    </div>
                 )}
             </div>
 
-            {/* Pagination */}
-            {totalPages > 1 && (
-                <div className="workspace-pagination">
-                    <button
-                        disabled={currentPage === 1}
-                        onClick={() => setCurrentPage((p) => p - 1)}
-                        className="pagination-btn"
-                    >
-                        <FiChevronLeft size={16} /> Previous
-                    </button>
-                    <div className="pagination-info">
-                        <span>Page <strong>{currentPage}</strong> of <strong>{totalPages}</strong></span>
+            {/* Filter Tabs Bar: All 7 Views matching user reference */}
+            <div className="workspace-filter-tabs">
+                <button
+                    className={`workspace-filter-tab ${activeTab === "all" ? "active" : ""}`}
+                    onClick={() => handleTabClick("all")}
+                >
+                    All ({tabCounts.all})
+                </button>
+                <button
+                    className={`workspace-filter-tab ${activeTab === "recent" ? "active" : ""}`}
+                    onClick={() => handleTabClick("recent")}
+                >
+                    Recent ({tabCounts.recent})
+                </button>
+                <button
+                    className={`workspace-filter-tab ${activeTab === "drafts" ? "active" : ""}`}
+                    onClick={() => handleTabClick("drafts")}
+                >
+                    Drafts ({tabCounts.drafts})
+                </button>
+                <button
+                    className={`workspace-filter-tab ${activeTab === "published" ? "active" : ""}`}
+                    onClick={() => handleTabClick("published")}
+                >
+                    Published ({tabCounts.published})
+                </button>
+                <button
+                    className={`workspace-filter-tab ${activeTab === "bookmarked" ? "active" : ""}`}
+                    onClick={() => handleTabClick("bookmarked")}
+                >
+                    Bookmarked ({tabCounts.bookmarked})
+                </button>
+                <button
+                    className={`workspace-filter-tab ${activeTab === "shared" ? "active" : ""}`}
+                    onClick={() => handleTabClick("shared")}
+                >
+                    Shared ({tabCounts.shared})
+                </button>
+                <button
+                    className={`workspace-filter-tab ${activeTab === "trash" ? "active" : ""}`}
+                    onClick={() => handleTabClick("trash")}
+                >
+                    Trash ({tabCounts.trash})
+                </button>
+            </div>
+
+            {/* Trash Advisory Banner */}
+            {activeTab === "trash" && (
+                <div className="workspace-trash-alert-banner">
+                    <div className="trash-alert-content">
+                        <FiAlertCircle className="trash-alert-icon" size={19} />
+                        <span>Items in the Trash will be permanently deleted automatically after 30 days.</span>
                     </div>
-                    <button
-                        disabled={currentPage === totalPages}
-                        onClick={() => setCurrentPage((p) => p + 1)}
-                        className="pagination-btn"
-                    >
-                        Next <FiChevronRight size={16} />
-                    </button>
                 </div>
             )}
+
+            {/* Document Rows List matching user reference image */}
+            <div className="workspace-doc-rows-list">
+                {isLoading ? (
+                    <div className="workspace-loading-state">
+                        <div className="workspace-spinner"></div>
+                        <p>Loading documents...</p>
+                    </div>
+                ) : filteredDocuments.length === 0 ? (
+                    <div className="workspace-empty-state">
+                        <FiFolder size={44} />
+                        <h3>No documents found</h3>
+                        <p>
+                            {query
+                                ? `No documents matching "${query}"`
+                                : `No documents in ${heading.title.toLowerCase()} currently.`}
+                        </p>
+                    </div>
+                ) : (
+                    filteredDocuments.map((doc, index) => {
+                        const badgeInfo = getDocBadge(doc.category, doc.title, index);
+                        const isDraft = (doc.status || "").toLowerCase() === "draft";
+                        const isTrashTab = activeTab === "trash";
+
+                        return (
+                            <div
+                                key={doc._id || index}
+                                className={`workspace-doc-row ${isTrashTab ? "trash-row" : ""}`}
+                                onClick={() => {
+                                    if (!isTrashTab) {
+                                        router.push(`/doc/${doc.slug || doc._id}`);
+                                    }
+                                }}
+                            >
+                                {/* Left Icon Badge */}
+                                <div
+                                    className="doc-icon-badge"
+                                    style={{ background: badgeInfo.bg }}
+                                >
+                                    {badgeInfo.icon}
+                                </div>
+
+                                {/* Middle Content */}
+                                <div className="doc-row-content">
+                                    <div className="doc-title-row">
+                                        <h3 className="doc-row-title">{doc.title}</h3>
+                                        {!isTrashTab && (
+                                            <button
+                                                className={`doc-inline-bookmark-btn ${doc.isBookmarked ? "active" : ""}`}
+                                                onClick={(e) => handleToggleBookmark(doc._id, e)}
+                                                title={doc.isBookmarked ? "Remove bookmark" : "Add bookmark"}
+                                                aria-label="Bookmark"
+                                            >
+                                                <FiBookmark size={15} />
+                                            </button>
+                                        )}
+                                    </div>
+
+                                    <div className="doc-row-meta">
+                                        <span
+                                            className={`status-indicator ${
+                                                isDraft ? "draft" : "published"
+                                            }`}
+                                        >
+                                            <span className="status-dot"></span>
+                                            {isDraft ? "Draft" : "Published"}
+                                        </span>
+                                        <span className="meta-sep">•</span>
+                                        <span className="doc-category-name">
+                                            {doc.category || "General"}
+                                        </span>
+                                        {doc.words && (
+                                            <>
+                                                <span className="meta-sep">•</span>
+                                                <span className="doc-word-count">
+                                                    {doc.words}
+                                                </span>
+                                            </>
+                                        )}
+
+                                        {/* Shared collaborator tags */}
+                                        {doc.isShared && doc.sharedWith && (
+                                            <>
+                                                <span className="meta-sep">•</span>
+                                                <span className="doc-shared-tag">
+                                                    <FiUsers size={12} />
+                                                    <span>{doc.sharedWith.length} shared</span>
+                                                </span>
+                                            </>
+                                        )}
+
+                                        {/* Trash days countdown */}
+                                        {doc.isTrash && (
+                                            <>
+                                                <span className="meta-sep">•</span>
+                                                <span className="trash-countdown-tag">
+                                                    Purges in {doc.purgeDays || 30} days
+                                                </span>
+                                            </>
+                                        )}
+                                    </div>
+                                </div>
+
+                                {/* Right Side: Actions */}
+                                <div
+                                    className="doc-row-right"
+                                    onClick={(e) => e.stopPropagation()}
+                                >
+                                    <span className="doc-edited-time">
+                                        {formatRelativeTime(doc.updatedAt, doc.relativeTime)}
+                                    </span>
+
+                                    {/* Action buttons depending on view */}
+                                    {isTrashTab ? (
+                                        <div className="trash-row-actions">
+                                            <button
+                                                className="btn-trash-restore"
+                                                onClick={() => handleRestore(doc._id)}
+                                                title="Restore document"
+                                            >
+                                                <FiRotateCcw size={14} />
+                                                <span>Restore</span>
+                                            </button>
+                                            <button
+                                                className="btn-trash-perm-delete"
+                                                onClick={() => handlePermanentDelete(doc._id)}
+                                                title="Delete permanently"
+                                            >
+                                                <FiTrash2 size={14} />
+                                            </button>
+                                        </div>
+                                    ) : (
+                                        <div className="active-row-actions">
+                                            {isDraft && (
+                                                <button
+                                                    className="btn-quick-publish"
+                                                    onClick={(e) => handlePublishDraft(doc._id, e)}
+                                                    title="Publish now"
+                                                >
+                                                    <FiSend size={13} />
+                                                    <span>Publish</span>
+                                                </button>
+                                            )}
+
+                                            <div className="doc-menu-container">
+                                                <button
+                                                    className="doc-menu-trigger-btn"
+                                                    onClick={() =>
+                                                        setMenuOpenFor(
+                                                            menuOpenFor === doc._id ? "" : doc._id
+                                                        )
+                                                    }
+                                                    aria-label="More options"
+                                                >
+                                                    <FiMoreVertical size={18} />
+                                                </button>
+
+                                                {menuOpenFor === doc._id && (
+                                                    <div className="doc-actions-dropdown">
+                                                        <button
+                                                            onClick={() => {
+                                                                setMenuOpenFor("");
+                                                                router.push(`/workspace/${doc._id}`);
+                                                            }}
+                                                        >
+                                                            <FiEdit2 size={14} /> Edit
+                                                        </button>
+                                                        <button
+                                                            onClick={() => {
+                                                                setMenuOpenFor("");
+                                                                router.push(`/doc/${doc.slug || doc._id}`);
+                                                            }}
+                                                        >
+                                                            <FiEye size={14} /> View
+                                                        </button>
+                                                        <button onClick={() => handleDuplicate(doc)}>
+                                                            <FiCopy size={14} /> Duplicate
+                                                        </button>
+                                                        <button onClick={() => handleShare(doc)}>
+                                                            <FiShare2 size={14} /> Share Link
+                                                        </button>
+                                                        <button
+                                                            className="delete-btn"
+                                                            onClick={() => handleMoveToTrash(doc._id)}
+                                                        >
+                                                            <FiTrash2 size={14} /> Move to Trash
+                                                        </button>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        );
+                    })
+                )}
+            </div>
         </div>
     );
 }

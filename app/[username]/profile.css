@@ -1,0 +1,22 @@
+@import "../components/ProfileView.css";
+
+/* Additional Wrapper Styles for Public Profile */
+.profile-page-wrapper {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--page-bg);
+  color: var(--text-main);
+  font-family: inherit;
+}
+
+.profile-main-content {
+  flex: 1;
+  padding-bottom: 60px;
+}
+
+.profile-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 24px;
+}

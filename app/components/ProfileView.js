@@ -1,323 +1,355 @@
-"use client"
-import { useState, useEffect } from "react";
-import { FiMail, FiMapPin, FiUser, FiFileText, FiBookmark, FiExternalLink, FiGithub, FiLinkedin } from "react-icons/fi";
-import { FaTwitter, FaYoutube, FaInstagram, FaGlobe } from "react-icons/fa";
-import ProfileEdit from "./ProfileEdit";
-import "./ProfileView.css";
-import ProfilePictureModal from "./ProfilePictureModal";
+"use client";
 
-const SOCIAL_ICONS = {
-    twitter: FaTwitter,
-    linkedin: FiLinkedin,
-    github: FiGithub,
-    youtube: FaYoutube,
-    instagram: FaInstagram,
-    portfolio: FaGlobe,
-    website: FaGlobe,
-};
+import React, { useState, useEffect } from "react";
+import Link from "next/link";
+import {
+    FiMapPin,
+    FiGlobe,
+    FiMail,
+    FiClock,
+    FiEye,
+    FiEdit2,
+    FiCheck,
+    FiPlus,
+    FiBarChart2,
+    FiBookOpen,
+    FiCamera
+} from "react-icons/fi";
+import ProfilePictureModal from "./ProfilePictureModal";
+import "./ProfileView.css";
+
+const RECENT_DOCUMENTS = [
+    {
+        id: "doc-1",
+        title: "Python Async Programming Design",
+        readTime: "13 min read",
+        views: "3.8K views",
+        thumbnail: "/thumb-async-design.jpg",
+        slug: "mastering-python-asyncio-deep-dive"
+    },
+    {
+        id: "doc-2",
+        title: "Python Async Programming Basics",
+        readTime: "12 min read",
+        views: "1.8K views",
+        thumbnail: "/thumb-async-basics.jpg",
+        slug: "mastering-python-asyncio-deep-dive"
+    },
+    {
+        id: "doc-3",
+        title: "Machine Learning Roadmap Basics",
+        readTime: "15 min read",
+        views: "2.2K views",
+        thumbnail: "/thumb-ml-roadmap.jpg",
+        slug: "docker-kubernetes-production-guide"
+    }
+];
+
+const ALL_USER_DOCS = [
+    ...RECENT_DOCUMENTS,
+    {
+        id: "doc-4",
+        title: "Production Docker & Kubernetes Deployment Guide",
+        readTime: "14 min read",
+        views: "5.1K views",
+        thumbnail: "/thumb-async-design.jpg",
+        slug: "docker-kubernetes-production-guide"
+    },
+    {
+        id: "doc-5",
+        title: "React 19 Server Actions & Architecture Patterns",
+        readTime: "10 min read",
+        views: "4.2K views",
+        thumbnail: "/thumb-async-basics.jpg",
+        slug: "react-19-server-actions-architecture"
+    },
+    {
+        id: "doc-6",
+        title: "PostgreSQL Query Optimization & Indexing Strategies",
+        readTime: "16 min read",
+        views: "3.1K views",
+        thumbnail: "/thumb-ml-roadmap.jpg",
+        slug: "postgresql-query-optimization-indexing"
+    }
+];
 
 export default function ProfileView({ userData, userEmail, userName }) {
-    const [isEditMode, setIsEditMode] = useState(false);
-    const [profileData, setProfileData] = useState({
-        name: userData?.name || userData?.username || userName || "User",
-        email: userEmail || userData?.email || "user@example.com",
-        location: userData?.location || "Not specified",
-        city: userData?.city || "",
-        country: userData?.country || "",
-        bio: userData?.bio || "Welcome to my profile!",
-        educations: userData?.educations || [],
-        domains: userData?.domains || [],
-        socialLinks: userData?.socialLinks || {
-            twitter: "",
-            linkedin: "",
-            github: "",
-            youtube: "",
-            instagram: "",
-            portfolio: "",
-        },
-        joinDate: userData?.joinDate || "2024",
-        followers: 128,
-        following: 45,
-        articlesCount: 4,
-        profileImage: (userData?.name || userData?.username || userName)?.charAt(0).toUpperCase(),
-        profilePicture: userData?.profilePicture,
-        userId: userData?._id,
-    });
-    const [isUploadingPicture, setIsUploadingPicture] = useState(false);
-    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [activeTab, setActiveTab] = useState("overview");
+    const [isFollowing, setIsFollowing] = useState(false);
+    const [followerCount, setFollowerCount] = useState(128);
+    const [isPictureModalOpen, setIsPictureModalOpen] = useState(false);
+    const [profilePicture, setProfilePicture] = useState(userData?.profilePicture || "/rupayan-avatar.jpg");
 
+    const name = userData?.name || userName || "Rupayan Dey";
+    const handle = `@${(userData?.username || name.toLowerCase().replace(/\s+/g, "") || "rupayan")}`;
+    const role = userData?.role || "Full Stack Developer";
+    const bio = userData?.bio || "Building systems, AI apps & developer tools. Sharing knowledge through detailed guides and tutorials.";
+    const location = userData?.location || userData?.city ? `${userData?.city || "Kolkata"}, ${userData?.country || "India"}` : "Kolkata, India";
+    const website = userData?.website || "rupayandey.dev";
 
     useEffect(() => {
-        console.log(userData);
-    }, [userData]);
-
-    useEffect(() => {
-        if (userData) {
-            setProfileData(prev => ({
-                ...prev,
-                userId: userData._id,
-                profilePicture: userData.profilePicture,
-            }));
+        if (userData?.profilePicture) {
+            setProfilePicture(userData.profilePicture);
         }
     }, [userData]);
 
-    useEffect(() => {
-        const handleUpdate = async () => {
-            // ...
-        };
+    const toggleFollow = () => {
+        if (isFollowing) {
+            setIsFollowing(false);
+            setFollowerCount((prev) => prev - 1);
+        } else {
+            setIsFollowing(true);
+            setFollowerCount((prev) => prev + 1);
+        }
+    };
 
-        window.addEventListener("profilePictureUpdated", handleUpdate);
-
-        return () => {
-            window.removeEventListener("profilePictureUpdated", handleUpdate);
-        };
-    }, [profileData.userId]);
-
-
-
-    useEffect(() => {
-        console.log(userData);
-    }, []);
-    useEffect(() => {
-        const handleUpdate = async () => {
-            try {
-                const res = await fetch(`/api/user/${profileData.userId}`);
-                const data = await res.json();
-
-                setProfileData(prev => ({
-                    ...prev,
-                    profilePicture: data.profilePicture
-                }));
-            } catch (err) {
-                console.error(err);
-            }
-        };
-
-        window.addEventListener("profilePictureUpdated", handleUpdate);
-
-        return () => {
-            window.removeEventListener("profilePictureUpdated", handleUpdate);
-        };
-    }, [profileData.userId]);
+    const handleMessageClick = () => {
+        window.location.href = `mailto:${userEmail || "contact@rupayandey.dev"}?subject=Hello from DocsPost`;
+    };
 
     const handleProfilePictureUpload = async (base64String) => {
-        if (!profileData.userId) {
-            alert("User ID not found. Please refresh the page.");
-            return;
-        }
-
-        setIsUploadingPicture(true);
         try {
-            const response = await fetch("/api/profile/upload-picture", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify({
-                    imageBase64: base64String,
-                    userId: profileData.userId,
-                }),
-            });
-
-            const data = await response.json();
-
-            if (response.ok) {
-                setIsModalOpen(false);
-                alert("Profile picture updated successfully!");
-                window.dispatchEvent(new Event("profilePictureUpdated"));
-            } else {
-                alert(data.error || "Failed to upload profile picture");
+            setProfilePicture(base64String);
+            setIsPictureModalOpen(false);
+            if (userData?._id) {
+                await fetch("/api/profile/upload-picture", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        imageBase64: base64String,
+                        userId: userData._id
+                    })
+                });
             }
-        } catch (error) {
-            console.error("Upload error:", error);
-            alert("Failed to upload profile picture");
-        } finally {
-            setIsUploadingPicture(false);
+        } catch (e) {
+            console.error(e);
         }
-    };
-
-    const handleProfilePictureDelete = async () => {
-        if (!profileData.userId) {
-            alert("User ID not found. Please refresh the page.");
-            return;
-        }
-
-        if (!confirm("Are you sure you want to delete your profile picture?")) {
-            return;
-        }
-
-        setIsUploadingPicture(true);
-        try {
-            const response = await fetch("/api/profile/delete-picture", {
-                method: "DELETE",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify({
-                    userId: profileData.userId,
-                    publicId: "",
-                }),
-            });
-
-            const data = await response.json();
-
-            if (response.ok) {
-                setIsModalOpen(false);
-                alert("Profile picture deleted successfully!");
-                window.dispatchEvent(new Event("profilePictureUpdated"));
-            } else {
-                alert(data.error || "Failed to delete profile picture");
-            }
-        } catch (error) {
-            console.error("Delete error:", error);
-            alert("Failed to delete profile picture");
-        } finally {
-            setIsUploadingPicture(false);
-        }
-    };
-
-    const handleEditClose = (updatedData) => {
-        if (updatedData) {
-            setProfileData(prev => ({
-                ...prev,
-                ...updatedData
-            }));
-        }
-        setIsEditMode(false);
     };
 
     return (
-        <div className="profile-view-container">
-            {/* Profile Header Section - Form Style */}
-            <section className="profile-header-section profile-header-form">
-                {isEditMode ? (
-                    <ProfileEdit
-                        profileData={profileData}
-                        onClose={handleEditClose}
-                        userId={profileData.userId}
-                        isInline={true}
-                    />
-                ) : (
-                    <div className="profile-header-content">
+        <div className="profile-dashboard-view">
+            {/* Profile Main Card */}
+            <div className="profile-card-container">
+                {/* Snowy Mountain Panoramic Banner */}
+                <div className="profile-cover-banner">
+                    <img src="/mountain-banner.jpg" alt="Mountain Landscape Cover" />
+                </div>
 
-                        <ProfilePictureModal
-                            isOpen={isModalOpen}
-                            onClose={() => setIsModalOpen(false)}
-                            profilePicture={profileData?.profilePicture}
-                            userName={profileData.name}
-                            onUpload={handleProfilePictureUpload}
-                            onDelete={handleProfilePictureDelete}
-                            isLoading={isUploadingPicture}
-                        />
-                        <div
-                            className="profile-avatar"
-                            onClick={() => setIsModalOpen(true)}
-                        >
-                            {profileData.profilePicture ? (
-                                <img src={profileData.profilePicture} alt="profile" />
-                            ) : (
-                                <span>{profileData.profileImage}</span>
-                            )}
-                        </div>
-                        <div className="profile-header-info">
-                            <h1 className="profile-name">{profileData.name}</h1>
-
-                            {/* Bio Display */}
-                            {profileData.bio && (
-                                <p className="profile-bio">{profileData.bio}</p>
-                            )}
-
-                            <div className="profile-meta-info">
-                                <div className="meta-item">
-                                    <FiMail size={16} />
-                                    <span>{profileData.email}</span>
-                                </div>
-                                {profileData.country && (
-                                    <div className="meta-item">
-                                        <FiMapPin size={16} />
-                                        <span>{profileData.city && `${profileData.city}, `}{profileData.country}</span>
-                                    </div>
-                                )}
-                            </div>
-
-                            {/* Social Links */}
-                            {Object.values(profileData.socialLinks || {}).some(link => link) && (
-                                <div className="social-links-wrapper">
-                                    <div className="social-links-label">Connect</div>
-                                    <div className="social-links-container">
-                                        {Object.entries(profileData.socialLinks || {}).map(([platform, url]) => {
-                                            if (!url) return null;
-                                            const IconComponent = SOCIAL_ICONS[platform];
-                                            return (
-                                                <a
-                                                    key={platform}
-                                                    href={url}
-                                                    target="_blank"
-                                                    rel="noopener noreferrer"
-                                                    className={`social-link social-link-${platform}`}
-                                                    title={platform.charAt(0).toUpperCase() + platform.slice(1)}
-                                                >
-                                                    {IconComponent && <IconComponent size={20} />}
-                                                </a>
-                                            );
-                                        })}
-                                    </div>
-                                </div>
-                            )}
-
-                            {/* Domains/Expertise Badges */}
-                            {profileData.domains && profileData.domains.length > 0 && (
-                                <div className="badges-section">
-                                    <div className="badges-label">Expertise</div>
-                                    <div className="badges-container">
-                                        {profileData.domains.map((domain, index) => (
-                                            <span key={index} className="badge badge-domain">
-                                                {domain}
-                                            </span>
-                                        ))}
-                                    </div>
-                                </div>
-                            )}
-
-                            {/* Institutions/Education Badges */}
-                            {profileData.educations && profileData.educations.length > 0 && (
-                                <div className="badges-section">
-                                    <div className="badges-label">Institutions</div>
-                                    <div className="badges-container">
-                                        {profileData.educations.map((edu, index) => (
-                                            <span key={index} className="badge badge-education">
-                                                {edu}
-                                            </span>
-                                        ))}
-                                    </div>
-                                </div>
-                            )}
-
-                            <div className="profile-stats-row">
-                                <div className="stat-item">
-                                    <span className="stat-number">{profileData.followers}</span>
-                                    <span className="stat-label">Followers</span>
-                                </div>
-                                <div className="stat-item">
-                                    <span className="stat-number">{profileData.following}</span>
-                                    <span className="stat-label">Following</span>
-                                </div>
-                                <div className="stat-item">
-                                    <span className="stat-number">{profileData.articlesCount}</span>
-                                    <span className="stat-label">Articles</span>
-                                </div>
-                            </div>
-
-                            <button
-                                className="btn-edit-profile"
-                                onClick={() => setIsEditMode(true)}
+                {/* Profile Information Section */}
+                <div className="profile-info-section">
+                    <div className="profile-avatar-and-actions">
+                        <div className="profile-avatar-wrapper">
+                            <div
+                                className="profile-main-avatar"
+                                onClick={() => setIsPictureModalOpen(true)}
+                                title="Change profile picture"
                             >
-                                Edit Profile
+                                <img
+                                    src={profilePicture || "/rupayan-avatar.jpg"}
+                                    alt={name}
+                                    onError={(e) => {
+                                        e.target.onerror = null;
+                                        e.target.src = "/rupayan-avatar.jpg";
+                                    }}
+                                />
+                            </div>
+                            <button
+                                className="avatar-edit-badge"
+                                onClick={() => setIsPictureModalOpen(true)}
+                                title="Upload Photo"
+                            >
+                                <FiCamera size={14} />
+                            </button>
+                        </div>
+
+                        {/* Top Right Buttons: Follow & Message */}
+                        <div className="profile-action-buttons">
+                            <button
+                                className={`btn-profile-follow ${isFollowing ? "following" : ""}`}
+                                onClick={toggleFollow}
+                            >
+                                {isFollowing ? (
+                                    <>
+                                        <FiCheck size={16} /> Following
+                                    </>
+                                ) : (
+                                    "Follow"
+                                )}
+                            </button>
+                            <button className="btn-profile-message" onClick={handleMessageClick}>
+                                <FiMail size={16} /> Message
                             </button>
                         </div>
                     </div>
-                )}
-            </section>
+
+                    {/* User Identity & Bio */}
+                    <div className="profile-user-details">
+                        <h1 className="profile-user-name">{name}</h1>
+                        <p className="profile-user-handle">{handle}</p>
+                        <p className="profile-user-role">{role}</p>
+                        <p className="profile-user-bio">{bio}</p>
+
+                        <div className="profile-user-meta">
+                            <span className="meta-info-item">
+                                <FiMapPin size={15} /> {location}
+                            </span>
+                            <span className="meta-info-item">
+                                <FiGlobe size={15} />
+                                <a
+                                    href={`https://${website.replace(/^https?:\/\//, "")}`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="meta-link"
+                                >
+                                    {website}
+                                </a>
+                            </span>
+                        </div>
+                    </div>
+
+                    {/* Stats Counter Pills */}
+                    <div className="profile-stats-pill-row">
+                        <div className="profile-stat-box">
+                            <span className="stat-bold-count">{followerCount}</span>
+                            <span className="stat-sub-label">Followers</span>
+                        </div>
+                        <div className="profile-stat-box">
+                            <span className="stat-bold-count">45</span>
+                            <span className="stat-sub-label">Following</span>
+                        </div>
+                        <div className="profile-stat-box">
+                            <span className="stat-bold-count">24</span>
+                            <span className="stat-sub-label">Documents</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {/* Navigation Tabs Bar */}
+            <div className="profile-nav-tabs-wrap">
+                <button
+                    className={`profile-tab-pill ${activeTab === "overview" ? "active" : ""}`}
+                    onClick={() => setActiveTab("overview")}
+                >
+                    Overview
+                </button>
+                <button
+                    className={`profile-tab-pill ${activeTab === "documents" ? "active" : ""}`}
+                    onClick={() => setActiveTab("documents")}
+                >
+                    Documents
+                </button>
+                <button
+                    className={`profile-tab-pill ${activeTab === "analytics" ? "active" : ""}`}
+                    onClick={() => setActiveTab("analytics")}
+                >
+                    Analytics
+                </button>
+                <button
+                    className={`profile-tab-pill ${activeTab === "about" ? "active" : ""}`}
+                    onClick={() => setActiveTab("about")}
+                >
+                    About
+                </button>
+            </div>
+
+            {/* Tab Content */}
+            {activeTab === "overview" && (
+                <div className="overview-tab-content">
+                    <h2 className="recent-docs-section-heading">Recent Documents</h2>
+
+                    <div className="recent-docs-horizontal-grid">
+                        {RECENT_DOCUMENTS.map((doc) => (
+                            <Link key={doc.id} href={`/doc/${doc.slug}`} className="recent-doc-card-h">
+                                <div className="recent-doc-thumb-box">
+                                    <img src={doc.thumbnail} alt={doc.title} />
+                                </div>
+                                <div className="recent-doc-info-col">
+                                    <h3>{doc.title}</h3>
+                                    <div className="recent-doc-meta-row">
+                                        <span>
+                                            <FiClock size={13} /> {doc.readTime}
+                                        </span>
+                                        <span>
+                                            <FiEye size={13} /> {doc.views}
+                                        </span>
+                                    </div>
+                                </div>
+                            </Link>
+                        ))}
+                    </div>
+                </div>
+            )}
+
+            {activeTab === "documents" && (
+                <div className="documents-tab-content">
+                    <h2 className="recent-docs-section-heading">All Published Documents (24)</h2>
+                    <div className="recent-docs-horizontal-grid">
+                        {ALL_USER_DOCS.map((doc) => (
+                            <Link key={doc.id} href={`/doc/${doc.slug}`} className="recent-doc-card-h">
+                                <div className="recent-doc-thumb-box">
+                                    <img src={doc.thumbnail} alt={doc.title} />
+                                </div>
+                                <div className="recent-doc-info-col">
+                                    <h3>{doc.title}</h3>
+                                    <div className="recent-doc-meta-row">
+                                        <span>
+                                            <FiClock size={13} /> {doc.readTime}
+                                        </span>
+                                        <span>
+                                            <FiEye size={13} /> {doc.views}
+                                        </span>
+                                    </div>
+                                </div>
+                            </Link>
+                        ))}
+                    </div>
+                </div>
+            )}
+
+            {activeTab === "analytics" && (
+                <div className="analytics-tab-content">
+                    <h2 className="recent-docs-section-heading">Audience & Performance</h2>
+                    <div className="profile-about-card">
+                        <p>Total impressions across all guides: <strong>48.2K</strong></p>
+                        <p>Average read completion rate: <strong>76.4%</strong></p>
+                        <p>Most popular topic: <strong>Python Concurrency & AsyncIO</strong></p>
+                    </div>
+                </div>
+            )}
+
+            {activeTab === "about" && (
+                <div className="about-tab-content">
+                    <div className="profile-about-card">
+                        <h3>About {name}</h3>
+                        <p>{bio}</p>
+                        <h4 style={{ margin: "16px 0 8px 0", fontSize: "1rem", fontWeight: 700 }}>
+                            Core Technologies
+                        </h4>
+                        <div className="tech-stack-wrap">
+                            <span className="tech-pill">Python</span>
+                            <span className="tech-pill">TypeScript</span>
+                            <span className="tech-pill">Next.js</span>
+                            <span className="tech-pill">Node.js</span>
+                            <span className="tech-pill">PostgreSQL</span>
+                            <span className="tech-pill">Docker</span>
+                            <span className="tech-pill">Kubernetes</span>
+                            <span className="tech-pill">AWS</span>
+                            <span className="tech-pill">PyTorch</span>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Profile Picture Modal */}
+            <ProfilePictureModal
+                isOpen={isPictureModalOpen}
+                onClose={() => setIsPictureModalOpen(false)}
+                profilePicture={profilePicture}
+                userName={name}
+                onUpload={handleProfilePictureUpload}
+                onDelete={() => setProfilePicture("/rupayan-avatar.jpg")}
+            />
         </div>
     );
 }

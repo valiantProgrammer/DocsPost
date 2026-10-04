@@ -5,10 +5,6 @@ export async function GET(request) {
     const redirectUri = process.env.GOOGLE_REDIRECT_URI || `${request.nextUrl.origin}/api/auth/google/callback`;
     const nextPath = request.nextUrl.searchParams.get("next") || "/";
 
-    console.log(" Google OAuth Start:");
-    console.log("  Client ID:", clientId);
-    console.log("  Redirect URI:", redirectUri);
-
     if (!clientId) {
         return NextResponse.json(
             { message: "Google auth is not configured. Set GOOGLE_CLIENT_ID." },
@@ -26,10 +22,6 @@ export async function GET(request) {
     authUrl.searchParams.set("state", nextPath);
 
     const fullAuthUrl = authUrl.toString();
-    console.log("📍 Full Auth URL:", fullAuthUrl);
-    console.log("🔗 Redirect URI (raw):", redirectUri);
-    console.log("🔗 Redirect URI (length):", redirectUri.length);
-    console.log("🔗 Redirect URI (chars):", redirectUri.split('').map(c => `${c}(${c.charCodeAt(0)})`).join(', '));
 
     return NextResponse.redirect(fullAuthUrl);
 }

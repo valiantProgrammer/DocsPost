@@ -385,34 +385,6 @@
     padding: 0;
 }
 
-.toc-link {
-    display: block;
-    color: var(--text-main);
-    text-decoration: none;
-    padding: 10px 12px;
-    border-radius: 6px;
-    font-size: 0.9rem;
-    transition: all 0.2s ease;
-    border-left: 3px solid transparent;
-    margin: 6px 0;
-    line-height: 1.5;
-    word-break: break-word;
-}
-
-.toc-link:hover {
-    background: rgba(124, 58, 237, 0.05);
-    color: var(--brand);
-    border-left-color: var(--brand);
-    padding-left: 16px;
-}
-
-.toc-link.active {
-    color: var(--brand);
-    background: rgba(124, 58, 237, 0.08);
-    border-left-color: var(--brand);
-    font-weight: 600;
-}
-
 .toc-item.level-2 .toc-link {
     padding-left: 12px;
 }
@@ -737,6 +709,7 @@ h3[id]::before {
 }
 
 .toc-item>.toc-link {
+    font-weight: 650;
     display: block;
     padding: 6px 8px;
     color: var(--text-muted);
@@ -753,10 +726,7 @@ h3[id]::before {
 }
 
 .toc-link:hover {
-    color: var(--brand);
-    background: rgba(99, 102, 241, 0.08);
-    border-left-color: var(--brand);
-    padding-left: 11px;
+    color: #22c55e;
 }
 
 .toc-empty {
@@ -889,3 +859,370 @@ h3[id]::before {
         height: 36px;
     }
 }
+
+/* ================= LAYOUT 3: DOCUMENT READER SPECIFIC STYLES ================= */
+.sidebar-title-badge {
+    font-size: 0.8rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    color: #94a3b8;
+    text-transform: uppercase;
+    margin: 0 0 16px;
+}
+
+.toc-contents-list,
+.toc-on-this-page-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.toc-contents-item,
+.on-this-page-item {
+    margin: 0;
+}
+
+.toc-contents-link,
+.on-this-page-link {
+    background: transparent;
+    border: none;
+    text-align: left;
+    font-size: 0.88rem;
+    color: #64748b;
+    padding: 6px 10px;
+    border-radius: 8px;
+    width: 100%;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+:root[data-theme="dark"] .toc-contents-link,
+:root[data-theme="dark"] .on-this-page-link {
+    color: #94a3b8;
+}
+
+.toc-contents-link:hover,
+.on-this-page-link:hover {
+    background: #f1f5f9;
+    color: #0f172a;
+}
+
+:root[data-theme="dark"] .toc-contents-link:hover,
+:root[data-theme="dark"] .on-this-page-link:hover {
+    background: #1e293b;
+    color: #f8fafc;
+}
+
+.toc-contents-link.active,
+.on-this-page-link.active {
+    background: #eff6ff;
+    color: #2563eb;
+    font-weight: 600;
+}
+
+:root[data-theme="dark"] .toc-contents-link.active,
+:root[data-theme="dark"] .on-this-page-link.active {
+    background: rgba(37, 99, 235, 0.15);
+    color: #60a5fa;
+}
+
+/* Reader Hero */
+.doc-reader-hero {
+    margin-bottom: 32px;
+}
+
+.doc-category-pill-wrap {
+    margin-bottom: 12px;
+}
+
+.doc-category-royal-pill {
+    background: #eff6ff;
+    color: #2563eb;
+    font-size: 0.74rem;
+    font-weight: 700;
+    padding: 4px 10px;
+    border-radius: 6px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+}
+
+:root[data-theme="dark"] .doc-category-royal-pill {
+    background: rgba(37, 99, 235, 0.15);
+    color: #60a5fa;
+}
+
+.doc-reader-main-title {
+    font-size: 2.3rem;
+    font-weight: 800;
+    color: #0f172a;
+    line-height: 1.2;
+    margin: 0 0 10px;
+    letter-spacing: -0.025em;
+}
+
+:root[data-theme="dark"] .doc-reader-main-title {
+    color: #f8fafc;
+}
+
+.doc-reader-subtitle {
+    font-size: 1.05rem;
+    color: #64748b;
+    line-height: 1.55;
+    margin: 0 0 20px;
+}
+
+:root[data-theme="dark"] .doc-reader-subtitle {
+    color: #94a3b8;
+}
+
+.doc-author-meta-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 16px;
+    padding: 16px 0;
+    border-top: 1px solid #f1f5f9;
+    border-bottom: 1px solid #f1f5f9;
+    margin-bottom: 28px;
+}
+
+:root[data-theme="dark"] .doc-author-meta-bar {
+    border-color: #1e293b;
+}
+
+.author-meta-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.author-avatar-circle {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #2563eb, #38bdf8);
+    color: #ffffff;
+    font-weight: 700;
+    font-size: 0.95rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.author-meta-text {
+    display: flex;
+    flex-direction: column;
+}
+
+.author-name-bold {
+    font-size: 0.92rem;
+    font-weight: 700;
+    color: #0f172a;
+}
+
+:root[data-theme="dark"] .author-name-bold {
+    color: #f8fafc;
+}
+
+.doc-publish-meta {
+    font-size: 0.8rem;
+    color: #94a3b8;
+}
+
+.author-meta-actions {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+
+.reader-metric-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.82rem;
+    color: #64748b;
+}
+
+.reader-upvote-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: #f8fafc;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    padding: 6px 12px;
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: #475569;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+:root[data-theme="dark"] .reader-upvote-btn {
+    background: #111827;
+    border-color: #1e293b;
+    color: #cbd5e1;
+}
+
+.reader-upvote-btn:hover,
+.reader-upvote-btn.active {
+    background: #eff6ff;
+    border-color: #2563eb;
+    color: #2563eb;
+}
+
+:root[data-theme="dark"] .reader-upvote-btn:hover,
+:root[data-theme="dark"] .reader-upvote-btn.active {
+    background: rgba(37, 99, 235, 0.15);
+    color: #60a5fa;
+    border-color: #3b82f6;
+}
+
+.reader-share-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: #f8fafc;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    padding: 7px;
+    color: #64748b;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+:root[data-theme="dark"] .reader-share-btn {
+    background: #111827;
+    border-color: #1e293b;
+    color: #94a3b8;
+}
+
+.reader-share-btn:hover {
+  color: #2563eb;
+  border-color: #2563eb;
+}
+
+/* Cover Diagram Card */
+.doc-cover-diagram-card {
+    background: linear-gradient(135deg, #090e1a 0%, #0f172a 100%);
+    border: 1px solid #1e293b;
+    border-radius: 16px;
+    padding: 48px 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.25);
+    margin-bottom: 32px;
+}
+
+.diagram-card-inner {
+    display: flex;
+    align-items: center;
+    gap: 28px;
+}
+
+.fastapi-brand-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    padding: 12px 24px;
+    border-radius: 12px;
+    font-size: 1.4rem;
+    font-weight: 800;
+    color: #ffffff;
+}
+
+.fastapi-logo-circle {
+    font-size: 1.6rem;
+    color: #059669;
+}
+
+.python-brand-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    color: #94a3b8;
+    font-size: 0.95rem;
+    font-weight: 600;
+}
+
+/* Related Docs Cards */
+.related-docs-cards-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.related-doc-mini-card {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px;
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    text-decoration: none;
+    transition: all 0.15s ease;
+}
+
+:root[data-theme="dark"] .related-doc-mini-card {
+    background: #111827;
+    border-color: #1e293b;
+}
+
+.related-doc-mini-card:hover {
+    border-color: #2563eb;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 14px rgba(37, 99, 235, 0.12);
+}
+
+.related-thumb-box {
+    width: 38px;
+    height: 38px;
+    border-radius: 8px;
+    background: #f1f5f9;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.1rem;
+    flex-shrink: 0;
+}
+
+:root[data-theme="dark"] .related-thumb-box {
+    background: #1e293b;
+}
+
+.related-mini-info {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    overflow: hidden;
+}
+
+.related-mini-title {
+    font-size: 0.88rem;
+    font-weight: 600;
+    color: #0f172a;
+    margin: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+:root[data-theme="dark"] .related-mini-title {
+    color: #f8fafc;
+}
+
+.related-mini-readtime {
+    font-size: 0.74rem;
+    color: #94a3b8;
+}

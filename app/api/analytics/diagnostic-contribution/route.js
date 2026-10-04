@@ -38,11 +38,6 @@ export async function GET(req) {
             .sort({ date: -1 })
             .toArray();
 
-        console.log(`[Diagnostic] Found ${allStats.length} records for ${email}`);
-        allStats.forEach(stat => {
-            console.log(`[Diagnostic] Date: ${stat.date}, Created: ${stat.articlesCreated}, Articles: `, stat.createdArticles);
-        });
-
         return new Response(
             JSON.stringify({
                 success: true,

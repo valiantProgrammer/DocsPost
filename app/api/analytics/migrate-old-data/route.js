@@ -15,7 +15,6 @@ export async function POST(req) {
 
         // Get all unique users from old analytics
         const uniqueUsers = await oldCollection.distinct("userEmail");
-        console.log(`[Migrate] Found ${uniqueUsers.length} unique users in old analytics`);
 
         const IST_OFFSET = 5.5 * 60 * 60 * 1000; // IST is UTC+5:30
         let migratedCount = 0;
@@ -137,7 +136,6 @@ export async function POST(req) {
             );
 
             migratedCount++;
-            console.log(`[Migrate] Migrated user ${migratedCount}/${uniqueUsers.length}: ${userEmail} (${records.length} records)`);
         }
 
         await client.close();

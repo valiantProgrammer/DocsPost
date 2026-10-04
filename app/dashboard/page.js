@@ -6,12 +6,21 @@ import Header from "@/app/components/Header";
 import DashboardSidebar from "@/app/components/DashboardSidebar";
 import AnalyticsDashboard from "@/app/components/AnalyticsDashboard";
 import ProfilePictureModal from "@/app/components/ProfilePictureModal";
+import ProfileView from "@/app/components/ProfileView";
 import UserWorkspace from "@/app/components/UserWorkspace";
-import { FiUser, FiMail, FiMapPin, FiBookmark, FiEdit2, FiFileText, FiBarChart2, FiBriefcase } from "react-icons/fi";
+import {
+    FiUser, FiMail, FiMapPin, FiBookmark, FiEdit2, FiFileText,
+    FiBarChart2, FiBriefcase, FiTrendingUp, FiEye, FiThumbsUp,
+    FiUsers, FiClock, FiPlus, FiChevronDown, FiShare2, FiMessageCircle
+} from "react-icons/fi";
+import {
+    AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer,
+    PieChart, Pie, Cell
+} from "recharts";
 import "./dashboard.css";
 
 export default function DashboardPage() {
-    const [activeTab, setActiveTab] = useState("analytics");
+    const [activeTab, setActiveTab] = useState("overview");
     const [userEmail, setUserEmail] = useState("");
     const [userName, setUserName] = useState("");
     const [userData, setUserData] = useState(null);
@@ -23,6 +32,14 @@ export default function DashboardPage() {
         const savedAuth = localStorage.getItem("docspost-auth");
         const savedEmail = localStorage.getItem("docspost-email");
         const savedUsername = localStorage.getItem("docspost-username");
+
+        if (typeof window !== "undefined") {
+            const urlParams = new URLSearchParams(window.location.search);
+            const tabParam = urlParams.get("tab");
+            if (tabParam) {
+                setActiveTab(tabParam);
+            }
+        }
 
         if (savedAuth !== "signed-in") {
             router.push("/Auth?mode=signin");
@@ -41,8 +58,7 @@ export default function DashboardPage() {
                     );
                     if (response.ok) {
                         const data = await response.json();
-                        await setUserData(data.user);
-                        console.log(data.user);
+                        setUserData(data.user);
                     }
                 }
             } catch (error) {
@@ -59,18 +75,33 @@ export default function DashboardPage() {
 
     const renderContent = () => {
         switch (activeTab) {
+            case "overview":
             case "dashboard":
-                return <DashboardView userName={userName} />;
+                return <DashboardView userName={userName || "Rupayan"} router={router} />;
             case "analytics":
-                return <AnalyticsView userEmail={userEmail} />;
+                return <AnalyticsDashboard userEmail={userEmail} />;
             case "profile":
                 return <ProfileView userData={userData} userEmail={userEmail} userName={userName} />;
+            case "documents":
             case "workspace":
-                return <UserWorkspace userEmail={userEmail} />;
+            case "all":
+                return <UserWorkspace userEmail={userEmail} initialTab="all" />;
+            case "recent":
+                return <UserWorkspace userEmail={userEmail} initialTab="recent" pageTitle="Recent" />;
+            case "drafts":
+                return <UserWorkspace userEmail={userEmail} initialTab="drafts" pageTitle="Drafts" />;
+            case "published":
+                return <UserWorkspace userEmail={userEmail} initialTab="published" pageTitle="Published" />;
+            case "bookmarked":
+                return <UserWorkspace userEmail={userEmail} initialTab="bookmarked" pageTitle="Bookmarked" />;
+            case "shared":
+                return <UserWorkspace userEmail={userEmail} initialTab="shared" pageTitle="Shared" />;
+            case "trash":
+                return <UserWorkspace userEmail={userEmail} initialTab="trash" pageTitle="Trash" />;
             case "settings":
                 return <SettingsView />;
             default:
-                return <UserWorkspace userEmail={userEmail} />
+                return <DashboardView userName={userName || "Rupayan"} router={router} />;
         }
     };
 
@@ -86,83 +117,240 @@ export default function DashboardPage() {
         <div className="dashboard-container">
             <Header />
             <DashboardSidebar activeTab={activeTab} onTabChange={setActiveTab} />
-            <main className="dashboard-main">
+            <main className={`dashboard-main ${activeTab === "analytics" ? "analytics-mode" : ""}`}>
                 {renderContent()}
             </main>
         </div>
     );
 }
 
-// Dashboard View Component
-function DashboardView({ userName }) {
+// Layout 6: User Dashboard (Overview) Component
+function DashboardView({ userName, router }) {
+    const [chartTimeframe, setChartTimeframe] = useState("Daily");
+    const [selectedRange, setSelectedRange] = useState("Last 30 Days");
+
+    const chartData = [
+        { date: "Sep 26", views: 420 },
+        { date: "Oct 1", views: 680 },
+        { date: "Oct 5", views: 1100 },
+        { date: "Oct 9", views: 1450 },
+        { date: "Oct 12", views: 1980 },
+        { date: "Oct 16", views: 2420 },
+        { date: "Oct 19", views: 2840 },
+        { date: "Oct 22", views: 2310 },
+        { date: "Oct 26", views: 2150 },
+    ];
+
+    const topDocs = [
+        { id: "fastapi-auth-jwt", title: "FastAPI Guide", views: "8.2K", engagement: "23.4%" },
+        { id: "react-hooks-guide", title: "React Hooks", views: "4.9K", engagement: "18.2%" },
+        { id: "dsa-patterns", title: "DSA Patterns", views: "3.1K", engagement: "12.8%" },
+    ];
+
+    const donutData = [
+        { name: "Views", value: 45, color: "#2563eb" },
+        { name: "Upvotes", value: 30, color: "#38bdf8" },
+        { name: "Comments", value: 15, color: "#818cf8" },
+        { name: "Shares", value: 10, color: "#10b981" },
+    ];
+
     return (
-        <div className="dashboard-view">
-            <div className="view-header">
-                <h1>Welcome, {userName}! 👋</h1>
-                <p>Here's your dashboard overview</p>
-            </div>
-
-            {/* Top Metrics */}
-            <div className="metrics-grid">
-                <MetricCard
-                    title="Total Documents"
-                    value="12"
-                    change="+2"
-                    changeType="positive"
-                    color="#ec4899"
-                />
-                <MetricCard
-                    title="Total Views"
-                    value="2,340"
-                    change="+15%"
-                    changeType="positive"
-                    color="#06b6d4"
-                />
-                <MetricCard
-                    title="Total Likes"
-                    value="456"
-                    change="+8%"
-                    changeType="positive"
-                    color="#8b5cf6"
-                />
-                <MetricCard
-                    title="Engagement Rate"
-                    value="19.5%"
-                    change="+3.2%"
-                    changeType="positive"
-                    color="#f59e0b"
-                />
-            </div>
-
-            {/* Featured Cards */}
-            <div className="featured-section">
-                <div className="featured-card featured-primary">
-                    <div className="card-content">
-                        <h3>Start Creating Documents</h3>
-                        <p>Build your knowledge base by creating and sharing documents with the community.</p>
-                        <a href="/docs/create" className="card-link">Create Now →</a>
-                    </div>
-                    <div className="card-icon">🚀</div>
+        <div className="dashboard-overview-container">
+            {/* Top Greeting Header */}
+            <div className="dashboard-overview-header">
+                <div>
+                    <h1 className="dashboard-greeting-title">
+                        Good morning, {userName} 👋
+                    </h1>
+                    <p className="dashboard-greeting-subtitle">
+                        Here&apos;s what&apos;s happening with your DocsPost account.
+                    </p>
                 </div>
 
-                <div className="featured-card featured-secondary">
-                    <div className="card-content">
-                        <h3>Explore Community</h3>
-                        <p>Discover amazing documents from other creators and boost your learning.</p>
-                        <a href="/search" className="card-link">Explore →</a>
-                    </div>
-                    <div className="card-icon">🌟</div>
+                <div className="dashboard-range-selector">
+                    <select
+                        value={selectedRange}
+                        onChange={(e) => setSelectedRange(e.target.value)}
+                        className="range-dropdown"
+                    >
+                        <option value="Last 7 Days">Last 7 Days</option>
+                        <option value="Last 30 Days">Last 30 Days</option>
+                        <option value="Last 90 Days">Last 90 Days</option>
+                        <option value="All Time">All Time</option>
+                    </select>
+                    <FiChevronDown className="range-dropdown-arrow" size={15} />
                 </div>
             </div>
 
-            {/* Quick Stats */}
-            <div className="quick-stats">
-                <h2>Quick Statistics</h2>
-                <div className="stats-grid">
-                    <StatItem label="Documents" value="12" icon="📄" />
-                    <StatItem label="Total Views" value="2.3K" icon="👁️" />
-                    <StatItem label="Likes Received" value="456" icon="❤️" />
-                    <StatItem label="Followers" value="23" icon="👥" />
+            {/* 4 Metric Cards */}
+            <div className="dashboard-metric-cards-grid">
+                <div className="dash-metric-card">
+                    <div className="dash-metric-label">Documents</div>
+                    <div className="dash-metric-value">24</div>
+                    <div className="dash-metric-change positive">
+                        <span>+3 this month</span>
+                    </div>
+                </div>
+
+                <div className="dash-metric-card">
+                    <div className="dash-metric-label">Views</div>
+                    <div className="dash-metric-value">18.4K</div>
+                    <div className="dash-metric-change positive">
+                        <span>+18%</span>
+                    </div>
+                </div>
+
+                <div className="dash-metric-card">
+                    <div className="dash-metric-label">Upvotes</div>
+                    <div className="dash-metric-value">1,204</div>
+                    <div className="dash-metric-change positive">
+                        <span>+12%</span>
+                    </div>
+                </div>
+
+                <div className="dash-metric-card">
+                    <div className="dash-metric-label">Followers</div>
+                    <div className="dash-metric-value">328</div>
+                    <div className="dash-metric-change positive">
+                        <span>+24%</span>
+                    </div>
+                </div>
+            </div>
+
+            {/* Content Performance Chart Card */}
+            <div className="dash-chart-card">
+                <div className="dash-chart-card-header">
+                    <div>
+                        <h2 className="dash-card-title">Content Performance</h2>
+                    </div>
+
+                    <div className="chart-timeframe-pills">
+                        {["Daily", "Weekly", "Monthly"].map((tf) => (
+                            <button
+                                key={tf}
+                                type="button"
+                                className={`timeframe-pill-btn ${chartTimeframe === tf ? "active" : ""}`}
+                                onClick={() => setChartTimeframe(tf)}
+                            >
+                                {tf}
+                            </button>
+                        ))}
+                    </div>
+                </div>
+
+                <div className="dash-chart-wrapper">
+                    <div className="chart-peak-badge">
+                        <span>2,840 views</span>
+                    </div>
+                    <ResponsiveContainer width="100%" height={260}>
+                        <AreaChart data={chartData} margin={{ top: 20, right: 10, left: -20, bottom: 0 }}>
+                            <defs>
+                                <linearGradient id="viewsGradient" x1="0" y1="0" x2="0" y2="1">
+                                    <stop offset="5%" stopColor="#2563eb" stopOpacity={0.35} />
+                                    <stop offset="95%" stopColor="#2563eb" stopOpacity={0.0} />
+                                </linearGradient>
+                            </defs>
+                            <XAxis
+                                dataKey="date"
+                                stroke="#94a3b8"
+                                fontSize={12}
+                                tickLine={false}
+                                axisLine={false}
+                            />
+                            <YAxis
+                                stroke="#94a3b8"
+                                fontSize={12}
+                                tickLine={false}
+                                axisLine={false}
+                            />
+                            <Tooltip
+                                contentStyle={{
+                                    backgroundColor: "#1e293b",
+                                    borderRadius: "8px",
+                                    border: "none",
+                                    color: "#fff",
+                                    fontSize: "12px",
+                                }}
+                            />
+                            <Area
+                                type="monotone"
+                                dataKey="views"
+                                stroke="#2563eb"
+                                strokeWidth={3}
+                                fillOpacity={1}
+                                fill="url(#viewsGradient)"
+                            />
+                        </AreaChart>
+                    </ResponsiveContainer>
+                </div>
+            </div>
+
+            {/* Bottom 2 Columns: Top Documents & Engagement */}
+            <div className="dash-bottom-grid">
+                {/* Top Documents */}
+                <div className="dash-subcard">
+                    <div className="dash-subcard-header">
+                        <h3 className="dash-card-title">Top Documents</h3>
+                    </div>
+                    <div className="top-docs-list">
+                        {topDocs.map((doc, idx) => (
+                            <div
+                                key={doc.id}
+                                className="top-doc-row"
+                                onClick={() => router?.push(`/doc/${doc.id}`)}
+                            >
+                                <div className="top-doc-info">
+                                    <span className="top-doc-num">{idx + 1}.</span>
+                                    <span className="top-doc-name">{doc.title}</span>
+                                </div>
+                                <div className="top-doc-metrics">
+                                    <span className="top-doc-views">{doc.views}</span>
+                                    <span className="top-doc-engagement">{doc.engagement}</span>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+
+                {/* Engagement Donut */}
+                <div className="dash-subcard">
+                    <div className="dash-subcard-header">
+                        <h3 className="dash-card-title">Engagement</h3>
+                    </div>
+                    <div className="engagement-donut-container">
+                        <div className="donut-chart-box">
+                            <ResponsiveContainer width={170} height={170}>
+                                <PieChart>
+                                    <Pie
+                                        data={donutData}
+                                        innerRadius={52}
+                                        outerRadius={74}
+                                        paddingAngle={4}
+                                        dataKey="value"
+                                    >
+                                        {donutData.map((entry, index) => (
+                                            <Cell key={`cell-${index}`} fill={entry.color} />
+                                        ))}
+                                    </Pie>
+                                </PieChart>
+                            </ResponsiveContainer>
+                            <div className="donut-center-metric">
+                                <span className="donut-center-pct">14.8%</span>
+                            </div>
+                        </div>
+
+                        <div className="donut-legend-list">
+                            {donutData.map((item) => (
+                                <div key={item.name} className="donut-legend-item">
+                                    <span
+                                        className="legend-color-dot"
+                                        style={{ backgroundColor: item.color }}
+                                    ></span>
+                                    <span className="legend-label">{item.name}</span>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -171,372 +359,9 @@ function DashboardView({ userName }) {
 
 // Analytics View Component
 function AnalyticsView({ userEmail }) {
-    return (
-        <div className="analytics-view">
-            <div className="view-header">
-                <h1>Analytics Dashboard</h1>
-                <p>Track your content performance</p>
-            </div>
-            <AnalyticsDashboard userEmail={userEmail} />
-        </div>
-    );
+    return <AnalyticsDashboard userEmail={userEmail} />;
 }
 
-// Profile View Component
-function ProfileView({ userData, userEmail, userName }) {
-    const [profileTabActive, setProfileTabActive] = useState("overview");
-    const [isModalOpen, setIsModalOpen] = useState(false);
-    const [isUploadingPicture, setIsUploadingPicture] = useState(false);
-
-    const articles = [
-        {
-            id: 1,
-            title: "Understanding Data Structures: Arrays vs Linked Lists",
-            excerpt: "A comprehensive guide to choosing the right data structure for your use case.",
-            date: "April 15, 2024",
-            views: 2340,
-            likes: 156,
-            category: "DSA"
-        },
-        {
-            id: 2,
-            title: "React Hooks Deep Dive: useContext and useReducer",
-            excerpt: "Learn advanced React patterns and optimize your component architecture.",
-            date: "April 10, 2024",
-            views: 1890,
-            likes: 234,
-            category: "React"
-        },
-        {
-            id: 3,
-            title: "Building Scalable APIs with Node.js and MongoDB",
-            excerpt: "Best practices for creating production-ready backend applications.",
-            date: "April 5, 2024",
-            views: 3120,
-            likes: 412,
-            category: "Backend"
-        },
-        {
-            id: 4,
-            title: "CSS Grid vs Flexbox: When to Use Each",
-            excerpt: "Master modern CSS layout techniques and responsive design patterns.",
-            date: "March 28, 2024",
-            views: 2680,
-            likes: 389,
-            category: "CSS"
-        }
-    ];
-
-    const profileData = {
-        name: userData?.name || userName || "User",
-        email: userEmail || userData?.email || "user@example.com",
-        location: userData?.location || "Not specified",
-        bio: userData?.bio || "Welcome to my profile!",
-        joinDate: userData?.joinDate || "2024",
-        followers: 128,
-        following: 45,
-        articlesCount: articles.length,
-        profileImage: (userData?.name || userName)?.charAt(0).toUpperCase(),
-        profilePicture: userData?.profilePicture,
-        userId: userData?._id,
-    };
-
-    const handleProfilePictureUpload = async (base64String) => {
-        if (!profileData.userId) {
-            alert("User ID not found. Please refresh the page.");
-            return;
-        }
-
-        setIsUploadingPicture(true);
-        try {
-            const response = await fetch("/api/profile/upload-picture", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify({
-                    imageBase64: base64String,
-                    userId: profileData.userId,
-                }),
-            });
-
-            const data = await response.json();
-
-            if (response.ok) {
-                setIsModalOpen(false);
-                alert("Profile picture updated successfully!");
-                window.dispatchEvent(new Event("profilePictureUpdated"));
-            } else {
-                alert(data.error || "Failed to upload profile picture");
-            }
-        } catch (error) {
-            console.error("Upload error:", error);
-            alert("Failed to upload profile picture");
-        } finally {
-            setIsUploadingPicture(false);
-        }
-    };
-
-    const handleProfilePictureDelete = async () => {
-        if (!profileData.userId) {
-            alert("User ID not found. Please refresh the page.");
-            return;
-        }
-
-        if (!confirm("Are you sure you want to delete your profile picture?")) {
-            return;
-        }
-
-        setIsUploadingPicture(true);
-        try {
-            const response = await fetch("/api/profile/delete-picture", {
-                method: "DELETE",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify({
-                    userId: profileData.userId,
-                    publicId: "",
-                }),
-            });
-
-            const data = await response.json();
-
-            if (response.ok) {
-                setIsModalOpen(false);
-                alert("Profile picture deleted successfully!");
-                window.dispatchEvent(new Event("profilePictureUpdated"));
-            } else {
-                alert(data.error || "Failed to delete profile picture");
-            }
-        } catch (error) {
-            console.error("Delete error:", error);
-            alert("Failed to delete profile picture");
-        } finally {
-            setIsUploadingPicture(false);
-        }
-    };
-
-    return (
-        <div className="profile-view">
-            <ProfilePictureModal
-                isOpen={isModalOpen}
-                onClose={() => setIsModalOpen(false)}
-                profilePicture={profileData.profilePicture}
-                userName={profileData.name}
-                onUpload={handleProfilePictureUpload}
-                onDelete={handleProfilePictureDelete}
-                isLoading={isUploadingPicture}
-            />
-
-            {/* Profile Header Section */}
-            <section className="profile-header">
-                <div className="profile-container">
-                    <div className="profile-card-main">
-                        <div
-                            className="profile-avatar-large"
-                            onClick={() => setIsModalOpen(true)}
-                            style={{ cursor: "pointer" }}
-                            title="Click to manage profile picture"
-                        >
-                            {profileData.profilePicture ? (
-                                <img
-                                    src={profileData.profilePicture}
-                                    alt={profileData.name}
-                                    style={{
-                                        width: "100%",
-                                        height: "100%",
-                                        borderRadius: "50%",
-                                        objectFit: "cover",
-                                    }}
-                                />
-                            ) : (
-                                profileData.profileImage
-                            )}
-                        </div>
-
-                        <div className="profile-info">
-                            <h1 className="profile-name">{profileData.name}</h1>
-                            <p className="profile-bio">{profileData.bio}</p>
-
-                            <div className="profile-meta">
-                                <div className="meta-item">
-                                    <FiMail size={16} />
-                                    <span>{profileData.email}</span>
-                                </div>
-                                <div className="meta-item">
-                                    <FiMapPin size={16} />
-                                    <span>{profileData.location}</span>
-                                </div>
-                            </div>
-
-                            <div className="profile-stats">
-                                <div className="stat">
-                                    <span className="stat-number">{profileData.followers}</span>
-                                    <span className="stat-label">Followers</span>
-                                </div>
-                                <div className="stat">
-                                    <span className="stat-number">{profileData.following}</span>
-                                    <span className="stat-label">Following</span>
-                                </div>
-                                <div className="stat">
-                                    <span className="stat-number">{profileData.articlesCount}</span>
-                                    <span className="stat-label">Articles</span>
-                                </div>
-                            </div>
-
-                            <div className="profile-actions">
-                                <button className="btn btn-primary">
-                                    <FiEdit2 size={18} />
-                                    Edit Profile
-                                </button>
-                                <button className="btn btn-secondary">
-                                    <FiBookmark size={18} />
-                                    Saved Items
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </section>
-
-            {/* Tabs Section */}
-            <section className="profile-content">
-                <div className="profile-container">
-                    <div className="profile-tabs">
-                        <button
-                            className={`tab-button ${profileTabActive === "overview" ? "active" : ""}`}
-                            onClick={() => setProfileTabActive("overview")}
-                        >
-                            Overview
-                        </button>
-                        <button
-                            className={`tab-button ${profileTabActive === "workspace" ? "active" : ""}`}
-                            onClick={() => setProfileTabActive("workspace")}
-                        >
-                            <FiBriefcase size={18} />
-                            Workspace
-                        </button>
-                        <button
-                            className={`tab-button ${profileTabActive === "analytics" ? "active" : ""}`}
-                            onClick={() => setProfileTabActive("analytics")}
-                        >
-                            <FiBarChart2 size={18} />
-                            Analytics
-                        </button>
-                        <button
-                            className={`tab-button ${profileTabActive === "articles" ? "active" : ""}`}
-                            onClick={() => setProfileTabActive("articles")}
-                        >
-                            <FiFileText size={18} />
-                            Your Articles ({profileData.articlesCount})
-                        </button>
-                    </div>
-
-                    {/* Overview Tab */}
-                    {profileTabActive === "overview" && (
-                        <div className="profile-tab-content">
-                            <div className="stats-grid">
-                                <div className="stat-card">
-                                    <div className="stat-card-icon">
-                                        <FiFileText size={24} />
-                                    </div>
-                                    <h3>Articles Written</h3>
-                                    <p className="stat-card-value">{profileData.articlesCount}</p>
-                                </div>
-                                <div className="stat-card">
-                                    <div className="stat-card-icon">
-                                        <FiBookmark size={24} />
-                                    </div>
-                                    <h3>Total Views</h3>
-                                    <p className="stat-card-value">9,030</p>
-                                </div>
-                                <div className="stat-card">
-                                    <div className="stat-card-icon">
-                                        <FiUser size={24} />
-                                    </div>
-                                    <h3>Followers</h3>
-                                    <p className="stat-card-value">{profileData.followers}</p>
-                                </div>
-                            </div>
-
-                            <div className="recent-section">
-                                <h2>Recent Articles</h2>
-                                <div className="articles-grid">
-                                    {articles.slice(0, 2).map((article) => (
-                                        <div key={article.id} className="article-card-mini">
-                                            <span className="article-category">{article.category}</span>
-                                            <h3>{article.title}</h3>
-                                            <p>{article.excerpt}</p>
-                                            <div className="article-meta-mini">
-                                                <span>{article.date}</span>
-                                                <span>{article.views} views</span>
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
-                        </div>
-                    )}
-
-                    {/* Analytics Tab */}
-                    {profileTabActive === "analytics" && (
-                        <div className="profile-tab-content">
-                            <AnalyticsDashboard userEmail={userEmail} />
-                        </div>
-                    )}
-
-                    {/* Workspace Tab */}
-                    {profileTabActive === "workspace" && (
-                        <div className="profile-tab-content">
-                            <UserWorkspace userEmail={userEmail} />
-                        </div>
-                    )}
-
-                    {/* Articles Tab */}
-                    {profileTabActive === "articles" && (
-                        <div className="profile-tab-content">
-                            <div className="articles-header">
-                                <h2>Your Published Articles</h2>
-                                <button className="btn btn-primary">
-                                    <FiFileText size={18} />
-                                    Write New Article
-                                </button>
-                            </div>
-
-                            <div className="articles-list">
-                                {articles.map((article) => (
-                                    <div key={article.id} className="article-card">
-                                        <div className="article-content">
-                                            <span className="article-category">{article.category}</span>
-                                            <h3>{article.title}</h3>
-                                            <p>{article.excerpt}</p>
-                                            <div className="article-footer">
-                                                <span className="article-date">{article.date}</span>
-                                                <div className="article-stats">
-                                                    <span>{article.views} views</span>
-                                                    <span>{article.likes} likes</span>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div className="article-actions">
-                                            <button className="icon-btn">
-                                                <FiEdit2 size={18} />
-                                            </button>
-                                            <button className="icon-btn">
-                                                ⋮
-                                            </button>
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-                    )}
-                </div>
-            </section>
-        </div>
-    );
-}
 
 // Workplace View Component
 function WorkplaceView() {

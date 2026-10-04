@@ -41,11 +41,9 @@ export async function GET(req) {
         }
 
         if (action === "migrate") {
-            // Get all records from old analytics collection
-            const allRecords = await db.collection("analytics").find({}).toArray();
-            console.log(`[Migration] Found ${allRecords.length} records to migrate`);
 
-            // Group by userEmail
+            const allRecords = await db.collection("analytics").find({}).toArray();
+
             const groupedByUser = {};
             allRecords.forEach(record => {
                 const email = record.userEmail;
@@ -54,8 +52,6 @@ export async function GET(req) {
                 }
                 groupedByUser[email].push(record);
             });
-
-            console.log(`[Migration] Found ${Object.keys(groupedByUser).length} unique users`);
 
             // Migrate each user's data
             const migratedUsers = [];
@@ -70,7 +66,6 @@ export async function GET(req) {
                 );
 
                 migratedUsers.push(userEmail);
-                console.log(`[Migration] Migrated user: ${userEmail} (${userRecords.length} records)`);
             }
 
             await client.close();

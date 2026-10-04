@@ -27,15 +27,11 @@ export async function POST(req) {
         const now = new Date();
         const utcDate = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), 0, 0, 0, 0));
 
-        console.log(`[View Logged] DocID: ${docId}, User: ${userEmail || "anonymous"}, Time: ${now.toISOString()}`);
-
         const docsCollection = db.collection("user_documents");
         const document = await docsCollection.findOne({ slug: docId });
 
         if (!document) {
             console.warn(`[View Warning] Document not found for slug: ${docId}`);
-        } else {
-            console.log(`[View Success] Document author: ${document.userEmail}`);
         }
 
         const viewsCollection = db.collection("doc_views");

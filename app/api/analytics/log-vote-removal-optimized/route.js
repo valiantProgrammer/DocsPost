@@ -8,9 +8,6 @@ export async function POST(req) {
     let client;
     try {
         const { docId, userEmail, voteType, articleTitle, voterEmail } = await req.json();
-        console.log(`[Vote Removal Log] POST /api/analytics/log-vote-removal-optimized called`);
-        console.log(`[Vote Removal Log]   docId: ${docId}, userEmail: ${userEmail}, voteType: ${voteType}`);
-
         if (!docId || !userEmail || !voteType) {
             console.error(`[Vote Removal Log] Missing required fields`);
             return new Response(JSON.stringify({ error: "docId, userEmail, and voteType are required" }), { status: 400 });
@@ -37,7 +34,6 @@ export async function POST(req) {
         }
 
         const authorEmail = document.userEmail;
-        console.log(`[Vote Removal Logged] DocID: ${docId}, Author: ${authorEmail}, VoteType: ${voteType}`);
 
         // Calculate interval identifiers (IST timezone)
         const istDate = new Date(now.getTime() + 5.5 * 60 * 60 * 1000);

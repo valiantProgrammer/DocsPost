@@ -1,0 +1,235 @@
+/* ==========================================================================
+   DocsPost CodeBlockView: Unified Code Block Styles
+   Target: #0F172A, 12px radius, 1px border rgba(255,255,255,0.06), 36px header,
+   and zero-drift grid row architecture (.cb-row, .cb-ln, .cb-code).
+   ========================================================================== */
+
+.docspost-codeblock-container {
+    background-color: #0F172A !important;
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    margin: 16px 0;
+    overflow: hidden;
+    position: relative;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25);
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    box-sizing: border-box;
+}
+
+/* Reset inherited prose styles from .docspost-content on static code block elements */
+.cb-body,
+.cb-body * {
+    box-sizing: border-box;
+}
+
+.cb-body p,
+.cb-body div,
+.cb-body span,
+.cb-body code,
+.cb-body pre {
+    margin: 0;
+    padding: 0;
+    border: none;
+    font-weight: 400;
+}
+
+.docspost-codeblock-container.is-editing {
+    border-color: #3B82F6 !important;
+    box-shadow: 0 0 0 1px #3B82F6, 0 4px 14px rgba(0, 0, 0, 0.25);
+}
+
+.docspost-codeblock-container.is-selected:not(.is-editing) {
+    border-color: rgba(59, 130, 246, 0.5);
+}
+
+/* Header (36px) */
+.docspost-codeblock-header {
+    height: 36px;
+    background: transparent;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 14px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.docspost-codeblock-header-left {
+    display: flex;
+    align-items: center;
+}
+
+.docspost-codeblock-lang-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 8px !important;
+    border-radius: 6px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    background: rgba(255, 255, 255, 0.04);
+    color: #94A3B8;
+    font-size: 12px;
+    font-family: "JetBrains Mono", "Fira Code", Consolas, monospace;
+    line-height: 1;
+}
+
+.docspost-codeblock-lang-label {
+    text-transform: lowercase;
+    cursor: pointer;
+    user-select: none;
+}
+
+.docspost-codeblock-lang-select {
+    background: transparent;
+    border: none;
+    color: #94A3B8;
+    font-size: 12px;
+    font-family: inherit;
+    outline: none;
+    cursor: pointer;
+}
+
+.docspost-codeblock-lang-select option {
+    background: #0F172A;
+    color: #E2E8F0;
+}
+
+.docspost-codeblock-header-right {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.docspost-codeblock-action-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 3px 9px;
+    border-radius: 6px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    color: #94A3B8;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    font-family: "JetBrains Mono", "Fira Code", Consolas, monospace;
+}
+
+.docspost-codeblock-action-btn:hover {
+    color: #FFFFFF;
+    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.16);
+}
+
+.docspost-codeblock-action-btn.done-btn {
+    color: #22C55E;
+    border-color: rgba(34, 197, 94, 0.3);
+}
+
+/* ==========================================================================
+   Code Block Body & Grid Row Architecture
+   ========================================================================== */
+
+.docspost-codeblock-body {
+    background: #0F172A;
+    position: relative;
+}
+
+.cb-body {
+    padding: 14px 0;
+    overflow-x: auto;
+    overflow-y: hidden;
+    background: #0F172A;
+    font-family: "JetBrains Mono", "Fira Code", Consolas, monospace;
+    font-size: 13px;
+    line-height: 22px;
+    font-variant-ligatures: none;
+    tab-size: 4;
+    -moz-tab-size: 4;
+    width: 100%;
+    cursor: pointer;
+    box-sizing: border-box;
+}
+
+.cb-row {
+    display: grid;
+    grid-template-columns: var(--gutter, 40px) 1fr;
+    height: 22px;
+    min-height: 22px;
+    max-height: 22px;
+    line-height: 22px;
+    margin: 0;
+    padding: 0;
+    width: max-content;
+    min-width: 100%;
+    box-sizing: border-box;
+}
+
+.cb-row,
+.cb-ln,
+.cb-code {
+    margin: 0;
+    padding: 0;
+}
+
+/* Center line number in gutter */
+.cb-ln {
+    width: var(--gutter, 40px);
+    position: sticky;
+    left: 0;
+    z-index: 2;
+    background: #0F172A;
+    color: #475569;
+    text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    user-select: none;
+    height: 22px;
+    line-height: 22px;
+    margin: 0;
+    padding: 0;
+    font-family: "JetBrains Mono", "Fira Code", Consolas, monospace;
+    font-size: 13px;
+    font-variant-ligatures: none;
+    box-sizing: border-box;
+}
+
+.cb-code {
+    margin: 0;
+    padding-left: 6px;
+    padding-right: 16px;
+    white-space: pre;
+    font-family: "JetBrains Mono", "Fira Code", Consolas, monospace;
+    font-size: 13px;
+    line-height: 22px;
+    height: 22px;
+    color: #E2E8F0;
+    font-variant-ligatures: none;
+    tab-size: 4;
+    -moz-tab-size: 4;
+    box-sizing: border-box;
+    display: block;
+}
+
+/* Monaco inside edit mode */
+.docspost-codeblock-monaco-wrap {
+    width: 100%;
+    overflow: hidden;
+    background: #0F172A;
+}
+
+/* Center line numbers in Monaco editor */
+.docspost-codeblock-monaco-wrap .monaco-editor .margin-view-overlays .line-numbers {
+    text-align: center !important;
+}
+
+/* Inline code tag */
+.inline-code {
+    background: rgba(99, 102, 241, 0.15);
+    color: #6366f1;
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-family: "JetBrains Mono", "Fira Code", Consolas, monospace;
+    font-size: 0.9em;
+}

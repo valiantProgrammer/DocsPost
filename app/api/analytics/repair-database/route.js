@@ -22,7 +22,6 @@ export async function POST(req) {
         // Delete ALL documents - they'll be recreated properly from the source data
         // This is the most reliable way to ensure clean data
         const allDocs = await collection.find({}).toArray();
-        console.log(`[Repair] Found ${allDocs.length} documents to check`);
 
         const results = {
             total: allDocs.length,
@@ -43,7 +42,6 @@ export async function POST(req) {
                     if (intervals && typeof intervals === 'object' && !Array.isArray(intervals)) {
                         if ('$slice' in intervals || '$push' in intervals || '$set' in intervals) {
                             hasIssues = true;
-                            console.log(`[Repair] Document has corrupted ${timeframe}.intervals: ${JSON.stringify(intervals)}`);
                         }
                     }
 
@@ -83,7 +81,6 @@ export async function POST(req) {
             ]
         });
 
-        console.log(`[Repair] Found ${missingCount} documents missing timeframe fields`);
         results.missing = missingCount;
 
         if (missingCount > 0) {

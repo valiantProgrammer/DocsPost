@@ -82,7 +82,6 @@ export async function POST(request) {
     // Optional: for analytics reports by views
     await analyticsCollection.createIndex({ "summary.allTimeViews": -1 });
 
-    console.log("✓ Database indexes created successfully");
 
     return NextResponse.json(
       {

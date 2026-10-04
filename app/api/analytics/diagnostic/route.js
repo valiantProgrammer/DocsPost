@@ -13,9 +13,6 @@ export async function GET(req) {
         const optimizedDocs = await db.collection("analytics_optimized").find().toArray();
         const oldDocs = await db.collection("analytics").countDocuments();
 
-        console.log(`[Diagnostic] analytics_optimized collection has ${optimizedDocs.length} documents`);
-        console.log(`[Diagnostic] analytics collection has ${oldDocs} documents`);
-
         // List all users in optimized collection
         const userEmails = optimizedDocs.map(doc => ({
             email: doc.userEmail,

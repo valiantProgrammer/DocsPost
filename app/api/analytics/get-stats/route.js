@@ -175,13 +175,6 @@ export async function GET(req) {
 
         await client.close();
 
-        if (timeframe === "quarterly") {
-            console.log(`[API Debug] Timeframe: ${timeframe}`);
-            console.log(`  StartDate: ${startDate.toISOString()}`);
-            console.log(`  UserEmail: ${userEmail}`);
-            console.log(`  Records returned: ${viewStats.length}`);
-            console.log(`  Data:`, viewStats);
-        }
 
         return new Response(
             JSON.stringify({

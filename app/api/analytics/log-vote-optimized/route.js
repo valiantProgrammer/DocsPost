@@ -15,8 +15,6 @@ export async function POST(req) {
     let client;
     try {
         const { docId, userEmail, voteType, articleTitle, voterEmail } = await req.json();
-        console.log(`[Vote Log] POST /api/analytics/log-vote-optimized called`);
-        console.log(`[Vote Log]   docId: ${docId}, userEmail: ${userEmail}, voteType: ${voteType}, voterEmail: ${voterEmail}`);
 
         if (!docId || !userEmail || !voteType) {
             console.error(`[Vote Log] Missing required fields`);
@@ -44,7 +42,6 @@ export async function POST(req) {
         }
 
         const authorEmail = document.userEmail;
-        console.log(`[Vote Logged] DocID: ${docId}, Author: ${authorEmail}, VoteType: ${voteType}, Time: ${now.toISOString()}`);
 
         // Calculate interval identifiers (IST timezone)
         const istDate = new Date(now.getTime() + 5.5 * 60 * 60 * 1000);
@@ -204,8 +201,6 @@ async function updateTopArticlesWithVote(collection, userEmail, articleId, voteF
                 }
             );
         }
-
-        console.log(`[Vote Log] Updated topArticles for ${userEmail}, article: ${articleId}`);
     } catch (error) {
         console.error(`[Vote Log ERROR] Failed to update topArticles:`, error);
     }

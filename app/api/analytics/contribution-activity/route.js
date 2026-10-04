@@ -53,9 +53,6 @@ export async function GET(req) {
             .sort({ createdAt: -1 })
             .toArray();
 
-        console.log(`[Contribution Activity] Found ${userArticles.length} articles for ${email} in last ${days} days`);
-
-        // Group articles by creation date (UTC)
         const creationMap = {};
         userArticles.forEach(article => {
             const createdDate = new Date(article.createdAt);
@@ -93,8 +90,6 @@ export async function GET(req) {
         const averagePerDay = creationsByDay.length > 0
             ? (totalArticlesCreated / creationsByDay.length).toFixed(2)
             : 0;
-
-        console.log(`[Contribution Activity] Total articles: ${totalArticlesCreated}, Active days: ${activeDays}`);
 
         return new Response(
             JSON.stringify({

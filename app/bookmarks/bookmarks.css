@@ -1,0 +1,276 @@
+.bookmarks-page-container {
+  max-width: 980px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  animation: fadeIn 0.3s ease;
+}
+
+.bookmarks-header {
+  margin-bottom: 4px;
+}
+
+.bookmarks-title {
+  font-size: 1.85rem;
+  font-weight: 800;
+  color: #0f172a;
+  margin: 0 0 6px 0;
+  letter-spacing: -0.02em;
+}
+
+:root[data-theme="dark"] .bookmarks-title {
+  color: #f8fafc;
+}
+
+.bookmarks-subtitle {
+  font-size: 0.95rem;
+  color: #64748b;
+  margin: 0;
+}
+
+:root[data-theme="dark"] .bookmarks-subtitle {
+  color: #94a3b8;
+}
+
+/* Search Box */
+.bookmarks-search-box {
+  display: flex;
+  align-items: center;
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  border-radius: 12px;
+  padding: 10px 16px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
+}
+
+:root[data-theme="dark"] .bookmarks-search-box {
+  background: #111827;
+  border-color: #1e293b;
+}
+
+.bookmarks-search-box:focus-within {
+  border-color: #2563eb;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+}
+
+.b-search-icon {
+  color: #94a3b8;
+  margin-right: 12px;
+}
+
+.b-search-input {
+  flex: 1;
+  border: none;
+  background: transparent;
+  color: var(--text-main);
+  font-size: 0.95rem;
+  outline: none;
+  font-family: inherit;
+}
+
+/* Topic Pills */
+.bookmarks-pills-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.b-topic-pill {
+  border: 1px solid #e2e8f0;
+  background: #ffffff;
+  padding: 6px 16px;
+  border-radius: 9999px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: #64748b;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+:root[data-theme="dark"] .b-topic-pill {
+  background: #111827;
+  border-color: #1e293b;
+  color: #94a3b8;
+}
+
+.b-topic-pill:hover {
+  background: #f1f5f9;
+  color: #0f172a;
+}
+
+:root[data-theme="dark"] .b-topic-pill:hover {
+  background: #1e293b;
+  color: #f8fafc;
+}
+
+.b-topic-pill.active {
+  background: #2563eb;
+  border-color: #2563eb;
+  color: #ffffff;
+  font-weight: 600;
+}
+
+:root[data-theme="dark"] .b-topic-pill.active {
+  background: #3b82f6;
+  border-color: #3b82f6;
+}
+
+/* Bookmarks List */
+.bookmarks-list {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.bookmark-row-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  padding: 16px 20px;
+  display: grid;
+  grid-template-columns: 80px 1fr auto;
+  gap: 20px;
+  align-items: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02);
+}
+
+:root[data-theme="dark"] .bookmark-row-card {
+  background: #111827;
+  border-color: #1e293b;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.bookmark-row-card:hover {
+  transform: translateY(-2px);
+  border-color: #93c5fd;
+  box-shadow: 0 8px 20px -4px rgba(37, 99, 235, 0.12);
+}
+
+:root[data-theme="dark"] .bookmark-row-card:hover {
+  border-color: #3b82f6;
+}
+
+.bookmark-thumb-cover {
+  width: 76px;
+  height: 60px;
+  border-radius: 8px;
+  overflow: hidden;
+  padding: 8px;
+  display: flex;
+  align-items: center;
+  border: 1px solid #1e293b;
+}
+
+.thumb-code {
+  margin: 0;
+  font-family: monospace;
+  font-size: 0.65rem;
+  line-height: 1.35;
+  color: #94a3b8;
+  overflow: hidden;
+  max-height: 48px;
+}
+
+.bookmark-card-details {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.bookmark-item-title {
+  font-size: 1.08rem;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0;
+}
+
+:root[data-theme="dark"] .bookmark-item-title {
+  color: #f8fafc;
+}
+
+.bookmark-meta-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.8rem;
+}
+
+.bookmark-category-pill {
+  font-weight: 700;
+  font-size: 0.78rem;
+  text-transform: uppercase;
+}
+
+.bookmark-readtime {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: #94a3b8;
+}
+
+.dot-sep {
+  color: #cbd5e1;
+}
+
+.bookmark-right-actions {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.saved-timestamp {
+  font-size: 0.8rem;
+  color: #94a3b8;
+}
+
+.bookmark-action-btn {
+  background: transparent;
+  border: none;
+  padding: 6px;
+  border-radius: 8px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #2563eb;
+  transition: all 0.15s ease;
+}
+
+.bookmark-action-btn:hover {
+  background: #eff6ff;
+  transform: scale(1.1);
+}
+
+:root[data-theme="dark"] .bookmark-action-btn:hover {
+  background: rgba(37, 99, 235, 0.2);
+}
+
+.fill-blue {
+  fill: #2563eb;
+}
+
+:root[data-theme="dark"] .fill-blue {
+  fill: #3b82f6;
+}
+
+.bookmarks-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+  color: #94a3b8;
+  gap: 12px;
+}
+
+@media (max-width: 680px) {
+  .bookmark-row-card {
+    grid-template-columns: 1fr;
+  }
+  .bookmark-thumb-cover {
+    display: none;
+  }
+}

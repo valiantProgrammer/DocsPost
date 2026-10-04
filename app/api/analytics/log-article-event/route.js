@@ -4,8 +4,6 @@ export async function POST(req) {
     let client;
     try {
         const { docId, articleTitle, eventType, voteType, viewerEmail } = await req.json();
-        console.log(`[Article Event] POST /api/analytics/log-article-event called`);
-        console.log(`[Article Event]   docId: ${docId}, eventType: ${eventType}, voteType: ${voteType}`);
 
         if (!docId || !eventType) {
             console.error(`[Article Event] Missing required fields`);
@@ -37,7 +35,6 @@ export async function POST(req) {
         const finalTitle = articleTitle || (document ? document.title : null) || "Untitled";
         const authorEmail = document ? document.userEmail : "unknown";
 
-        console.log(`[Article Event] DocID: ${docId}, Title: ${finalTitle}, Author: ${authorEmail}, EventType: ${eventType}`);
 
         // Create detailed report record (article stats now tracked in analytics_optimized)
         await createReportRecord(db, docId, finalTitle, authorEmail, eventType, voteType, viewerEmail, now);
@@ -63,8 +60,6 @@ async function updateArticleStats(db, articleId, title, authorEmail, eventType, 
     try {
         const statsCollection = db.collection("article_stats");
         const now = new Date();
-
-        console.log(`[updateArticleStats] Starting for articleId: ${articleId}, title: ${title}, authorEmail: ${authorEmail}`);
 
         if (eventType === "view") {
             // Increment view count
@@ -95,9 +90,6 @@ async function updateArticleStats(db, articleId, title, authorEmail, eventType, 
                 },
                 { upsert: true }
             );
-
-            console.log(`[updateArticleStats] View update result:`, result);
-            console.log(`[Article Event] Updated view count for article: ${articleId}`);
         } else if (eventType === "vote") {
             // Increment vote count
             const voteField = voteType === "like" ? "totalLikes" : "totalDislikes";
@@ -133,11 +125,7 @@ async function updateArticleStats(db, articleId, title, authorEmail, eventType, 
                 { upsert: true }
             );
 
-            console.log(`[updateArticleStats] Vote update result:`, result);
-
-            // Update engagement rate
             const doc = await statsCollection.findOne({ articleId });
-            console.log(`[updateArticleStats] Found document:`, doc);
 
             if (doc) {
                 const engagementRate = doc.totalViews > 0
@@ -149,8 +137,6 @@ async function updateArticleStats(db, articleId, title, authorEmail, eventType, 
                     { $set: { engagementRate } }
                 );
             }
-
-            console.log(`[Article Event] Updated ${voteType} count for article: ${articleId}`);
         }
 
     } catch (error) {
@@ -159,9 +145,6 @@ async function updateArticleStats(db, articleId, title, authorEmail, eventType, 
     }
 }
 
-/**
- * Create a detailed report record for view/vote events
- */
 async function createReportRecord(db, articleId, title, authorEmail, eventType, voteType, viewerEmail, timestamp) {
     try {
         const reportsCollection = db.collection("analytics_reports");
@@ -180,7 +163,6 @@ async function createReportRecord(db, articleId, title, authorEmail, eventType, 
         };
 
         await reportsCollection.insertOne(report);
-        console.log(`[Article Event] Created report record for ${eventType} on article: ${articleId}`);
     } catch (error) {
         console.error(`[Article Event ERROR] Failed to create report record:`, error);
     }

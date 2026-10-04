@@ -1,88 +1,124 @@
 import { MongoClient } from "mongodb";
+import { NextResponse } from "next/server";
+import { getSessionUser } from "@/lib/session";
 
-const stripHtml = (value) => (value || "").replace(/<[^>]*>?/gm, " ").replace(/\s+/g, " ").trim();
-
-const normalizeBlocks = (blocks) => {
-    if (!Array.isArray(blocks)) return [];
-    return blocks
-        .filter((block) => block && typeof block === "object" && typeof block.type === "string")
-        .map((block, index) => ({
-            id: block.id || `block-${Date.now()}-${index}`,
-            type: block.type,
-            content: typeof block.content === "string" ? block.content : "",
-        }));
-};
-
-const deriveContentFromBlocks = (blocks) =>
-    blocks
-        .map((block) => stripHtml(block.content || ""))
-        .filter(Boolean)
-        .join("\n")
-        .slice(0, 5000);
+function generateSlug(title) {
+    return (title || "untitled")
+        .toLowerCase()
+        .trim()
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/^-+|-+$/g, "") || "untitled-doc";
+}
 
 export async function POST(req) {
     let client;
     try {
+        // Authenticate user via session/JWT/cookie
+        let session = await getSessionUser(req);
+        let user = session.user;
+
+        const body = await req.json();
         const {
             title,
+            slug: incomingSlug,
             description,
             content,
+            contentJson,
             category,
             difficulty,
-            userEmail,
             status,
             visibility,
             tags,
             featuredImage,
-            blocks,
-        } = await req.json();
+            wordCount,
+            advancedSettings,
+            userEmail: fallbackEmail,
+        } = body;
 
-        if (!title || !userEmail) {
-            return new Response(JSON.stringify({ error: "Missing required fields" }), { status: 400 });
+        // Fallback check if session couldn't get user from cookies
+        if (!user && fallbackEmail && process.env.MONGODB_URI) {
+            const tempClient = new MongoClient(process.env.MONGODB_URI);
+            await tempClient.connect();
+            const found = await tempClient.db("DocsPost").collection("users").findOne({ email: fallbackEmail.toLowerCase() });
+            await tempClient.close();
+            if (found) {
+                user = {
+                    _id: found._id.toString(),
+                    email: found.email,
+                    username: found.username || found.email.split("@")[0],
+                };
+            }
+        }
+
+        if (!user) {
+            return NextResponse.json({ error: "Unauthorized: Active session required" }, { status: 401 });
+        }
+
+        if (!title || !title.trim()) {
+            return NextResponse.json({ error: "Title is required" }, { status: 400 });
         }
 
         if (!process.env.MONGODB_URI) {
-            return new Response(
-                JSON.stringify({ error: "Database connection not configured" }),
-                { status: 500 }
-            );
+            return NextResponse.json({ error: "Database connection not configured" }, { status: 500 });
         }
 
         client = new MongoClient(process.env.MONGODB_URI);
         await client.connect();
         const db = client.db("DocsPost");
+        const docsCollection = db.collection("user_documents");
 
-        const slug = title
-            .toLowerCase()
-            .replace(/[^a-z0-9]+/g, "-")
-            .replace(/^-|-$/g, "");
+        // Validate and ensure unique slug
+        let baseSlug = (incomingSlug || generateSlug(title)).toLowerCase().trim();
+        baseSlug = baseSlug.replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "") || "untitled";
+        let finalSlug = baseSlug;
+        let counter = 1;
+        while (await docsCollection.findOne({ slug: finalSlug })) {
+            finalSlug = `${baseSlug}-${counter}`;
+            counter++;
+        }
+
+        // Reject base64 images in featuredImage
+        let safeFeaturedImage = featuredImage || "";
+        if (safeFeaturedImage.startsWith("data:image")) {
+            safeFeaturedImage = ""; // Do not store base64 in MongoDB
+        }
 
         const now = new Date();
         const normalizedStatus = status === "Published" ? "Published" : "Draft";
-        const normalizedBlocks = normalizeBlocks(blocks);
-        const hasIncomingContent = typeof content === "string" && content.trim().length > 0;
-        const normalizedContent = hasIncomingContent ? content : deriveContentFromBlocks(normalizedBlocks);
+
+        // Count words from markdown content if not provided
+        const computedWordCount = typeof wordCount === "number"
+            ? wordCount
+            : (content ? content.trim().split(/\s+/).filter(Boolean).length : 0);
 
         const document = {
-            title,
-            description: description || normalizedContent.slice(0, 140),
-            content: normalizedContent,
-            blocks: normalizedBlocks,
-            category: category || "Other",
+            title: title.trim(),
+            slug: finalSlug,
+            description: (description || "").slice(0, 160),
+            content: typeof content === "string" ? content : "",
+            contentJson: contentJson || null,
+            category: category || "Backend Development",
             difficulty: difficulty || "Beginner",
-            slug,
-            userEmail,
+            userEmail: user.email,
+            authorUsername: user.username,
             views: 0,
             createdAt: now,
             updatedAt: now,
             published: normalizedStatus === "Published",
             status: normalizedStatus,
             visibility: visibility || "Public",
-            tags: Array.isArray(tags) ? tags : [],
-            featuredImage: featuredImage || "",
+            tags: Array.isArray(tags) ? tags.map(t => t.trim().replace(/^#/, "")).filter(Boolean).slice(0, 8) : [],
+            featuredImage: safeFeaturedImage,
+            wordCount: computedWordCount,
+            advancedSettings: advancedSettings || {
+                allowComments: true,
+                showToc: true,
+                seoTitle: "",
+                seoDescription: "",
+                scheduledPublishDate: null,
+            },
         };
 
-        const docsCollection = db.collection("user_documents");
         const result = await docsCollection.insertOne(document);
         const docId = result.insertedId.toString();
 
@@ -92,8 +128,8 @@ export async function POST(req) {
             {
                 $set: {
                     docId,
-                    title,
-                    userEmail,
+                    title: document.title,
+                    userEmail: user.email,
                     views: 0,
                     upvotes: 0,
                     reports: 0,
@@ -104,19 +140,16 @@ export async function POST(req) {
             { upsert: true }
         );
 
-        return new Response(
-            JSON.stringify({
-                success: true,
-                message: "Document created successfully",
-                documentId: docId,
-            }),
-            { status: 201 }
-        );
+        return NextResponse.json({
+            success: true,
+            message: "Document created successfully",
+            documentId: docId,
+            slug: finalSlug,
+            document: { ...document, _id: docId },
+        }, { status: 201 });
     } catch (error) {
         console.error("Error creating document:", error);
-        return new Response(JSON.stringify({ error: error.message || "Failed to create document" }), {
-            status: 500,
-        });
+        return NextResponse.json({ error: error.message || "Failed to create document" }, { status: 500 });
     } finally {
         if (client) {
             await client.close();

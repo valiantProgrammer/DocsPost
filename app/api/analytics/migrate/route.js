@@ -35,9 +35,6 @@ export async function POST(req) {
         const userDocs = await docsCollection
             .find({ userEmail })
             .toArray();
-
-        console.log(`Found ${userDocs.length} documents for user ${userEmail}`);
-
         // For each document, migrate views
         for (const doc of userDocs) {
             try {
@@ -48,8 +45,6 @@ export async function POST(req) {
                 const views = await viewsCollection
                     .find({ docId: docSlug })
                     .toArray();
-
-                console.log(`Found ${views.length} views for doc ${docSlug}`);
 
                 // Insert each view into analytics
                 for (const view of views) {
@@ -77,8 +72,6 @@ export async function POST(req) {
                 const upvotes = await upvotesCollection
                     .find({ docId: docSlug })
                     .toArray();
-
-                console.log(`Found ${upvotes.length} upvotes for doc ${docSlug}`);
 
                 // Insert each upvote into analytics
                 for (const upvote of upvotes) {

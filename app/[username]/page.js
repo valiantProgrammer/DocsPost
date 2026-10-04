@@ -1,243 +1,316 @@
-"use client"
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
-import { useTheme } from "@/app/providers/ThemeProvider";
+"use client";
+
+import React, { useState, useEffect } from "react";
+import { useParams } from "next/navigation";
+import Link from "next/link";
 import Header from "@/app/components/Header";
-import DashboardSidebar from "@/app/components/DashboardSidebar";
-import AnalyticsDashboard from "@/app/components/AnalyticsDashboard";
-import ProfileView from "@/app/components/ProfileView";
-import UserWorkspace from "@/app/components/UserWorkspace";
-import { FiUser, FiMail, FiMapPin, FiBookmark, FiEdit2, FiFileText, FiBarChart2, FiBriefcase } from "react-icons/fi";
-import "./dashboard.css";
+import Footer from "@/app/components/Footer";
+import {
+    FiMapPin,
+    FiGlobe,
+    FiMail,
+    FiClock,
+    FiEye,
+    FiCheck,
+    FiBookOpen,
+    FiStar,
+    FiArrowRight
+} from "react-icons/fi";
+import "./profile.css";
 
-export default function DashboardPage() {
-    const [activeTab, setActiveTab] = useState("analytics");
-    const [documents, setDocuments] = useState([]);
-    const [userEmail, setUserEmail] = useState("");
-    const [userName, setUserName] = useState("");
-    const [userData, setUserData] = useState(null);
-    const [loading, setLoading] = useState(true);
-    const { mounted } = useTheme();
-    const router = useRouter();
+const RECENT_DOCUMENTS = [
+    {
+        id: "doc-1",
+        title: "Python Async Programming Design",
+        readTime: "13 min read",
+        views: "3.8K views",
+        thumbnail: "/thumb-async-design.jpg",
+        slug: "mastering-python-asyncio-deep-dive"
+    },
+    {
+        id: "doc-2",
+        title: "Python Async Programming Basics",
+        readTime: "12 min read",
+        views: "1.8K views",
+        thumbnail: "/thumb-async-basics.jpg",
+        slug: "mastering-python-asyncio-deep-dive"
+    },
+    {
+        id: "doc-3",
+        title: "Machine Learning Roadmap Basics",
+        readTime: "15 min read",
+        views: "2.2K views",
+        thumbnail: "/thumb-ml-roadmap.jpg",
+        slug: "docker-kubernetes-production-guide"
+    }
+];
 
-    useEffect(() => {
-        const savedAuth = localStorage.getItem("docspost-auth");
-        const savedEmail = localStorage.getItem("docspost-email");
-        const savedUsername = localStorage.getItem("docspost-username");
+const ALL_DOCUMENTS = [
+    ...RECENT_DOCUMENTS,
+    {
+        id: "doc-4",
+        title: "Production Docker & Kubernetes Deployment Guide",
+        readTime: "14 min read",
+        views: "5.1K views",
+        thumbnail: "/thumb-async-design.jpg",
+        slug: "docker-kubernetes-production-guide"
+    },
+    {
+        id: "doc-5",
+        title: "React 19 Server Actions & Architecture Patterns",
+        readTime: "10 min read",
+        views: "4.2K views",
+        thumbnail: "/thumb-async-basics.jpg",
+        slug: "react-19-server-actions-architecture"
+    },
+    {
+        id: "doc-6",
+        title: "PostgreSQL Query Optimization & Indexing Strategies",
+        readTime: "16 min read",
+        views: "3.1K views",
+        thumbnail: "/thumb-ml-roadmap.jpg",
+        slug: "postgresql-query-optimization-indexing"
+    }
+];
 
-        if (savedAuth !== "signed-in") {
-            router.push("/Auth?mode=signin");
-            return;
-        }
+export default function PublicProfilePage() {
+    const params = useParams();
+    const rawParam = params?.username ? String(params.username) : "rupayan";
+    const username = decodeURIComponent(rawParam);
 
-        setUserEmail(savedEmail || "");
-        setUserName(savedUsername || "");
+    const displayName = (username && username.toLowerCase() !== "rupayan")
+        ? username.split(/[-_.]/).map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(" ")
+        : "Rupayan Dey";
 
-        // Fetch user profile data
-        const fetchUserData = async () => {
-            try {
-                if (savedEmail) {
-                    const response = await fetch(
-                        `/api/profile/get-profile?email=${encodeURIComponent(savedEmail)}`
-                    );
-                    if (response.ok) {
-                        const data = await response.json();
-                        setUserData(data.user);
-                    }
-                }
-            } catch (error) {
-                console.error("Error fetching user data:", error);
-            } finally {
-                setLoading(false);
-            }
-        };
+    const [isFollowing, setIsFollowing] = useState(false);
+    const [followerCount, setFollowerCount] = useState(128);
+    const [activeTab, setActiveTab] = useState("overview");
 
-        if (savedEmail) {
-            fetchUserData();
-            console.log("[CSR] User Data fetched : ", userData);
-        }
-    }, [router]);
-
-    const renderContent = () => {
-        switch (activeTab) {
-            case "analytics":
-                return <AnalyticsView userEmail={userEmail} />;
-            case "profile":
-                return <ProfileView userData={userData} userEmail={userEmail} userName={userName} />;
-            case "settings":
-                return <SettingsView />;
-            default:
-                return <UserWorkspace userEmail={userEmail} />;
+    const toggleFollow = () => {
+        if (isFollowing) {
+            setIsFollowing(false);
+            setFollowerCount((prev) => prev - 1);
+        } else {
+            setIsFollowing(true);
+            setFollowerCount((prev) => prev + 1);
         }
     };
 
-    if (loading || !mounted) {
-        return (
-            <div className="dashboard-loading">
-                <div className="loading-spinner"></div>
-            </div>
-        );
-    }
-
     return (
-        <div className="dashboard-container">
+        <div className="profile-page-wrapper">
             <Header />
-            <DashboardSidebar activeTab={activeTab} onTabChange={setActiveTab} />
-            <main className="dashboard-main">
-                {renderContent()}
+
+            <main className="profile-main-content">
+                <div className="profile-container" style={{ paddingTop: 24 }}>
+                    {/* Header Card (with Mountain Banner) */}
+                    <div className="profile-card-container">
+                        <div className="profile-cover-banner">
+                            <img src="/mountain-banner.jpg" alt="Mountain Cover Banner" />
+                        </div>
+
+                        <div className="profile-info-section">
+                            <div className="profile-avatar-and-actions">
+                                <div className="profile-avatar-wrapper">
+                                    <div className="profile-main-avatar">
+                                        <img
+                                            src="/rupayan-avatar.jpg"
+                                            alt={displayName}
+                                            onError={(e) => {
+                                                e.target.onerror = null;
+                                                e.target.src = "/rupayan-avatar.jpg";
+                                            }}
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className="profile-action-buttons">
+                                    <button
+                                        className={`btn-profile-follow ${isFollowing ? "following" : ""}`}
+                                        onClick={toggleFollow}
+                                    >
+                                        {isFollowing ? (
+                                            <>
+                                                <FiCheck size={16} /> Following
+                                            </>
+                                        ) : (
+                                            "Follow"
+                                        )}
+                                    </button>
+                                    <button
+                                        className="btn-profile-message"
+                                        onClick={() => {
+                                            window.location.href = "mailto:contact@rupayandey.dev?subject=Hello from DocsPost";
+                                        }}
+                                    >
+                                        <FiMail size={16} /> Message
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div className="profile-user-details">
+                                <h1 className="profile-user-name">{displayName}</h1>
+                                <p className="profile-user-handle">@{username.toLowerCase()}</p>
+                                <p className="profile-user-role">Full Stack Developer</p>
+                                <p className="profile-user-bio">
+                                    Building systems, AI apps & developer tools. Sharing knowledge through detailed guides and tutorials.
+                                </p>
+
+                                <div className="profile-user-meta">
+                                    <span className="meta-info-item">
+                                        <FiMapPin size={15} /> Kolkata, India
+                                    </span>
+                                    <span className="meta-info-item">
+                                        <FiGlobe size={15} />
+                                        <a
+                                            href="https://rupayandey.dev"
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="meta-link"
+                                        >
+                                            rupayandey.dev
+                                        </a>
+                                    </span>
+                                </div>
+                            </div>
+
+                            <div className="profile-stats-pill-row">
+                                <div className="profile-stat-box">
+                                    <span className="stat-bold-count">{followerCount}</span>
+                                    <span className="stat-sub-label">Followers</span>
+                                </div>
+                                <div className="profile-stat-box">
+                                    <span className="stat-bold-count">45</span>
+                                    <span className="stat-sub-label">Following</span>
+                                </div>
+                                <div className="profile-stat-box">
+                                    <span className="stat-bold-count">24</span>
+                                    <span className="stat-sub-label">Documents</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Navigation Tabs */}
+                    <div className="profile-nav-tabs-wrap">
+                        <button
+                            className={`profile-tab-pill ${activeTab === "overview" ? "active" : ""}`}
+                            onClick={() => setActiveTab("overview")}
+                        >
+                            Overview
+                        </button>
+                        <button
+                            className={`profile-tab-pill ${activeTab === "documents" ? "active" : ""}`}
+                            onClick={() => setActiveTab("documents")}
+                        >
+                            Documents
+                        </button>
+                        <button
+                            className={`profile-tab-pill ${activeTab === "analytics" ? "active" : ""}`}
+                            onClick={() => setActiveTab("analytics")}
+                        >
+                            Analytics
+                        </button>
+                        <button
+                            className={`profile-tab-pill ${activeTab === "about" ? "active" : ""}`}
+                            onClick={() => setActiveTab("about")}
+                        >
+                            About
+                        </button>
+                    </div>
+
+                    {/* Tab Content */}
+                    {activeTab === "overview" && (
+                        <div className="overview-tab-content">
+                            <h2 className="recent-docs-section-heading">Recent Documents</h2>
+
+                            <div className="recent-docs-horizontal-grid">
+                                {RECENT_DOCUMENTS.map((doc) => (
+                                    <Link key={doc.id} href={`/doc/${doc.slug}`} className="recent-doc-card-h">
+                                        <div className="recent-doc-thumb-box">
+                                            <img src={doc.thumbnail} alt={doc.title} />
+                                        </div>
+                                        <div className="recent-doc-info-col">
+                                            <h3>{doc.title}</h3>
+                                            <div className="recent-doc-meta-row">
+                                                <span>
+                                                    <FiClock size={13} /> {doc.readTime}
+                                                </span>
+                                                <span>
+                                                    <FiEye size={13} /> {doc.views}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </Link>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+
+                    {activeTab === "documents" && (
+                        <div className="documents-tab-content">
+                            <h2 className="recent-docs-section-heading">All Documents ({ALL_DOCUMENTS.length})</h2>
+                            <div className="recent-docs-horizontal-grid">
+                                {ALL_DOCUMENTS.map((doc) => (
+                                    <Link key={doc.id} href={`/doc/${doc.slug}`} className="recent-doc-card-h">
+                                        <div className="recent-doc-thumb-box">
+                                            <img src={doc.thumbnail} alt={doc.title} />
+                                        </div>
+                                        <div className="recent-doc-info-col">
+                                            <h3>{doc.title}</h3>
+                                            <div className="recent-doc-meta-row">
+                                                <span>
+                                                    <FiClock size={13} /> {doc.readTime}
+                                                </span>
+                                                <span>
+                                                    <FiEye size={13} /> {doc.views}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </Link>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+
+                    {activeTab === "analytics" && (
+                        <div className="analytics-tab-content">
+                            <h2 className="recent-docs-section-heading">Audience & Performance</h2>
+                            <div className="profile-about-card">
+                                <p>Total impressions across all guides: <strong>48.2K</strong></p>
+                                <p>Average read completion rate: <strong>76.4%</strong></p>
+                                <p>Top performing topic: <strong>Python Concurrency & AsyncIO</strong></p>
+                            </div>
+                        </div>
+                    )}
+
+                    {activeTab === "about" && (
+                        <div className="about-tab-content">
+                            <div className="profile-about-card">
+                                <h3>About {displayName}</h3>
+                                <p>
+                                    Building systems, AI apps & developer tools. Sharing knowledge through detailed guides and tutorials.
+                                </p>
+                                <h4 style={{ margin: "16px 0 8px 0", fontSize: "1rem", fontWeight: 700 }}>
+                                    Core Technologies
+                                </h4>
+                                <div className="tech-stack-wrap">
+                                    <span className="tech-pill">Python</span>
+                                    <span className="tech-pill">TypeScript</span>
+                                    <span className="tech-pill">Next.js</span>
+                                    <span className="tech-pill">Node.js</span>
+                                    <span className="tech-pill">PostgreSQL</span>
+                                    <span className="tech-pill">Docker</span>
+                                    <span className="tech-pill">Kubernetes</span>
+                                    <span className="tech-pill">AWS</span>
+                                    <span className="tech-pill">PyTorch</span>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+                </div>
             </main>
-        </div>
-    );
-}
 
-// Dashboard View Component
-function DashboardView({ userName }) {
-    return (
-        <div className="dashboard-view">
-            <div className="view-header">
-                <h1>Welcome, {userName}! 👋</h1>
-                <p>Here's your dashboard overview</p>
-            </div>
-
-            {/* Top Metrics */}
-            <div className="metrics-grid">
-                <MetricCard
-                    title="Total Documents"
-                    value="12"
-                    change="+2"
-                    changeType="positive"
-                    color="#ec4899"
-                />
-                <MetricCard
-                    title="Total Views"
-                    value="2,340"
-                    change="+15%"
-                    changeType="positive"
-                    color="#06b6d4"
-                />
-                <MetricCard
-                    title="Total Likes"
-                    value="456"
-                    change="+8%"
-                    changeType="positive"
-                    color="#8b5cf6"
-                />
-                <MetricCard
-                    title="Engagement Rate"
-                    value="19.5%"
-                    change="+3.2%"
-                    changeType="positive"
-                    color="#f59e0b"
-                />
-            </div>
-
-            {/* Featured Cards */}
-            <div className="featured-section">
-                <div className="featured-card featured-primary">
-                    <div className="card-content">
-                        <h3>Start Creating Documents</h3>
-                        <p>Build your knowledge base by creating and sharing documents with the community.</p>
-                        <a href="/docs/create" className="card-link">Create Now →</a>
-                    </div>
-                    <div className="card-icon">🚀</div>
-                </div>
-
-                <div className="featured-card featured-secondary">
-                    <div className="card-content">
-                        <h3>Explore Community</h3>
-                        <p>Discover amazing documents from other creators and boost your learning.</p>
-                        <a href="/search" className="card-link">Explore →</a>
-                    </div>
-                    <div className="card-icon">🌟</div>
-                </div>
-            </div>
-
-            {/* Quick Stats */}
-            <div className="quick-stats">
-                <h2>Quick Statistics</h2>
-                <div className="stats-grid">
-                    <StatItem label="Documents" value="12" icon="📄" />
-                    <StatItem label="Total Views" value="2.3K" icon="👁️" />
-                    <StatItem label="Likes Received" value="456" icon="❤️" />
-                    <StatItem label="Followers" value="23" icon="👥" />
-                </div>
-            </div>
-        </div>
-    );
-}
-
-// Analytics View Component
-function AnalyticsView({ userEmail }) {
-    return (
-        <div className="analytics-view">
-            <div className="view-header">
-                <h1>Analytics Dashboard</h1>
-                <p>Track your content performance</p>
-            </div>
-            <AnalyticsDashboard userEmail={userEmail} />
-        </div>
-    );
-}
-
-
-
-// Settings View Component
-function SettingsView() {
-    return (
-        <div className="settings-view">
-            <div className="view-header">
-                <h1>Settings</h1>
-                <p>Configure your preferences</p>
-            </div>
-
-            <div className="settings-sections">
-                <div className="settings-section">
-                    <h3>🎨 Theme Settings</h3>
-                    <div className="setting-item">
-                        <label>Dark Mode</label>
-                        <input type="checkbox" defaultChecked />
-                    </div>
-                </div>
-
-                <div className="settings-section">
-                    <h3>🔔 Notifications</h3>
-                    <div className="setting-item">
-                        <label>Email Notifications</label>
-                        <input type="checkbox" defaultChecked />
-                    </div>
-                </div>
-
-                <div className="settings-section">
-                    <h3>🔐 Privacy & Security</h3>
-                    <p>Your profile is public. Others can find you by your username.</p>
-                </div>
-            </div>
-        </div>
-    );
-}
-
-// Metric Card Component
-function MetricCard({ title, value, change, changeType, color }) {
-    return (
-        <div className="metric-card" style={{ borderLeftColor: color }}>
-            <div className="metric-header">
-                <h3>{title}</h3>
-                <span className={`change ${changeType}`}>{change}</span>
-            </div>
-            <div className="metric-value">{value}</div>
-        </div>
-    );
-}
-
-// Stat Item Component
-function StatItem({ label, value, icon }) {
-    return (
-        <div className="stat-item">
-            <div className="stat-icon">{icon}</div>
-            <div className="stat-info">
-                <p className="stat-label">{label}</p>
-                <p className="stat-value">{value}</p>
-            </div>
+            <Footer />
         </div>
     );
 }

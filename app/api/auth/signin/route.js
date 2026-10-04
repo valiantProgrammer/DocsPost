@@ -143,7 +143,6 @@ export async function POST(request) {
 
     // Generate tokens
     const accessToken = await generateAccessToken(user._id.toString());
-    console.log("starting : " + accessToken + " : ending");
     const refreshToken = generateRefreshToken(user._id.toString());
 
     // Update user with refresh token

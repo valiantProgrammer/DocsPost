@@ -7,17 +7,11 @@ const MAX_INTERVALS = {
     yearly: 20
 };
 
-/**
- * Log a view to the optimized analytics collection
- * Creates/updates documents with proper schema using upsert
- */
+
 export async function POST(req) {
     let client;
     try {
         const { docId, userEmail } = await req.json();
-        console.logends(`[View Log] POST /api/docs/log-view-optimized called`);
-        console.log(`[View Log]   docId: ${docId}, userEmail: ${userEmail}`);
-
         if (!docId) {
             console.error(`[View Log] Missing docId`);
             return new Response(JSON.stringify({ error: "Doc ID is required" }), { status: 400 });
@@ -45,14 +39,12 @@ export async function POST(req) {
         }
 
         const authorEmail = document.userEmail;
-        console.log(`[View Logged] DocID: ${docId}, Author: ${authorEmail}, Time: ${now.toISOString()}`);
 
         // Update views count in user_documents collection
         await docsCollection.updateOne(
             { slug: docId },
             { $inc: { views: 1 }, $set: { updatedAt: now } }
         );
-        console.log(`[View Log] Updated user_documents views for: ${docId}`);
 
         // Calculate interval identifiers
         const istDate = new Date(now.getTime() + 5.5 * 60 * 60 * 1000);
@@ -300,8 +292,6 @@ async function updateTopArticlesWithView(collection, userEmail, articleId, artic
                 }
             );
         }
-
-        console.log(`[View Log] Updated topArticles for ${userEmail}, article: ${articleId}`);
     } catch (error) {
         console.error(`[View Log ERROR] Failed to update topArticles:`, error);
     }

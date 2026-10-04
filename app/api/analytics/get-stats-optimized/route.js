@@ -140,13 +140,6 @@ export async function GET(req) {
             summary: analyticsDoc.summary || {}
         };
 
-        // Log all responses for debugging
-        console.log(`[Analytics Query] Timeframe: ${timeframe}`);
-        console.log(`  UserEmail: ${userEmail}`);
-        console.log(`  View intervals found: ${viewStats.length}`);
-        console.log(`  First interval sample:`, viewStats[0]);
-        console.log(`  Full response:`, JSON.stringify(responseData, null, 2));
-
         return new Response(
             JSON.stringify(responseData),
             { status: 200 }
