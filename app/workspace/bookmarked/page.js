@@ -1,25 +1,14 @@
 "use client";
 
-import Header from "@/app/components/Header";
-import DashboardSidebar from "@/app/components/DashboardSidebar";
-import UserWorkspace from "@/app/components/UserWorkspace";
-import "@/app/dashboard/dashboard.css";
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
 
-export default function BookmarkedWorkspacePage() {
-    const userEmail = typeof window === "undefined" ? "" : localStorage.getItem("docspost-email") || "";
+export default function BookmarkedRedirectPage() {
+    const router = useRouter();
 
-    return (
-        <div className="dashboard-container">
-            <Header />
-            <DashboardSidebar activeTab="bookmarked" />
-            <main className="dashboard-main">
-                <UserWorkspace
-                    userEmail={userEmail}
-                    initialTab="bookmarked"
-                    pageTitle="Bookmarked Documents"
-                    pageDescription="Quick access to your curated guides, references, and saved tutorials."
-                />
-            </main>
-        </div>
-    );
+    useEffect(() => {
+        router.replace("/dashboard#bookmark");
+    }, [router]);
+
+    return null;
 }

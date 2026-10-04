@@ -1,26 +1,14 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import Header from "@/app/components/Header";
-import DashboardSidebar from "@/app/components/DashboardSidebar";
-import AnalyticsDashboard from "@/app/components/AnalyticsDashboard";
-import "../dashboard/dashboard.css";
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
 
-export default function AnalyticsPage() {
-    const [userEmail, setUserEmail] = useState("");
+export default function AnalyticsRedirectPage() {
+    const router = useRouter();
 
     useEffect(() => {
-        const savedEmail = localStorage.getItem("docspost-email") || "";
-        setUserEmail(savedEmail);
-    }, []);
+        router.replace("/dashboard#analytics");
+    }, [router]);
 
-    return (
-        <div className="dashboard-container">
-            <Header />
-            <DashboardSidebar activeTab="analytics" />
-            <main className="dashboard-main analytics-mode">
-                <AnalyticsDashboard userEmail={userEmail} />
-            </main>
-        </div>
-    );
+    return null;
 }

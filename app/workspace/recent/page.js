@@ -1,25 +1,14 @@
 "use client";
 
-import Header from "@/app/components/Header";
-import DashboardSidebar from "@/app/components/DashboardSidebar";
-import UserWorkspace from "@/app/components/UserWorkspace";
-import "@/app/dashboard/dashboard.css";
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
 
-export default function RecentWorkspacePage() {
-    const userEmail = typeof window === "undefined" ? "" : localStorage.getItem("docspost-email") || "";
+export default function RecentRedirectPage() {
+    const router = useRouter();
 
-    return (
-        <div className="dashboard-container">
-            <Header />
-            <DashboardSidebar activeTab="recent" />
-            <main className="dashboard-main">
-                <UserWorkspace
-                    userEmail={userEmail}
-                    initialTab="recent"
-                    pageTitle="Recent Documents"
-                    pageDescription="Pick up right where you left off. Documents sorted by recent activity."
-                />
-            </main>
-        </div>
-    );
+    useEffect(() => {
+        router.replace("/dashboard#recent");
+    }, [router]);
+
+    return null;
 }

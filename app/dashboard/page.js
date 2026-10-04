@@ -9,6 +9,7 @@ import ProfilePictureModal from "@/app/components/ProfilePictureModal";
 import ProfileView from "@/app/components/ProfileView";
 import UserWorkspace from "@/app/components/UserWorkspace";
 import DashboardOverview from "@/app/components/DashboardOverview";
+import BookmarksView from "@/app/components/BookmarksView";
 import {
     FiUser, FiMail, FiMapPin, FiBookmark, FiEdit2, FiFileText,
     FiBarChart2, FiBriefcase, FiTrendingUp, FiEye, FiThumbsUp,
@@ -29,18 +30,47 @@ export default function DashboardPage() {
     const { mounted } = useTheme();
     const router = useRouter();
 
+    const normalizeTab = (raw) => {
+        if (!raw) return "overview";
+        const clean = raw.replace(/^#\/?/, "").toLowerCase().trim();
+        if (clean === "bookmark" || clean === "bookmarks" || clean === "bookmarked") return "bookmarks";
+        if (clean === "overview" || clean === "dashboard") return "overview";
+        return clean;
+    };
+
+    const handleTabChange = (tabId) => {
+        const normalized = normalizeTab(tabId);
+        setActiveTab(normalized);
+        if (typeof window !== "undefined") {
+            const hash = (normalized === "bookmarks") ? "bookmark" : normalized;
+            window.location.hash = hash;
+        }
+    };
+
+    useEffect(() => {
+        const syncTabFromLocation = () => {
+            if (typeof window === "undefined") return;
+            const hash = window.location.hash;
+            if (hash) {
+                setActiveTab(normalizeTab(hash));
+                return;
+            }
+            const urlParams = new URLSearchParams(window.location.search);
+            const tabParam = urlParams.get("tab");
+            if (tabParam) {
+                setActiveTab(normalizeTab(tabParam));
+            }
+        };
+
+        syncTabFromLocation();
+        window.addEventListener("hashchange", syncTabFromLocation);
+        return () => window.removeEventListener("hashchange", syncTabFromLocation);
+    }, []);
+
     useEffect(() => {
         const savedAuth = localStorage.getItem("docspost-auth");
         const savedEmail = localStorage.getItem("docspost-email");
         const savedUsername = localStorage.getItem("docspost-username");
-
-        if (typeof window !== "undefined") {
-            const urlParams = new URLSearchParams(window.location.search);
-            const tabParam = urlParams.get("tab");
-            if (tabParam) {
-                setActiveTab(tabParam);
-            }
-        }
 
         if (savedAuth !== "signed-in") {
             router.push("/Auth?mode=signin");
@@ -83,6 +113,10 @@ export default function DashboardPage() {
                 return <AnalyticsDashboard userEmail={userEmail} />;
             case "profile":
                 return <ProfileView userData={userData} userEmail={userEmail} userName={userName} />;
+            case "bookmark":
+            case "bookmarks":
+            case "bookmarked":
+                return <BookmarksView router={router} />;
             case "documents":
             case "workspace":
             case "all":
@@ -93,8 +127,6 @@ export default function DashboardPage() {
                 return <UserWorkspace userEmail={userEmail} initialTab="drafts" pageTitle="Drafts" />;
             case "published":
                 return <UserWorkspace userEmail={userEmail} initialTab="published" pageTitle="Published" />;
-            case "bookmarked":
-                return <UserWorkspace userEmail={userEmail} initialTab="bookmarked" pageTitle="Bookmarked" />;
             case "shared":
                 return <UserWorkspace userEmail={userEmail} initialTab="shared" pageTitle="Shared" />;
             case "trash":
@@ -117,7 +149,7 @@ export default function DashboardPage() {
     return (
         <div className="dashboard-container">
             <Header />
-            <DashboardSidebar activeTab={activeTab} onTabChange={setActiveTab} />
+            <DashboardSidebar activeTab={activeTab} onTabChange={handleTabChange} />
             <main className={`dashboard-main ${activeTab === "analytics" ? "analytics-mode" : ""}`}>
                 {renderContent()}
             </main>

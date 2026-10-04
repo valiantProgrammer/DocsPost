@@ -1,25 +1,14 @@
 "use client";
 
-import Header from "@/app/components/Header";
-import DashboardSidebar from "@/app/components/DashboardSidebar";
-import UserWorkspace from "@/app/components/UserWorkspace";
-import "@/app/dashboard/dashboard.css";
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
 
-export default function SharedWorkspacePage() {
-    const userEmail = typeof window === "undefined" ? "" : localStorage.getItem("docspost-email") || "";
+export default function SharedRedirectPage() {
+    const router = useRouter();
 
-    return (
-        <div className="dashboard-container">
-            <Header />
-            <DashboardSidebar activeTab="shared" />
-            <main className="dashboard-main">
-                <UserWorkspace
-                    userEmail={userEmail}
-                    initialTab="shared"
-                    pageTitle="Shared Documents"
-                    pageDescription="Documents shared with you or your team members with active permissions."
-                />
-            </main>
-        </div>
-    );
+    useEffect(() => {
+        router.replace("/dashboard#shared");
+    }, [router]);
+
+    return null;
 }

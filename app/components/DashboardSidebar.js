@@ -81,30 +81,15 @@ export default function DashboardSidebar({ activeTab, onTabChange }) {
         { id: "trash", label: "Trash", icon: FiTrash2, path: "/workspace/trash" },
     ];
 
-    const handleParentWorkspaceClick = () => {
+    const goToTab = (tabId) => {
+        const hash = (tabId === "bookmarked" || tabId === "bookmarks") ? "bookmark" : tabId;
         if (onTabChange) {
-            onTabChange("workspace");
-        } else {
-            router.push("/workspace");
-        }
-        setIsWorkspaceOpen(true);
-        setIsOpen(false);
-    };
-
-    const handleSubmenuClick = (item) => {
-        if (onTabChange) {
-            onTabChange(item.id);
-        } else {
-            router.push(item.path);
-        }
-        setIsOpen(false);
-    };
-
-    const handleNavClick = (path, tabId) => {
-        if (onTabChange && (tabId === "overview" || tabId === "analytics" || tabId === "profile")) {
             onTabChange(tabId);
+            if (typeof window !== "undefined") {
+                window.location.hash = hash;
+            }
         } else {
-            router.push(path);
+            router.push(`/dashboard#${hash}`);
         }
         setIsOpen(false);
     };
@@ -154,7 +139,7 @@ export default function DashboardSidebar({ activeTab, onTabChange }) {
                     {/* Overview */}
                     <button
                         className={`sidebar-nav-btn ${activeTab === "overview" || activeTab === "dashboard" ? "active" : ""}`}
-                        onClick={() => handleNavClick("/dashboard", "overview")}
+                        onClick={() => goToTab("overview")}
                     >
                         <FiHome className="nav-icon" size={19} />
                         <span className="nav-label">Overview</span>
@@ -167,7 +152,10 @@ export default function DashboardSidebar({ activeTab, onTabChange }) {
                         >
                             <div
                                 className="sidebar-nav-main-action"
-                                onClick={handleParentWorkspaceClick}
+                                onClick={() => {
+                                    goToTab("workspace");
+                                    setIsWorkspaceOpen(true);
+                                }}
                             >
                                 <FiFolder className="nav-icon" size={19} />
                                 <span className="nav-label">Workspace</span>
@@ -190,12 +178,14 @@ export default function DashboardSidebar({ activeTab, onTabChange }) {
                             <div className="sidebar-submenu">
                                 {workspaceSubmenu.map((subItem) => {
                                     const SubIcon = subItem.icon;
-                                    const isSubActive = activeTab === subItem.id;
+                                    const isSubActive =
+                                        activeTab === subItem.id ||
+                                        (subItem.id === "bookmarked" && (activeTab === "bookmark" || activeTab === "bookmarks"));
                                     return (
                                         <button
                                             key={subItem.id}
                                             className={`sidebar-submenu-btn ${isSubActive ? "active" : ""}`}
-                                            onClick={() => handleSubmenuClick(subItem)}
+                                            onClick={() => goToTab(subItem.id)}
                                         >
                                             <SubIcon className="nav-icon" size={17} />
                                             <span className="nav-label">{subItem.label}</span>
@@ -209,7 +199,7 @@ export default function DashboardSidebar({ activeTab, onTabChange }) {
                     {/* Analytics */}
                     <button
                         className={`sidebar-nav-btn ${activeTab === "analytics" ? "active" : ""}`}
-                        onClick={() => handleNavClick("/analytics", "analytics")}
+                        onClick={() => goToTab("analytics")}
                     >
                         <FiBarChart2 className="nav-icon" size={19} />
                         <span className="nav-label">Analytics</span>
@@ -217,8 +207,8 @@ export default function DashboardSidebar({ activeTab, onTabChange }) {
 
                     {/* Bookmarks */}
                     <button
-                        className={`sidebar-nav-btn ${activeTab === "bookmarks" ? "active" : ""}`}
-                        onClick={() => handleNavClick("/bookmarks", "bookmarks")}
+                        className={`sidebar-nav-btn ${activeTab === "bookmarks" || activeTab === "bookmark" || activeTab === "bookmarked" ? "active" : ""}`}
+                        onClick={() => goToTab("bookmark")}
                     >
                         <FiBookmark className="nav-icon" size={19} />
                         <span className="nav-label">Bookmarks</span>
@@ -227,7 +217,7 @@ export default function DashboardSidebar({ activeTab, onTabChange }) {
                     {/* Profile */}
                     <button
                         className={`sidebar-nav-btn ${activeTab === "profile" ? "active" : ""}`}
-                        onClick={() => handleNavClick("/profile", "profile")}
+                        onClick={() => goToTab("profile")}
                     >
                         <FiUser className="nav-icon" size={19} />
                         <span className="nav-label">Profile</span>
@@ -236,7 +226,7 @@ export default function DashboardSidebar({ activeTab, onTabChange }) {
                     {/* Settings */}
                     <button
                         className={`sidebar-nav-btn ${activeTab === "settings" ? "active" : ""}`}
-                        onClick={() => handleNavClick("/settings", "settings")}
+                        onClick={() => goToTab("settings")}
                     >
                         <FiSettings className="nav-icon" size={19} />
                         <span className="nav-label">Settings</span>

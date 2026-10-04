@@ -1,20 +1,14 @@
 "use client";
 
-import Header from "@/app/components/Header";
-import DashboardSidebar from "@/app/components/DashboardSidebar";
-import UserWorkspace from "@/app/components/UserWorkspace";
-import "../dashboard/dashboard.css";
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
 
-export default function WorkspacePage() {
-    const userEmail = typeof window === "undefined" ? "" : localStorage.getItem("docspost-email") || "";
+export default function WorkspaceRedirectPage() {
+    const router = useRouter();
 
-    return (
-        <div className="dashboard-container">
-            <Header />
-            <DashboardSidebar activeTab="workspace" />
-            <main className="dashboard-main">
-                <UserWorkspace userEmail={userEmail} />
-            </main>
-        </div>
-    );
+    useEffect(() => {
+        router.replace("/dashboard#workspace");
+    }, [router]);
+
+    return null;
 }
