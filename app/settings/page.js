@@ -1,18 +1,14 @@
-"use client"
-import Header from "@/app/components/Header";
-import { useTheme } from "@/app/providers/ThemeProvider";
+"use client";
 
-export default function Settings() {
-    const { isDark } = useTheme();
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
 
-    return (
-        <main className="learning-page" data-theme={isDark ? "dark" : "light"}>
-            <Header />
+export default function SettingsRedirectPage() {
+    const router = useRouter();
 
-            <div style={{ padding: "40px 20px", maxWidth: "1200px", margin: "0 auto" }}>
-                <h1>Settings</h1>
-                <p>Your account settings will go here.</p>
-            </div>
-        </main>
-    );
+    useEffect(() => {
+        router.replace("/dashboard#settings");
+    }, [router]);
+
+    return null;
 }

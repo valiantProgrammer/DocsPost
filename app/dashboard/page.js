@@ -10,6 +10,7 @@ import ProfileView from "@/app/components/ProfileView";
 import UserWorkspace from "@/app/components/UserWorkspace";
 import DashboardOverview from "@/app/components/DashboardOverview";
 import BookmarksView from "@/app/components/BookmarksView";
+import DashboardSettings from "@/app/components/DashboardSettings";
 import {
     FiUser, FiMail, FiMapPin, FiBookmark, FiEdit2, FiFileText,
     FiBarChart2, FiBriefcase, FiTrendingUp, FiEye, FiThumbsUp,
@@ -132,7 +133,7 @@ export default function DashboardPage() {
             case "trash":
                 return <UserWorkspace userEmail={userEmail} initialTab="trash" pageTitle="Trash" />;
             case "settings":
-                return <SettingsView />;
+                return <DashboardSettings userEmail={userEmail} userName={userName} userData={userData} />;
             default:
                 return <DashboardOverview userName={userName || "rupayanDey"} userEmail={userEmail} router={router} />;
         }
