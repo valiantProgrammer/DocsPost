@@ -26,6 +26,7 @@ import {
     FiCloud
 } from "react-icons/fi";
 import { FaBookReader } from "react-icons/fa";
+import { BiSolidDashboard } from "react-icons/bi";
 import "./DashboardSidebar.css";
 
 export default function DashboardSidebar({ activeTab, onTabChange }) {
