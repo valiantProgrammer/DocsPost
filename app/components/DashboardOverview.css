@@ -21,6 +21,7 @@
     opacity: 0;
     transform: translateY(8px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -55,7 +56,7 @@
 }
 
 .overview-greeting-title {
-  font-size: 2.15rem;
+  font-size: 2rem;
   font-weight: 800;
   color: #0f172a;
   letter-spacing: -0.03em;
@@ -76,14 +77,37 @@
 }
 
 @keyframes waveEmoji {
-  0% { transform: rotate(0deg); }
-  10% { transform: rotate(14deg); }
-  20% { transform: rotate(-8deg); }
-  30% { transform: rotate(14deg); }
-  40% { transform: rotate(-4deg); }
-  50% { transform: rotate(10deg); }
-  60% { transform: rotate(0deg); }
-  100% { transform: rotate(0deg); }
+  0% {
+    transform: rotate(0deg);
+  }
+
+  10% {
+    transform: rotate(14deg);
+  }
+
+  20% {
+    transform: rotate(-8deg);
+  }
+
+  30% {
+    transform: rotate(14deg);
+  }
+
+  40% {
+    transform: rotate(-4deg);
+  }
+
+  50% {
+    transform: rotate(10deg);
+  }
+
+  60% {
+    transform: rotate(0deg);
+  }
+
+  100% {
+    transform: rotate(0deg);
+  }
 }
 
 .overview-greeting-sub {
@@ -682,11 +706,25 @@
   justify-content: center;
 }
 
-.top-doc-rank-num.rank-1 { color: #38bdf8; }
-.top-doc-rank-num.rank-2 { color: #38bdf8; }
-.top-doc-rank-num.rank-3 { color: #fbbf24; }
-.top-doc-rank-num.rank-4 { color: #38bdf8; }
-.top-doc-rank-num.rank-5 { color: #818cf8; }
+.top-doc-rank-num.rank-1 {
+  color: #38bdf8;
+}
+
+.top-doc-rank-num.rank-2 {
+  color: #38bdf8;
+}
+
+.top-doc-rank-num.rank-3 {
+  color: #fbbf24;
+}
+
+.top-doc-rank-num.rank-4 {
+  color: #38bdf8;
+}
+
+.top-doc-rank-num.rank-5 {
+  color: #818cf8;
+}
 
 .top-doc-main-col {
   display: flex;
@@ -902,6 +940,7 @@
   .overview-metrics-grid {
     grid-template-columns: repeat(2, 1fr);
   }
+
   .overview-bottom-grid {
     grid-template-columns: 1fr;
   }
@@ -911,14 +950,17 @@
   .overview-metrics-grid {
     grid-template-columns: 1fr;
   }
+
   .overview-top-header {
     flex-direction: column;
     align-items: flex-start;
   }
+
   .top-docs-table-header,
   .top-doc-table-row {
     grid-template-columns: 24px 1fr 70px 30px;
   }
+
   .top-doc-stat-col.upvotes-col {
     display: none;
   }

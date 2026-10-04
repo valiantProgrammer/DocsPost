@@ -5,8 +5,10 @@
     --text-main: #0f1720;
     --text-muted: #4a5563;
     --line: #d6dde2;
-    --brand: #118a63;
-    --brand-deep: #0f7a57;
+    --brand: #2563eb;
+    --brand-deep: #1d4ed8;
+    --brand-light: #eff6ff;
+    --brand-accent: #3b82f6;
     --but-col: rgb(228, 228, 228);
     --border-color: #48484888;
 }
@@ -19,8 +21,10 @@
     --text-main: #f5f5f7;
     --text-muted: #b0b8c1;
     --line: #202426;
-    --brand: #2ebd7e;
-    --brand-deep: #1fa366;
+    --brand: #2563eb;
+    --brand-deep: #1d4ed8;
+    --brand-light: #eff6ff;
+    --brand-accent: #3b82f6;
     --border-color: #bdbdbd;
 }
 

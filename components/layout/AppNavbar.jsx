@@ -39,7 +39,7 @@ export default function AppNavbar({ userEmail, onSearchClick }) {
                         });
                     }
                 })
-                .catch(() => {});
+                .catch(() => { });
         }
     }, [userEmail]);
 
@@ -48,7 +48,7 @@ export default function AppNavbar({ userEmail, onSearchClick }) {
             {/* Left: Brand & Navigation */}
             <div className="app-navbar-left">
                 <Link href="/workspace" className="brand-link" aria-label="DocsPost Workspace">
-                    <div className="brand-icon-box">P</div>
+                    <img src="/favicon.ico" alt="Logo" className="h-6 w-6 mr-2" />
                     <span>DocsPost</span>
                 </Link>
 

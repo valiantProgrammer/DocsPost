@@ -134,17 +134,13 @@ export default function Header() {
         { label: "Community", href: "/explore", icon: FiUsers },
     ];
 
-    return (
+    return (<>
         <header className="main-header">
             <div className="main-header-inner">
                 <div className="brand-and-search">
                     <Link className="brand-mark" href="/" aria-label="DocsPost Home" onClick={() => setMobileMenuOpen(false)}>
                         <span className="brand-icon-wrap" style={{ display: "flex", alignItems: "center" }}>
-                            <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
-                                <rect width="28" height="28" rx="7" fill="#2563eb" />
-                                <path d="M8 8h6.5c3.5 0 6 2.5 6 6s-2.5 6-6 6H8V8z" fill="#ffffff" />
-                                <circle cx="14" cy="14" r="3.2" fill="#2563eb" />
-                            </svg>
+                            <img src="/favicon.ico" alt="Logo" className="h-6 w-6 mr-2" />
                         </span>
                         <span className="brand-word font-bold tracking-tight text-[1.25rem]">DocsPost</span>
                     </Link>
@@ -166,7 +162,7 @@ export default function Header() {
                 <nav className="primary-nav hidden md:flex items-center gap-6" aria-label="Primary">
                     {navLinks.map((item) => (
                         <Link
-                            className="text-[14px] font-medium text-slate-600 hover:text-blue-600 dark:text-slate-300 dark:hover:text-blue-400 transition-colors"
+                            className="navbar-nav-link"
                             key={item.label}
                             href={item.href}
                         >
@@ -412,5 +408,8 @@ export default function Header() {
                 </div>
             )}
         </header>
+
+
+    </>
     );
 }

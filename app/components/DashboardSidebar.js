@@ -25,6 +25,7 @@ import {
     FiChevronDown,
     FiCloud
 } from "react-icons/fi";
+import { FaBookReader } from "react-icons/fa";
 import "./DashboardSidebar.css";
 
 export default function DashboardSidebar({ activeTab, onTabChange }) {
@@ -67,7 +68,7 @@ export default function DashboardSidebar({ activeTab, onTabChange }) {
                         setProfilePicture(data.user.profilePicture);
                     }
                 })
-                .catch(() => {});
+                .catch(() => { });
         }
     }, []);
 
@@ -212,6 +213,14 @@ export default function DashboardSidebar({ activeTab, onTabChange }) {
                     >
                         <FiBookmark className="nav-icon" size={19} />
                         <span className="nav-label">Bookmarks</span>
+                    </button>
+                    {/* Learning */}
+                    <button
+                        className={`sidebar-nav-btn ${activeTab === "learning" || activeTab === "learning" || activeTab === "learning" ? "active" : ""}`}
+                        onClick={() => goToTab("learning")}
+                    >
+                        <FaBookReader className="nav-icon" size={19} />
+                        <span className="nav-label">Learning</span>
                     </button>
 
                     {/* Profile */}

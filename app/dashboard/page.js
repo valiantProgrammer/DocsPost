@@ -11,6 +11,7 @@ import UserWorkspace from "@/app/components/UserWorkspace";
 import DashboardOverview from "@/app/components/DashboardOverview";
 import BookmarksView from "@/app/components/BookmarksView";
 import DashboardSettings from "@/app/components/DashboardSettings";
+import LearningView from "@/app/components/LearningView";
 import {
     FiUser, FiMail, FiMapPin, FiBookmark, FiEdit2, FiFileText,
     FiBarChart2, FiBriefcase, FiTrendingUp, FiEye, FiThumbsUp,
@@ -116,8 +117,9 @@ export default function DashboardPage() {
                 return <ProfileView userData={userData} userEmail={userEmail} userName={userName} />;
             case "bookmark":
             case "bookmarks":
-            case "bookmarked":
                 return <BookmarksView router={router} />;
+            case "learning":
+                return <LearningView router={router} />;
             case "documents":
             case "workspace":
             case "all":
