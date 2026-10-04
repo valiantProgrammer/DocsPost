@@ -1,0 +1,72 @@
+﻿<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 300" width="1200" height="300" role="img" aria-label="DocsPost banner">
+  <defs>
+    <linearGradient id="bg-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0d1117">
+        <animate attributeName="stop-color" values="#0d1117;#0f2044;#0d1117;#0a1628;#0d1117" dur="10s" repeatCount="indefinite"/>
+      </stop>
+      <stop offset="50%" stop-color="#0f2044">
+        <animate attributeName="stop-color" values="#0f2044;#162a5a;#0d2240;#0f2044;#162a5a" dur="10s" repeatCount="indefinite"/>
+      </stop>
+      <stop offset="100%" stop-color="#0d1117">
+        <animate attributeName="stop-color" values="#0d1117;#0a1628;#1a1a2e;#0d1117;#0d1117" dur="10s" repeatCount="indefinite"/>
+      </stop>
+    </linearGradient>
+    <linearGradient id="sg1" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#2563eb" stop-opacity="0.6"/>
+      <stop offset="100%" stop-color="#3b82f6" stop-opacity="0.1"/>
+    </linearGradient>
+    <linearGradient id="sg2" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1d4ed8" stop-opacity="0.4"/>
+      <stop offset="100%" stop-color="#60a5fa" stop-opacity="0.05"/>
+    </linearGradient>
+    <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="4" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <filter id="sglow" x="-40%" y="-40%" width="180%" height="180%">
+      <feGaussianBlur stdDeviation="14" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+  <rect width="1200" height="300" fill="url(#bg-grad)"/>
+  <circle cx="80" cy="60" r="90" fill="url(#sg1)" opacity="0.35">
+    <animate attributeName="r" values="90;102;90;84;90" dur="7s" repeatCount="indefinite"/>
+    <animate attributeName="opacity" values="0.35;0.5;0.35;0.25;0.35" dur="7s" repeatCount="indefinite"/>
+  </circle>
+  <circle cx="1130" cy="250" r="110" fill="url(#sg2)" opacity="0.3">
+    <animate attributeName="r" values="110;126;110;98;110" dur="9s" repeatCount="indefinite"/>
+    <animate attributeName="opacity" values="0.3;0.45;0.3;0.2;0.3" dur="9s" repeatCount="indefinite"/>
+  </circle>
+  <circle cx="950" cy="80" r="55" fill="#2563eb" opacity="0.12">
+    <animate attributeName="cx" values="950;962;950;938;950" dur="11s" repeatCount="indefinite"/>
+    <animate attributeName="opacity" values="0.12;0.2;0.12;0.07;0.12" dur="11s" repeatCount="indefinite"/>
+  </circle>
+  <circle cx="1100" cy="40" r="4" fill="#60a5fa" opacity="0.7" filter="url(#glow)">
+    <animate attributeName="opacity" values="0.7;1;0.7;0.4;0.7" dur="3s" repeatCount="indefinite"/>
+  </circle>
+  <circle cx="1142" cy="80" r="2.5" fill="#93c5fd" opacity="0.5">
+    <animate attributeName="opacity" values="0.5;0.9;0.5;0.3;0.5" dur="4s" repeatCount="indefinite"/>
+  </circle>
+  <circle cx="100" cy="242" r="3" fill="#60a5fa" opacity="0.5" filter="url(#glow)">
+    <animate attributeName="opacity" values="0.5;0.8;0.5;0.3;0.5" dur="4.5s" repeatCount="indefinite"/>
+  </circle>
+  <rect x="242" y="82" width="36" height="36" rx="8" fill="#2563eb"/>
+  <text x="260" y="107" font-family="system-ui,sans-serif" font-size="20" font-weight="700" text-anchor="middle" fill="#ffffff">D</text>
+  <text x="600" y="122" font-family="system-ui,-apple-system,Segoe UI,sans-serif" font-size="72" font-weight="800" text-anchor="middle" fill="#ffffff" letter-spacing="-2" filter="url(#sglow)">DocsPost
+    <animate attributeName="fill" values="#ffffff;#dbeafe;#ffffff;#bfdbfe;#ffffff" dur="8s" repeatCount="indefinite"/>
+  </text>
+  <text x="600" y="166" font-family="system-ui,-apple-system,Segoe UI,sans-serif" font-size="19" font-weight="400" text-anchor="middle" fill="#93c5fd" letter-spacing="0.5">Share knowledge. Build the future.</text>
+  <rect x="328" y="200" width="92" height="30" rx="15" fill="#2563eb" fill-opacity="0.25" stroke="#2563eb" stroke-width="1" stroke-opacity="0.5"/>
+  <text x="374" y="220" font-family="system-ui,sans-serif" font-size="13" font-weight="600" text-anchor="middle" fill="#93c5fd">Write</text>
+  <rect x="438" y="200" width="92" height="30" rx="15" fill="#2563eb" fill-opacity="0.15" stroke="#3b82f6" stroke-width="1" stroke-opacity="0.4"/>
+  <text x="484" y="220" font-family="system-ui,sans-serif" font-size="13" font-weight="600" text-anchor="middle" fill="#93c5fd">Learn</text>
+  <rect x="548" y="200" width="92" height="30" rx="15" fill="#2563eb" fill-opacity="0.15" stroke="#3b82f6" stroke-width="1" stroke-opacity="0.4"/>
+  <text x="594" y="220" font-family="system-ui,sans-serif" font-size="13" font-weight="600" text-anchor="middle" fill="#93c5fd">Build</text>
+  <rect x="658" y="200" width="92" height="30" rx="15" fill="#2563eb" fill-opacity="0.15" stroke="#3b82f6" stroke-width="1" stroke-opacity="0.4"/>
+  <text x="704" y="220" font-family="system-ui,sans-serif" font-size="13" font-weight="600" text-anchor="middle" fill="#93c5fd">Share</text>
+  <rect x="768" y="200" width="102" height="30" rx="15" fill="#2563eb" fill-opacity="0.15" stroke="#3b82f6" stroke-width="1" stroke-opacity="0.4"/>
+  <text x="819" y="220" font-family="system-ui,sans-serif" font-size="13" font-weight="600" text-anchor="middle" fill="#93c5fd">Explore</text>
+  <rect x="0" y="292" width="1200" height="8" fill="#2563eb" opacity="0.6">
+    <animate attributeName="opacity" values="0.6;0.9;0.6;0.4;0.6" dur="5s" repeatCount="indefinite"/>
+  </rect>
+</svg>
