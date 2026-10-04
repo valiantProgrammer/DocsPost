@@ -1,15 +1,15 @@
-import clientPromise from "../../../lib/db";
-import { generateAccessToken, generateRefreshToken } from "../../../lib/authUtils";
-import { sanitizeUser } from "../../../lib/utils";
+import clientPromise from "@/lib/db";
+import { generateAccessToken, generateRefreshToken } from "@/lib/auth";
+import { sanitizeUser } from "@/lib/utils";
 import { NextResponse } from "next/server";
 
 export async function POST(request) {
   const client = await clientPromise;
   const session = client.startSession();
-  
+
   try {
     const { email, otp } = await request.json();
-    
+
     // --- 1. Input Validation ---
     if (!email || !otp) {
       return NextResponse.json(
@@ -34,7 +34,7 @@ export async function POST(request) {
       const db = client.db();
 
       // Find the temporary user with a valid, non-expired OTP
-      const tempUser = await db.collection("tempusers").findOne({ 
+      const tempUser = await db.collection("tempusers").findOne({
         email: email.toLowerCase(),
         otp: cleanOtp,
         otpExpiresAt: { $gt: new Date() }
@@ -44,8 +44,8 @@ export async function POST(request) {
         // To prevent users from guessing if an email exists, we can check for other failure reasons.
         const existingTempUser = await db.collection("tempusers").findOne({ email: email.toLowerCase() });
         if (existingTempUser) {
-            // Increment attempt counter if you want to implement rate limiting
-            await db.collection("tempusers").updateOne({ _id: existingTempUser._id }, { $inc: { otpAttempts: 1 } });
+          // Increment attempt counter if you want to implement rate limiting
+          await db.collection("tempusers").updateOne({ _id: existingTempUser._id }, { $inc: { otpAttempts: 1 } });
         }
         throw new Error("Invalid or expired OTP");
       }
@@ -73,7 +73,7 @@ export async function POST(request) {
 
       // Insert the new user into the main "users" collection
       const insertResult = await db.collection("users").insertOne(userToInsert, { session });
-      
+
       // The newly created user"s full document
       newlyVerifiedUser = { ...userToInsert, _id: insertResult.insertedId };
 
@@ -88,7 +88,7 @@ export async function POST(request) {
     }
 
     const userId = newlyVerifiedUser._id.toString();
-    const accessToken = generateAccessToken(userId);
+    const accessToken = await generateAccessToken(userId);
     const refreshToken = generateRefreshToken(userId);
 
     // Update the new user with their first refresh token
@@ -96,10 +96,10 @@ export async function POST(request) {
       { _id: newlyVerifiedUser._id },
       { $set: { refreshToken, updatedAt: new Date() } }
     );
-    
+
     // --- 4. Create Response and Set Cookie ---
     const response = NextResponse.json(
-      { 
+      {
         success: true,
         user: sanitizeUser(newlyVerifiedUser),
         accessToken
@@ -123,7 +123,7 @@ export async function POST(request) {
     }
 
     console.error("Verification Error:", error);
-    
+
     // Handle MongoDB duplicate key errors
     if (error.code === 11000) {
       const field = Object.keys(error.keyPattern || {})[0];
@@ -139,13 +139,13 @@ export async function POST(request) {
         );
       }
     }
-    
+
     const statusMap = {
       "Invalid or expired OTP": 400,
       "User already verified": 409, // 409 Conflict
     };
     const status = statusMap[error.message] || 500;
-    
+
     return NextResponse.json(
       { error: error.message || "Verification failed" },
       { status }
