@@ -541,7 +541,7 @@ export default function WorkspaceEditor({ userEmail, documentId }) {
             />
 
             {/* 3-Column Workspace Grid */}
-            <main className="workspace-main-container">
+            <main className="editor-workspace-container">
                 {/* 1. Left: Document Outline */}
                 <OutlinePane
                     headings={headings}

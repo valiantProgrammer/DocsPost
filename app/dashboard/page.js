@@ -8,6 +8,7 @@ import AnalyticsDashboard from "@/app/components/AnalyticsDashboard";
 import ProfilePictureModal from "@/app/components/ProfilePictureModal";
 import ProfileView from "@/app/components/ProfileView";
 import UserWorkspace from "@/app/components/UserWorkspace";
+import DashboardOverview from "@/app/components/DashboardOverview";
 import {
     FiUser, FiMail, FiMapPin, FiBookmark, FiEdit2, FiFileText,
     FiBarChart2, FiBriefcase, FiTrendingUp, FiEye, FiThumbsUp,
@@ -77,7 +78,7 @@ export default function DashboardPage() {
         switch (activeTab) {
             case "overview":
             case "dashboard":
-                return <DashboardView userName={userName || "Rupayan"} router={router} />;
+                return <DashboardOverview userName={userName || "rupayanDey"} userEmail={userEmail} router={router} />;
             case "analytics":
                 return <AnalyticsDashboard userEmail={userEmail} />;
             case "profile":
@@ -101,7 +102,7 @@ export default function DashboardPage() {
             case "settings":
                 return <SettingsView />;
             default:
-                return <DashboardView userName={userName || "Rupayan"} router={router} />;
+                return <DashboardOverview userName={userName || "rupayanDey"} userEmail={userEmail} router={router} />;
         }
     };
 

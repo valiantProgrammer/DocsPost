@@ -1,6 +1,7 @@
 /* User Workspace - Matching User Layout Reference */
 
 .workspace-main-container {
+  display: block;
   width: 100%;
   max-width: 1200px;
   margin: 0 auto;

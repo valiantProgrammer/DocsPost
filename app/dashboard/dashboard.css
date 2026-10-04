@@ -12,8 +12,8 @@
 
 .dashboard-main {
     flex: 1;
-    margin-left: 280px;
-    padding: 40px;
+    margin-left: 250px;
+    padding: 32px 36px;
     overflow-y: auto;
     transition: margin-left 0.3s ease;
     background: var(--page-bg);

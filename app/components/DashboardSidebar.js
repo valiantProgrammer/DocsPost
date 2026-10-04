@@ -22,7 +22,8 @@ import {
     FiCheckCircle,
     FiShare2,
     FiTrash2,
-    FiChevronDown
+    FiChevronDown,
+    FiCloud
 } from "react-icons/fi";
 import "./DashboardSidebar.css";
 
@@ -283,6 +284,20 @@ export default function DashboardSidebar({ activeTab, onTabChange }) {
                         >
                             <FiLogOut size={16} />
                         </button>
+                    </div>
+
+                    {/* Storage Usage Widget matching screenshot */}
+                    <div className="sidebar-storage-card">
+                        <div className="storage-card-header">
+                            <div className="storage-icon-label">
+                                <FiCloud size={16} className="storage-icon" />
+                                <span>Storage Usage</span>
+                            </div>
+                            <span className="storage-values">2.4 GB / 10 GB</span>
+                        </div>
+                        <div className="storage-progress-track">
+                            <div className="storage-progress-fill" style={{ width: "24%" }}></div>
+                        </div>
                     </div>
                 </div>
             </aside>

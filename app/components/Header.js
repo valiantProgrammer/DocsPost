@@ -139,8 +139,12 @@ export default function Header() {
             <div className="main-header-inner">
                 <div className="brand-and-search">
                     <Link className="brand-mark" href="/" aria-label="DocsPost Home" onClick={() => setMobileMenuOpen(false)}>
-                        <span className="brand-icon-wrap">
-                            <IoLogoDribbble size={32} />
+                        <span className="brand-icon-wrap" style={{ display: "flex", alignItems: "center" }}>
+                            <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+                                <rect width="28" height="28" rx="7" fill="#2563eb" />
+                                <path d="M8 8h6.5c3.5 0 6 2.5 6 6s-2.5 6-6 6H8V8z" fill="#ffffff" />
+                                <circle cx="14" cy="14" r="3.2" fill="#2563eb" />
+                            </svg>
                         </span>
                         <span className="brand-word font-bold tracking-tight text-[1.25rem]">DocsPost</span>
                     </Link>
@@ -155,6 +159,7 @@ export default function Header() {
                             placeholder="Search docs, tutorials, guides..."
                             onKeyDown={handleSearchInput}
                         />
+                        <kbd className="header-search-badge">Ctrl K</kbd>
                     </label>
                 </div>
 
@@ -189,19 +194,19 @@ export default function Header() {
                     </button>
                     <button
                         type="button"
-                        className="circle-action grid place-items-center"
+                        className="circle-action notification-bell-btn grid place-items-center"
                         aria-label="Notifications"
                         onClick={() => router.push("/notifications")}
                     >
-                        <GoBell size={20} />
-
+                        <GoBell size={19} />
+                        <span className="notification-red-badge">1</span>
                     </button>
 
                     {isSignedIn ? (
                         <div className="profile-dropdown-container" ref={dropdownRef}>
                             <button
                                 type="button"
-                                className="profile-button"
+                                className="profile-pill-button"
                                 onClick={() => setIsDropdownOpen(!isDropdownOpen)}
                                 aria-label="User profile menu"
                             >
@@ -218,8 +223,12 @@ export default function Header() {
                                             }}
                                         />
                                     ) : (
-                                        userName ? userName.charAt(0).toUpperCase() : "U"
+                                        userName ? userName.charAt(0).toUpperCase() : "R"
                                     )}
+                                </div>
+                                <div className="profile-user-texts hidden md:flex flex-col text-left">
+                                    <span className="profile-name-span">{userName || "Rupayan Dey"}</span>
+                                    <span className="profile-role-span">Creator</span>
                                 </div>
                             </button>
 
