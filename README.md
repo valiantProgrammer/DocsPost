@@ -4,7 +4,7 @@
 
 <br/>
 
-# DocsPost
+# [DocsPost](https://docs-post-two.vercel.app/)
 
 **A modern knowledge platform for developers, students, and technical creators.**
 
@@ -35,8 +35,7 @@
 ## About
 
 DocsPost is a full-stack knowledge-sharing platform aimed at developers, students, and technical creators. Users write and publish documentation, tutorials, and engineering roadmaps, then track their content's performance through a built-in analytics dashboard. It sits somewhere between a personal wiki and a dev-focused publishing platform — structured enough for serious technical writing, open enough for quick guides and notes.
-
-<img src="./docs/assets/divider.svg" alt="" width="100%"/>
+<img src="./docs/assets/divider.svg" alt="" width="50%"/>
 
 ## Features
 
